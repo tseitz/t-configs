@@ -1,0 +1,11 @@
+# ============================================
+# Private Environment Variables
+# ============================================
+# Copy this file to .zshrc-env-vars and fill in your values:
+#   cp dotfiles/.zshrc-env-vars.example dotfiles/.zshrc-env-vars
+#
+# NEVER commit .zshrc-env-vars — it is gitignored.
+# ============================================
+
+export OCO_OPENAI_API_KEY=
+export GITHUB_TOKEN=
