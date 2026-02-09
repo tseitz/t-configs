@@ -1,0 +1,10 @@
+[user]
+	email = tdseitz10@gmail.com
+	name = tseitz
+[init]
+	defaultBranch = main
+[filter "lfs"]
+	process = git-lfs filter-process
+	required = true
+	clean = git-lfs clean -- %f
+	smudge = git-lfs smudge -- %f

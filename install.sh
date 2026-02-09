@@ -111,8 +111,8 @@ create_symlink() {
       ln -sf "$src" "$dest"
       success "Symlink updated: $dest -> $src"
     fi
-  elif [ -f "$dest" ]; then
-    warn "Regular file exists at $dest — backing up to ${dest}.bak"
+  elif [ -f "$dest" ] || [ -d "$dest" ]; then
+    warn "Existing file/directory at $dest — backing up to ${dest}.bak"
     mv "$dest" "${dest}.bak"
     ln -s "$src" "$dest"
     success "Symlink created (original backed up): $dest -> $src"
@@ -123,7 +123,19 @@ create_symlink() {
 }
 
 info "Creating symlinks..."
-create_symlink "$DOTFILES_DIR/.zshrc" "$HOME/.zshrc"
+create_symlink "$DOTFILES_DIR/.zshrc"      "$HOME/.zshrc"
+create_symlink "$DOTFILES_DIR/.zshenv"     "$HOME/.zshenv"
+create_symlink "$DOTFILES_DIR/.zprofile"   "$HOME/.zprofile"
+create_symlink "$DOTFILES_DIR/.gitconfig"  "$HOME/.gitconfig"
+create_symlink "$DOTFILES_DIR/.hushlogin"  "$HOME/.hushlogin"
+
+# Neovim config
+mkdir -p "$HOME/.config"
+create_symlink "$DOTFILES_DIR/.config/nvim" "$HOME/.config/nvim"
+
+# Cursor MCP config
+mkdir -p "$HOME/.cursor"
+create_symlink "$DOTFILES_DIR/.cursor/mcp.json" "$HOME/.cursor/mcp.json"
 
 # ------------------------------------------
 # 7. Set up private env vars

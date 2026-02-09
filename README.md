@@ -35,7 +35,13 @@ See `dotfiles/.zshrc-env-vars.example` for the full list of supported variables.
 | File | Description |
 |------|-------------|
 | `dotfiles/.zshrc` | Zsh configuration — aliases, functions, PATH, tool init |
+| `dotfiles/.zshenv` | Zsh environment — loads Cargo/Rust toolchain |
+| `dotfiles/.zprofile` | Zsh profile — Homebrew shell environment |
 | `dotfiles/.zshrc-env-vars.example` | Template for private environment variables |
+| `dotfiles/.gitconfig` | Git configuration — user, LFS, default branch |
+| `dotfiles/.hushlogin` | Suppresses macOS "Last login" terminal banner |
+| `dotfiles/.config/nvim/` | Neovim configuration (LazyVim) |
+| `dotfiles/.cursor/mcp.json` | Cursor MCP server configuration |
 | `Brewfile` | Homebrew packages, casks, and dependencies |
 | `install.sh` | Bootstrap script for new machines |
 
