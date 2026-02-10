@@ -63,21 +63,20 @@ fi
 # ------------------------------------------
 ZSH_CUSTOM="${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}"
 
-declare -A plugins=(
-  ["zsh-syntax-highlighting"]="https://github.com/zsh-users/zsh-syntax-highlighting.git"
-  ["zsh-autosuggestions"]="https://github.com/zsh-users/zsh-autosuggestions.git"
-)
-
-for plugin in "${!plugins[@]}"; do
-  plugin_dir="$ZSH_CUSTOM/plugins/$plugin"
+install_omz_plugin() {
+  local name="$1"
+  local url="$2"
+  local plugin_dir="$ZSH_CUSTOM/plugins/$name"
   if [ -d "$plugin_dir" ]; then
-    success "Plugin '$plugin' already installed"
+    success "Plugin '$name' already installed"
   else
-    info "Installing oh-my-zsh plugin: $plugin..."
-    git clone "${plugins[$plugin]}" "$plugin_dir"
-    success "Plugin '$plugin' installed"
+    info "Installing oh-my-zsh plugin: $name..."
+    git clone "$url" "$plugin_dir"
+    success "Plugin '$name' installed"
   fi
-done
+}
+install_omz_plugin "zsh-syntax-highlighting" "https://github.com/zsh-users/zsh-syntax-highlighting.git"
+install_omz_plugin "zsh-autosuggestions" "https://github.com/zsh-users/zsh-autosuggestions.git"
 
 # ------------------------------------------
 # 5. Install spaceship prompt theme

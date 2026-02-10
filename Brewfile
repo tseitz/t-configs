@@ -23,9 +23,9 @@ brew "mysql-client"
 # ===== Casks =====
 # Uncomment the apps you want installed
 cask "cursor"
-cask "docker"
+cask "docker-desktop"
 cask "firefox"
 cask "google-chrome"
-# cask "slack"
+cask "slack"
 # cask "obsidian"
 # cask "dropbox"
