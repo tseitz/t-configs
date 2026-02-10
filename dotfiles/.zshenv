@@ -1,1 +1,3 @@
-. "$HOME/.cargo/env"
+eval "$(/opt/homebrew/bin/brew shellenv 2>/dev/null)" || true
+
+# . "$HOME/.cargo/env"

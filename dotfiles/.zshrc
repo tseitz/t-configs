@@ -78,7 +78,7 @@ eval "$(direnv hook zsh)"
 eval "$(rbenv init - zsh)"
 
 # Deno
-. "$HOME/.deno/env"
+eval "$(deno env --env-file)"
 
 # Initialize zsh completions
 autoload -Uz compinit

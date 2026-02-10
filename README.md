@@ -55,8 +55,7 @@ Edit the file to remove any comment lines you don’t want. On a new machine, `i
 | File | Description |
 |------|-------------|
 | `dotfiles/.zshrc` | Zsh configuration — aliases, functions, PATH, tool init |
-| `dotfiles/.zshenv` | Zsh environment — loads Cargo/Rust toolchain |
-| `dotfiles/.zprofile` | Zsh profile — Homebrew shell environment |
+| `dotfiles/.zshenv` | Zsh environment — Homebrew PATH, Cargo/Rust |
 | `dotfiles/.zshrc-env-vars.example` | Template for private environment variables |
 | `dotfiles/.gitconfig` | Git configuration — user, LFS, default branch |
 | `dotfiles/.hushlogin` | Suppresses macOS "Last login" terminal banner |

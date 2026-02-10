@@ -124,7 +124,6 @@ create_symlink() {
 info "Creating symlinks..."
 create_symlink "$DOTFILES_DIR/.zshrc"      "$HOME/.zshrc"
 create_symlink "$DOTFILES_DIR/.zshenv"     "$HOME/.zshenv"
-create_symlink "$DOTFILES_DIR/.zprofile"   "$HOME/.zprofile"
 create_symlink "$DOTFILES_DIR/.gitconfig"  "$HOME/.gitconfig"
 create_symlink "$DOTFILES_DIR/.hushlogin"  "$HOME/.hushlogin"
 
