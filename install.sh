@@ -136,6 +136,30 @@ create_symlink "$DOTFILES_DIR/.config/nvim" "$HOME/.config/nvim"
 mkdir -p "$HOME/.cursor"
 create_symlink "$DOTFILES_DIR/.cursor/mcp.json" "$HOME/.cursor/mcp.json"
 
+# Cursor User settings (macOS vs Linux paths)
+if [[ "$OSTYPE" == darwin* ]]; then
+  CURSOR_USER_DIR="$HOME/Library/Application Support/Cursor/User"
+else
+  CURSOR_USER_DIR="$HOME/.config/Cursor/User"
+fi
+mkdir -p "$CURSOR_USER_DIR"
+create_symlink "$DOTFILES_DIR/.config/Cursor/User/settings.json" "$CURSOR_USER_DIR/settings.json"
+
+# Cursor extensions (install from list if cursor CLI is available)
+CURSOR_EXTENSIONS_FILE="$DOTFILES_DIR/.config/Cursor/extensions.txt"
+if [ -f "$CURSOR_EXTENSIONS_FILE" ] && command -v cursor &>/dev/null; then
+  info "Installing Cursor extensions from list..."
+  while IFS= read -r line || [ -n "$line" ]; do
+    line="${line%%#*}"
+    line="${line#"${line%%[![:space:]]*}"}"
+    [ -z "$line" ] && continue
+    cursor --install-extension "$line" &>/dev/null || true
+  done < "$CURSOR_EXTENSIONS_FILE"
+  success "Cursor extensions processed (already-installed extensions are skipped)"
+elif [ -f "$CURSOR_EXTENSIONS_FILE" ] && ! command -v cursor &>/dev/null; then
+  warn "Cursor CLI not in PATH — skip extension install or add Cursor to PATH and re-run"
+fi
+
 # ------------------------------------------
 # 7. Set up private env vars
 # ------------------------------------------
