@@ -1,5 +1,4 @@
 aaron-bond.better-comments
-alefragnani.bookmarks
 anysphere.cursorpyright
 astro-build.astro-vscode
 asvetliakov.vscode-neovim
@@ -19,10 +18,8 @@ graphql.vscode-graphql-syntax
 gruntfuggly.todo-tree
 hashicorp.terraform
 hediet.vscode-drawio
-hosho.solidity-debugger
 jakearl.search-editor-apply-changes
 jpoissonnier.vscode-styled-components
-juanblanco.solidity
 kevinkyang.auto-comment-blocks
 knisterpeter.vscode-commitizen
 mechatroner.rainbow-csv

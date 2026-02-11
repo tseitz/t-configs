@@ -1,67 +1,91 @@
 {
-  "[python]": {
-    "editor.tabSize": 4,
-    "editor.formatOnSave": true,
-    "editor.detectIndentation": true
-  },
-  "[svelte]": {
-    "editor.formatOnSave": true,
-    "editor.defaultFormatter": "svelte.svelte-vscode"
-  },
-  "autoDocstring.startOnNewLine": true,
-  "css.lint.duplicateProperties": "warning",
-  "css.lint.float": "warning",
-  "diffEditor.ignoreTrimWhitespace": false,
-  "editor.bracketPairColorization.enabled": true,
-  "editor.detectIndentation": false,
-  "editor.dragAndDrop": false,
+  // ── Editor: Appearance ──────────────────────────────────────────
   "editor.fontFamily": "Fira Code",
   "editor.fontLigatures": true,
-  "terminal.integrated.fontSize": 12.2,
-  "editor.formatOnPaste": false,
-  "editor.mouseWheelScrollSensitivity": 1.5,
-  "editor.smoothScrolling": true,
-  "editor.snippetSuggestions": "top",
-  "editor.suggest.localityBonus": true,
-  "editor.suggestSelection": "first",
-  "editor.tabCompletion": "on",
+  "editor.cursorBlinking": "phase",
+  "editor.minimap.enabled": true,
+  "editor.minimap.autohide": true,
+  "editor.renderWhitespace": "trailing",
+  "editor.stickyScroll.enabled": true,
+
+  // ── Editor: Behavior ────────────────────────────────────────────
   "editor.tabSize": 2,
   "editor.autoIndent": "full",
-  "explorer.confirmDragAndDrop": false,
-  "extensions.ignoreRecommendations": true,
-  "editor.semanticTokenColorCustomizations": {
-    "[Default Dark+]": {
-      "rules": {
-        "selfParameter": "#569CD6",
-        "clsParameter": "#569CD6"
-      }
-    }
+  "editor.detectIndentation": false,
+  "editor.dragAndDrop": false,
+  "editor.formatOnPaste": false,
+  "editor.linkedEditing": true,
+  "editor.snippetSuggestions": "top",
+  "editor.tabCompletion": "on",
+  "editor.suggestSelection": "first",
+  "editor.suggest.localityBonus": true,
+  "editor.quickSuggestions": {
+    "strings": true
   },
+  "editor.mouseWheelScrollSensitivity": 1.5,
+  "editor.smoothScrolling": true,
+  "editor.accessibilitySupport": "off",
+  "editor.gotoLocation.multipleDefinitions": "goto",
+  "editor.inlineSuggest.suppressSuggestions": true,
+
+  // ── Workbench ───────────────────────────────────────────────────
+  "workbench.colorTheme": "Default Dark Modern",
+  "workbench.iconTheme": "material-icon-theme",
+  "workbench.startupEditor": "newUntitledFile",
+  "workbench.editor.openPositioning": "right",
+  "workbench.editor.pinnedTabSizing": "shrink",
+  "workbench.editorAssociations": {
+    "*.ipynb": "jupyter-notebook"
+  },
+
+  // ── Files ───────────────────────────────────────────────────────
   "files.exclude": {
-    "**/.vs": true,
-    "**/[Bb]in": true,
-    "**/[Oo]bj": true,
     "**/*.js": {
       "when": "$(basename).ts"
-    },
-    "**/project.lock.json": true,
-    "**/wwwroot": true,
-    "Prototype": true
+    }
   },
   "files.watcherExclude": {
     "**/__pycache__/*/**": true,
     "**/.venv/*/**": true
   },
+  "files.associations": {
+    "*.css": "tailwindcss"
+  },
+
+  // ── Search ──────────────────────────────────────────────────────
+  "search.smartCase": true,
+
+  // ── Explorer & Diff ─────────────────────────────────────────────
+  "explorer.confirmDragAndDrop": false,
+  "extensions.ignoreRecommendations": true,
+  "diffEditor.ignoreTrimWhitespace": false,
+
+  // ── Terminal ────────────────────────────────────────────────────
+  "terminal.integrated.fontSize": 12.2,
+  "terminal.integrated.scrollback": 5000,
+  "terminal.integrated.defaultProfile.osx": "zsh",
+  "terminal.integrated.defaultProfile.linux": "zsh",
+  "terminal.integrated.automationProfile.osx": {
+    "path": "/bin/zsh"
+  },
+  "terminal.integrated.autoReplies": {
+    "[Oh My Zsh] Would you like to check for updates? [Y/n]": "Y\r",
+    "[oh-my-zsh] Would you like to update? [Y/n]": "Y\r"
+  },
+  "terminal.explorerKind": "external",
+
+  // ── Git ─────────────────────────────────────────────────────────
   "git.confirmSync": false,
   "git.enableSmartCommit": true,
-  "gitlens.advanced.messages": {
-    "suppressCommitHasNoPreviousCommitWarning": false,
-    "suppressCommitNotFoundWarning": false,
-    "suppressFileNotUnderSourceControlWarning": false,
-    "suppressGitVersionWarning": false,
-    "suppressLineUncommittedWarning": false,
-    "suppressNoRepositoryWarning": false
-  },
+  "git.autofetch": true,
+  "git.autoStash": true,
+  "git.ignoreRebaseWarning": true,
+
+  // ── GitLens ─────────────────────────────────────────────────────
+  "gitlens.codeLens.enabled": false,
+  "gitlens.hovers.currentLine.over": "line",
+  "gitlens.hovers.currentLine.details": false,
+  "gitlens.hovers.annotations.details": false,
   "gitlens.menus": {
     "editor": false,
     "editorGroup": false,
@@ -76,8 +100,42 @@
       "remote": true
     }
   },
-  "html.format.unformatted": "",
-  "http.proxyStrictSSL": false,
+
+  // ── CSS & Tailwind ──────────────────────────────────────────────
+  "css.lint.duplicateProperties": "warning",
+  "css.lint.float": "warning",
+  "tailwindCSS.includeLanguages": {
+    "plaintext": "html"
+  },
+
+  // ── JavaScript / TypeScript ─────────────────────────────────────
+  "javascript.updateImportsOnFileMove.enabled": "always",
+  "typescript.updateImportsOnFileMove.enabled": "always",
+  "typescript.suggest.paths": false,
+  "typescript.tsserver.log": "off",
+  "eslint.validate": ["javascript", "javascriptreact", "Babel Javascript", "typescript", "typescriptreact"],
+  "prettier.printWidth": 120,
+
+  // ── Python ──────────────────────────────────────────────────────
+  "autoDocstring.startOnNewLine": true,
+
+  // ── Ruby ────────────────────────────────────────────────────────
+  "rubyLsp.formatter": "rubocop",
+
+  // ── Svelte ──────────────────────────────────────────────────────
+  "svelte.enable-ts-plugin": true,
+
+  // ── Notebook ────────────────────────────────────────────────────
+  "notebook.cellToolbarLocation": {
+    "default": "right",
+    "jupyter-notebook": "left"
+  },
+
+  // ── Security ────────────────────────────────────────────────────
+  "security.workspace.trust.untrustedFiles": "open",
+  "remote.autoForwardPortsSource": "hybrid",
+
+  // ── Extensions ──────────────────────────────────────────────────
   "markdownlint.config": {
     "MD001": false,
     "MD007": {
@@ -86,88 +144,10 @@
     "MD013": false,
     "MD025": false
   },
-  "search.smartCase": true,
-  "search.useIgnoreFiles": true,
-  "terminal.integrated.defaultProfile.windows": "PowerShell",
-  "workbench.editor.openPositioning": "right",
-  "workbench.iconTheme": "material-icon-theme",
-  "workbench.startupEditor": "newUntitledFile",
-  "remote.SSH.remotePlatform": {
-    "na2RPASmallJobs1": "linux",
-    "SmallJobsBox": "linux"
-  },
-  "javascript.updateImportsOnFileMove.enabled": "always",
-  "typescript.updateImportsOnFileMove.enabled": "always",
-  "editor.renderWhitespace": "trailing",
-  "git.autofetch": true,
-  "workbench.editor.pinnedTabSizing": "shrink",
-  "editor.cursorBlinking": "phase",
-  "git.ignoreRebaseWarning": true,
-  "workbench.editorAssociations": {
-    "*.ipynb": "jupyter-notebook"
-  },
-  "[typescript]": {
-    "editor.defaultFormatter": "esbenp.prettier-vscode",
-    "editor.formatOnSave": true,
-    "editor.detectIndentation": true
-  },
-  "[json]": {
-    "editor.defaultFormatter": "esbenp.prettier-vscode"
-  },
-  "[javascript]": {
-    "editor.defaultFormatter": "esbenp.prettier-vscode",
-    "editor.formatOnSave": false
-  },
-  "[jsonc]": {
-    "editor.defaultFormatter": "esbenp.prettier-vscode"
-  },
-  "eslint.validate": ["javascript", "javascriptreact", "Babel Javascript", "typescript", "typescriptreact"],
-  "editor.quickSuggestions": {
-    "strings": true
-  },
-  "[typescriptreact]": {
-    "editor.defaultFormatter": "esbenp.prettier-vscode"
-  },
-  "python.languageServer": "None",
-  "notebook.cellToolbarLocation": {
-    "default": "right",
-    "jupyter-notebook": "left"
-  },
   "todo-tree.general.tags": ["BUG", "HACK", "FIXME", "TODO", "XXX", "[ ]", "[x]"],
   "todo-tree.regex.regex": "(//|#|<!--|;|/\\*|^|^\\s*(-|\\d+.))\\s*($TAGS)",
-  "typescript.suggest.paths": false,
-  "security.workspace.trust.untrustedFiles": "open",
-  "[javascriptreact]": {
-    "editor.defaultFormatter": "esbenp.prettier-vscode",
-    "editor.formatOnSave": true
-  },
-  "editor.accessibilitySupport": "off",
-  "editor.inlineSuggest.enabled": true,
-  "terminal.integrated.env.osx": {
-    "FIG_NEW_SESSION": "1"
-  },
-  "[solidity]": {
-    "editor.formatOnSave": true,
-    "editor.defaultFormatter": "JuanBlanco.solidity"
-  },
-  "editor.minimap.enabled": true,
-  "git.autoStash": true,
-  "editor.linkedEditing": true,
-  "svelte.enable-ts-plugin": true,
-  "terminal.integrated.scrollback": 5000,
-  "terminal.integrated.autoReplies": {
-    "[Oh My Zsh] Would you like to check for updates? [Y/n]": "Y\r",
-    "[oh-my-zsh] Would you like to update? [Y/n]": "Y\r"
-  },
-  "gitlens.hovers.currentLine.over": "line",
-  "editor.gotoLocation.multipleDefinitions": "goto",
-  "terminal.explorerKind": "external",
-  "terminal.external.osxExec": "Warp.app",
   "conventionalCommits.gitmoji": false,
   "typeChallenges.workspaceFolder": "/Users/tseitz/code/learn/type-challenges",
-  "gitlens.codeLens.enabled": false,
-  "gitlens.hovers.currentLine.details": false,
-  "gitlens.hovers.annotations.details": false,
   "taskExplorer.enabledTasks": {
     "ant": false,
     "composer": false,
@@ -178,15 +158,14 @@
     "maven": false,
     "perl": false
   },
-  "[ruby]": {
-    "editor.formatOnSave": true,
-    "editor.defaultFormatter": "Shopify.ruby-lsp"
-  },
-  "rubyLsp.formatter": "rubocop",
-  "terminal.integrated.defaultProfile.osx": "zsh",
-  "terminal.integrated.defaultProfile.linux": "zsh",
+  "taskExplorer.enableSideBar": true,
   "errorLens.excludeBySource": ["ts(2304)"],
-  "editor.minimap.autohide": true,
+  "hediet.vscode-drawio.resizeImages": null,
+
+  // ── Cursor ──────────────────────────────────────────────────────
+  "cursor.cpp.disabledLanguages": ["plaintext", "markdown", "scminput"],
+
+  // ── Vim ─────────────────────────────────────────────────────────
   "vim.leader": " ",
   "vim.normalModeKeyBindings": [
     {
@@ -232,10 +211,6 @@
     {
       "before": ["<leader>", "y"],
       "after": ["\"", "+", "y"]
-    },
-    {
-      "before": ["<leader>", "y"],
-      "after": ["\"", "+", "y"]
     }
   ],
   "vim.visualModeKeyBindings": [
@@ -266,34 +241,50 @@
       "after": ["<Esc>"]
     }
   ],
-  "editor.inlineSuggest.suppressSuggestions": true,
-  "typescript.tsserver.log": "off",
-  "taskExplorer.enableSideBar": true,
-  "editor.stickyScroll.enabled": true,
-  "github.copilot.enable": {
-    "*": false,
-    "plaintext": false,
-    "markdown": false,
-    "scminput": false
+
+  // ── Language-Specific Overrides ─────────────────────────────────
+  "[python]": {
+    "editor.tabSize": 4,
+    "editor.formatOnSave": true,
+    "editor.detectIndentation": true
   },
-  "remote.autoForwardPortsSource": "hybrid",
-  "prettier.printWidth": 120,
+  "[typescript]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "editor.formatOnSave": true,
+    "editor.detectIndentation": true
+  },
+  "[typescriptreact]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[javascript]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "editor.formatOnSave": false
+  },
+  "[javascriptreact]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "editor.formatOnSave": true
+  },
+  "[json]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[jsonc]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
   "[html]": {
     "editor.defaultFormatter": "esbenp.prettier-vscode"
   },
-  "hediet.vscode-drawio.resizeImages": null,
   "[css]": {
     "editor.defaultFormatter": "esbenp.prettier-vscode"
   },
-  "cursor.cpp.disabledLanguages": ["plaintext", "markdown", "scminput"],
-  "workbench.colorTheme": "Default Dark Modern",
+  "[svelte]": {
+    "editor.formatOnSave": true,
+    "editor.defaultFormatter": "svelte.svelte-vscode"
+  },
+  "[ruby]": {
+    "editor.formatOnSave": true,
+    "editor.defaultFormatter": "Shopify.ruby-lsp"
+  },
   "[astro]": {
     "editor.defaultFormatter": "astro-build.astro-vscode"
-  },
-  "files.associations": {
-    "*.css": "tailwindcss"
-  },
-  "tailwindCSS.includeLanguages": {
-    "plaintext": "html"
   }
 }
