@@ -16,3 +16,5 @@
 
 # Deno
 # eval "$(deno env --env-file)"
+
+# . "$HOME/.cargo/env"
