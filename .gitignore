@@ -1,3 +1,4 @@
 dotfiles/.zshrc-env-vars
 dotfiles/.zshrc-local
+dotfiles/.cursor/mcp.json
 .DS_Store

@@ -56,7 +56,7 @@ See `dotfiles/.zshrc-local.example` for examples.
 
 Then commit and push. On a new machine, `install.sh` will symlink this file into the right place for your OS.
 
-**MCP Servers** — `dotfiles/.cursor/mcp.json` is a template with `REF_API_KEY_PLACEHOLDER`. The install script copies it to `~/.cursor/mcp.json` and substitutes `REF_API_KEY` from your env vars. To add a new MCP server, edit the template and re-run `install.sh`.
+**MCP Servers** — `dotfiles/.cursor/mcp.json.template` contains MCP server config with `REF_API_KEY_PLACEHOLDER`. The install script copies it to `~/.cursor/mcp.json` and substitutes `REF_API_KEY` from your env vars. To add a new MCP server, edit the template and re-run `install.sh`.
 
 **Extensions** — Extensions are not synced as files; they're installed from a list of IDs. To export your current extensions into the repo:
 
@@ -77,7 +77,7 @@ Edit the file to remove any you don't want. On a new machine, `install.sh` will 
 | `dotfiles/.gitconfig` | Git configuration — user, LFS, default branch, pull strategy |
 | `dotfiles/.hushlogin` | Suppresses macOS "Last login" terminal banner |
 | `dotfiles/.config/nvim/` | Neovim configuration (LazyVim) |
-| `dotfiles/.cursor/mcp.json` | Cursor MCP server configuration (template with placeholders) |
+| `dotfiles/.cursor/mcp.json.template` | Cursor MCP server config template (API keys substituted at install) |
 | `dotfiles/.config/Cursor/User/settings.json` | Cursor editor settings |
 | `dotfiles/.config/Cursor/extensions.txt` | List of Cursor extension IDs (one per line) |
 | `mise.toml` | Default runtimes managed by mise (e.g. Node) |

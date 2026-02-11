@@ -5,7 +5,6 @@ brew "git"
 brew "direnv"
 brew "mise"
 brew "rbenv"
-brew "font-fira-code"
 
 # ===== Languages & Runtimes =====
 # Most versions managed by mise, but these provide system-level support
@@ -21,7 +20,7 @@ brew "libomp"
 brew "openblas"
 
 # ===== Casks =====
-# Uncomment the apps you want installed
+cask "font-fira-code"
 cask "cursor"
 cask "docker-desktop"
 cask "firefox"
