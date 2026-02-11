@@ -13,7 +13,7 @@
     "Ref": {
       "type": "http",
       "_comment": "Replace YOUR_API_KEY with your Ref API key (ref.tools)",
-      "url": "https://api.ref.tools/mcp?apiKey=YOUR_API_KEY"
+      "url": "https://api.ref.tools/mcp?apiKey=REF_API_KEY_PLACEHOLDER"
     }
   }
 }

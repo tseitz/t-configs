@@ -15,9 +15,11 @@ The install script is idempotent — safe to run multiple times. It will:
 1. Install [Homebrew](https://brew.sh) (if not already installed)
 2. Install all packages from the `Brewfile`
 3. Install [oh-my-zsh](https://ohmyz.sh) with custom plugins and spaceship theme
-4. Symlink dotfiles (including Cursor User settings) to their expected locations
-5. Install Cursor extensions from `dotfiles/.config/Cursor/extensions.txt` (if Cursor CLI is in PATH)
-6. Create a `.zshrc-env-vars` file from the example template
+4. Install default runtimes via [mise](https://mise.jdx.dev) (Node, etc. from `mise.toml`)
+5. Symlink dotfiles to their expected locations
+6. Generate Cursor MCP config from template (substituting API keys from env vars)
+7. Install Cursor extensions from `dotfiles/.config/Cursor/extensions.txt` (if Cursor CLI is in PATH)
+8. Create `.zshrc-env-vars` (private secrets) and `.zshrc-local` (machine-specific overrides) from example templates
 
 ## Private Environment Variables
 
@@ -31,24 +33,38 @@ nvim ~/t-configs/dotfiles/.zshrc-env-vars
 
 See `dotfiles/.zshrc-env-vars.example` for the full list of supported variables.
 
+## Machine-Specific Overrides
+
+Per-machine customizations (e.g. different PATH entries, tool versions) go in `dotfiles/.zshrc-local`, which is **gitignored**.
+
+This file is sourced **last** in `.zshrc`, so anything in it overrides or extends the shared defaults. On a fresh machine, the install script creates it from the example template:
+
+```bash
+nvim ~/t-configs/dotfiles/.zshrc-local
+```
+
+See `dotfiles/.zshrc-local.example` for examples.
+
 ## Cursor Settings and Extensions
 
 **Settings** — Your Cursor `settings.json` is symlinked from this repo. To pull your current settings into the repo (e.g. from this machine):
 
-- **macOS:**  
+- **macOS:**
   `cp ~/Library/Application\ Support/Cursor/User/settings.json ~/t-configs/dotfiles/.config/Cursor/User/settings.json`
-- **Linux:**  
+- **Linux:**
   `cp ~/.config/Cursor/User/settings.json ~/t-configs/dotfiles/.config/Cursor/User/settings.json`
 
 Then commit and push. On a new machine, `install.sh` will symlink this file into the right place for your OS.
 
-**Extensions** — Extensions are not synced as files; they’re installed from a list of IDs. To export your current extensions into the repo:
+**MCP Servers** — `dotfiles/.cursor/mcp.json` is a template with `REF_API_KEY_PLACEHOLDER`. The install script copies it to `~/.cursor/mcp.json` and substitutes `REF_API_KEY` from your env vars. To add a new MCP server, edit the template and re-run `install.sh`.
+
+**Extensions** — Extensions are not synced as files; they're installed from a list of IDs. To export your current extensions into the repo:
 
 ```bash
 cursor --list-extensions > ~/t-configs/dotfiles/.config/Cursor/extensions.txt
 ```
 
-Edit the file to remove any comment lines you don’t want. On a new machine, `install.sh` will run `cursor --install-extension <id>` for each line (when the Cursor CLI is in PATH). On macOS, enable “Shell Command: Install ‘cursor’ command in PATH” in Cursor (Command Palette → “Shell Command”) so `cursor` is available in the terminal.
+Edit the file to remove any you don't want. On a new machine, `install.sh` will run `cursor --install-extension <id>` for each line (when the Cursor CLI is in PATH). On macOS, enable "Shell Command: Install 'cursor' command in PATH" in Cursor (Command Palette → "Shell Command") so `cursor` is available in the terminal.
 
 ## What's Included
 
@@ -57,12 +73,14 @@ Edit the file to remove any comment lines you don’t want. On a new machine, `i
 | `dotfiles/.zshrc` | Zsh configuration — aliases, functions, PATH, tool init |
 | `dotfiles/.zshenv` | Zsh environment — Homebrew PATH, Cargo/Rust |
 | `dotfiles/.zshrc-env-vars.example` | Template for private environment variables |
-| `dotfiles/.gitconfig` | Git configuration — user, LFS, default branch |
+| `dotfiles/.zshrc-local.example` | Template for machine-specific overrides |
+| `dotfiles/.gitconfig` | Git configuration — user, LFS, default branch, pull strategy |
 | `dotfiles/.hushlogin` | Suppresses macOS "Last login" terminal banner |
 | `dotfiles/.config/nvim/` | Neovim configuration (LazyVim) |
-| `dotfiles/.cursor/mcp.json` | Cursor MCP server configuration |
+| `dotfiles/.cursor/mcp.json` | Cursor MCP server configuration (template with placeholders) |
 | `dotfiles/.config/Cursor/User/settings.json` | Cursor editor settings |
 | `dotfiles/.config/Cursor/extensions.txt` | List of Cursor extension IDs (one per line) |
+| `mise.toml` | Default runtimes managed by mise (e.g. Node) |
 | `Brewfile` | Homebrew packages, casks, and dependencies |
 | `install.sh` | Bootstrap script for new machines |
 

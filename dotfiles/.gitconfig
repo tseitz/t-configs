@@ -8,5 +8,7 @@
 	required = true
 	clean = git-lfs clean -- %f
 	smudge = git-lfs smudge -- %f
-# [core]
-	# hooksPath = /Users/tseitz/.config/git/hooks
+[pull]
+	rebase = false
+[core]
+	hooksPath = ~/.config/git/hooks
