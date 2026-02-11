@@ -92,7 +92,19 @@ else
 fi
 
 # ------------------------------------------
-# 6. Create symlinks
+# 6. Install mise runtimes (Node, etc.)
+# ------------------------------------------
+if command -v mise &>/dev/null; then
+  info "Installing default runtimes via mise (Node from mise.toml)..."
+  (cd "$REPO_DIR" && mise install)
+  mise use -g node@latest
+  success "mise runtimes installed (Node available by default)"
+else
+  warn "mise not found, skipping runtime install (run install.sh again after opening a new terminal)"
+fi
+
+# ------------------------------------------
+# 7. Create symlinks
 # ------------------------------------------
 create_symlink() {
   local src="$1"
@@ -160,7 +172,7 @@ elif [ -f "$CURSOR_EXTENSIONS_FILE" ] && ! command -v cursor &>/dev/null; then
 fi
 
 # ------------------------------------------
-# 7. Set up private env vars
+# 8. Set up private env vars
 # ------------------------------------------
 ENV_VARS_FILE="$DOTFILES_DIR/.zshrc-env-vars"
 ENV_VARS_EXAMPLE="$DOTFILES_DIR/.zshrc-env-vars.example"
@@ -180,6 +192,26 @@ else
 fi
 
 # ------------------------------------------
+# 9. Set up machine-specific local overrides
+# ------------------------------------------
+LOCAL_FILE="$DOTFILES_DIR/.zshrc-local"
+LOCAL_EXAMPLE="$DOTFILES_DIR/.zshrc-local.example"
+
+if [ -f "$LOCAL_FILE" ]; then
+  success "Machine-specific overrides file already exists"
+else
+  if [ -f "$LOCAL_EXAMPLE" ]; then
+    cp "$LOCAL_EXAMPLE" "$LOCAL_FILE"
+    success "Created .zshrc-local from example template"
+    warn "Add machine-specific overrides in: $LOCAL_FILE"
+  else
+    touch "$LOCAL_FILE"
+    success "Created empty .zshrc-local"
+    warn "Add machine-specific overrides in: $LOCAL_FILE"
+  fi
+fi
+
+# ------------------------------------------
 # Done!
 # ------------------------------------------
 echo ""
@@ -190,6 +222,8 @@ echo ""
 echo "Next steps:"
 echo "  1. Fill in your private env vars:"
 echo "     $ENV_VARS_FILE"
-echo "  2. Restart your terminal or run:"
+echo "  2. Add machine-specific overrides (e.g. PATH tweaks):"
+echo "     $LOCAL_FILE"
+echo "  3. Restart your terminal or run:"
 echo "     source ~/.zshrc"
 echo ""

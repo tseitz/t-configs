@@ -5,6 +5,7 @@ brew "git"
 brew "direnv"
 brew "mise"
 brew "rbenv"
+brew "font-fira-code"
 
 # ===== Languages & Runtimes =====
 # Most versions managed by mise, but these provide system-level support
@@ -18,7 +19,6 @@ brew "bzip2"
 brew "openssl"
 brew "libomp"
 brew "openblas"
-brew "mysql-client"
 
 # ===== Casks =====
 # Uncomment the apps you want installed

@@ -8,11 +8,7 @@
     },
     "chrome-devtools": {
       "command": "npx",
-      "args": ["chrome-devtools-mcp@latest"]
-    },
-    "cloudflare": {
-      "command": "npx",
-      "args": ["mcp-remote", "https://docs.mcp.cloudflare.com/mcp"]
+      "args": ["-y", "chrome-devtools-mcp@latest"]
     },
     "Ref": {
       "type": "http",

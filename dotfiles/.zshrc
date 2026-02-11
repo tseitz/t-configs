@@ -1,10 +1,9 @@
 # Import private env variables
-ROOT="$HOME"
-dotfiles_path="$ROOT/t-configs/dotfiles"
+dotfiles_path="$HOME/t-configs/dotfiles"
 source $dotfiles_path/.zshrc-env-vars
 
 # Path to your oh-my-zsh installation
-export ZSH="$ROOT/.oh-my-zsh"
+export ZSH="$HOME/.oh-my-zsh"
 
 # Theme
 ZSH_THEME="spaceship"
@@ -25,11 +24,11 @@ alias zshconf="nvim ~/.zshrc"
 alias zshre="source ~/.zshrc; clear"
 alias zshr="source ~/.zshrc"
 alias brewup="brew update; brew upgrade; brew cleanup; brew doctor"
-alias codeconf="code $ROOT/t-configs"
+alias codeconf="code $HOME/t-configs"
 
 # Navigation
 alias cdcode="cd ~/code"
-alias notes="cd $ROOT/Library/CloudStorage/Dropbox/Tegan/Obsidian/tegan"
+alias notes="cd $HOME/Library/CloudStorage/Dropbox/Tegan/Obsidian/tegan"
 
 # ===== Functions =====
 
@@ -56,12 +55,12 @@ export PKG_CONFIG_PATH="${brew_prefix}/opt/openblas/lib/pkgconfig"
 
 # ===== PATH =====
 
-export PATH="$PATH:$ROOT/.local/bin"
-export PATH="$PATH:$ROOT/.foundry/bin"
+export PATH="$PATH:$HOME/.local/bin"
+export PATH="$PATH:$HOME/.foundry/bin"
 export PATH="${brew_prefix}/opt/mysql-client/bin:$PATH"
 
 # pnpm
-export PNPM_HOME="$ROOT/Library/pnpm"
+export PNPM_HOME="$HOME/Library/pnpm"
 case ":$PATH:" in
   *":$PNPM_HOME:"*) ;;
   *) export PATH="$PNPM_HOME:$PATH" ;;
@@ -77,11 +76,18 @@ export PATH="$BUN_INSTALL/bin:$PATH"
 eval "$(direnv hook zsh)"
 eval "$(rbenv init - zsh)"
 
-# Deno
-eval "$(deno env --env-file)"
-
 # Initialize zsh completions
 autoload -Uz compinit
 compinit
 
 eval "$(mise activate zsh)"
+
+# The following lines have been added by Docker Desktop to enable Docker CLI completions.
+fpath=($HOME/.docker/completions $fpath)
+autoload -Uz compinit
+compinit
+# End of Docker CLI completions
+
+# ===== Machine-Specific Overrides =====
+# Source local overrides last so they can extend or override anything above
+[ -f "$dotfiles_path/.zshrc-local" ] && source "$dotfiles_path/.zshrc-local"

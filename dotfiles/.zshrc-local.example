@@ -1,0 +1,18 @@
+# ============================================
+# Machine-Specific Overrides
+# ============================================
+# This file is for per-machine customizations that extend or override
+# the shared defaults in .zshrc. It is sourced LAST, so anything here
+# takes precedence.
+#
+# Copy to .zshrc-local and edit:
+#   cp dotfiles/.zshrc-local.example dotfiles/.zshrc-local
+#
+# NEVER commit .zshrc-local — it is gitignored.
+# ============================================
+
+# Example: use mysql-client 8.0 instead of the default
+# export PATH="${brew_prefix}/opt/mysql-client@8.0/bin:$PATH"
+
+# Deno
+# eval "$(deno env --env-file)"
