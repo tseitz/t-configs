@@ -18,6 +18,7 @@ graphql.vscode-graphql-syntax
 gruntfuggly.todo-tree
 hashicorp.terraform
 hediet.vscode-drawio
+hverlin.mise-vscode
 jakearl.search-editor-apply-changes
 jpoissonnier.vscode-styled-components
 kevinkyang.auto-comment-blocks
@@ -39,6 +40,7 @@ ms-vscode.remote-explorer
 njpwerner.autodocstring
 nyxb.vscode-styled-colors
 orta.vscode-jest
+oxc.oxc-vscode
 philstainer.git-worktree
 pkief.material-icon-theme
 quicktype.quicktype
