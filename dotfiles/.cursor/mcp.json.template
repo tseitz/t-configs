@@ -10,6 +10,11 @@
       "command": "npx",
       "args": ["-y", "chrome-devtools-mcp@latest"]
     },
+    "mui-mcp": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "@mui/mcp@latest"]
+    },
     "Ref": {
       "type": "http",
       "_comment": "Replace YOUR_API_KEY with your Ref API key (ref.tools)",
