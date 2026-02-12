@@ -55,6 +55,7 @@ export PKG_CONFIG_PATH="${brew_prefix}/opt/openblas/lib/pkgconfig"
 
 # ===== PATH =====
 
+eval "$(/opt/homebrew/bin/brew shellenv 2>/dev/null)" || true
 export PATH="$PATH:$HOME/.local/bin"
 export PATH="$PATH:$HOME/.foundry/bin"
 export PATH="${brew_prefix}/opt/mysql-client/bin:$PATH"

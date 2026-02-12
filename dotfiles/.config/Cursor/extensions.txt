@@ -51,6 +51,7 @@ svelte.svelte-vscode
 tintinweb.solidity-metrics
 tintinweb.vscode-decompiler
 tintinweb.vscode-solidity-language
+tombi-toml.tombi
 unifiedjs.vscode-mdx
 usernamehw.errorlens
 vitest.explorer
