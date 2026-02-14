@@ -21,6 +21,7 @@ brew "openblas"
 
 # ===== Casks =====
 cask "font-fira-code"
+cask "bluesnooze"
 cask "cursor"
 cask "docker-desktop"
 cask "firefox"
