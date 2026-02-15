@@ -9,7 +9,7 @@ brew "rbenv"
 # ===== Languages & Runtimes =====
 # Most versions managed by mise, but these provide system-level support
 brew "deno"
-brew "pnpm"
+# brew "pnpm"
 
 # ===== Build Dependencies =====
 # Needed for compiling Python packages with native extensions
@@ -24,10 +24,11 @@ cask "font-fira-code"
 cask "bluesnooze"
 cask "cursor"
 cask "docker-desktop"
-cask "firefox"
+# cask "firefox"
 cask "google-chrome"
 cask "raycast"
 cask "rectangle"
-cask "slack"
+# cask "slack"
+cask "ghostty"
 # cask "obsidian"
 # cask "dropbox"
