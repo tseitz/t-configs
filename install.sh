@@ -133,6 +133,33 @@ create_symlink() {
   fi
 }
 
+# ------------------------------------------
+# 8. Set up private env vars
+# ------------------------------------------
+ENV_VARS_FILE="$DOTFILES_DIR/.zshrc-env-vars"
+ENV_VARS_EXAMPLE="$DOTFILES_DIR/.zshrc-env-vars.example"
+
+if [ -f "$ENV_VARS_FILE" ]; then
+  success "Private env vars file already exists"
+else
+  if [ -f "$ENV_VARS_EXAMPLE" ]; then
+    cp "$ENV_VARS_EXAMPLE" "$ENV_VARS_FILE"
+    success "Created .zshrc-env-vars from example template"
+    warn "Remember to fill in your private values in: $ENV_VARS_FILE"
+  else
+    touch "$ENV_VARS_FILE"
+    success "Created empty .zshrc-env-vars"
+    warn "Add your private environment variables to: $ENV_VARS_FILE"
+  fi
+fi
+
+# Load env vars so MCP setup can use REF_API_KEY etc.
+if [ -f "$ENV_VARS_FILE" ]; then
+  set +u
+  source "$ENV_VARS_FILE"
+  set -u
+fi
+
 info "Creating symlinks..."
 create_symlink "$DOTFILES_DIR/.zshrc"      "$HOME/.zshrc"
 create_symlink "$DOTFILES_DIR/.zshenv"     "$HOME/.zshenv"
@@ -198,26 +225,6 @@ fi
 create_symlink "$DOTFILES_DIR/.agent/skills" "$HOME/.cursor/skills"
 mkdir -p "$HOME/.gemini/antigravity"
 create_symlink "$DOTFILES_DIR/.agent/skills" "$HOME/.gemini/antigravity/skills"
-
-# ------------------------------------------
-# 8. Set up private env vars
-# ------------------------------------------
-ENV_VARS_FILE="$DOTFILES_DIR/.zshrc-env-vars"
-ENV_VARS_EXAMPLE="$DOTFILES_DIR/.zshrc-env-vars.example"
-
-if [ -f "$ENV_VARS_FILE" ]; then
-  success "Private env vars file already exists"
-else
-  if [ -f "$ENV_VARS_EXAMPLE" ]; then
-    cp "$ENV_VARS_EXAMPLE" "$ENV_VARS_FILE"
-    success "Created .zshrc-env-vars from example template"
-    warn "Remember to fill in your private values in: $ENV_VARS_FILE"
-  else
-    touch "$ENV_VARS_FILE"
-    success "Created empty .zshrc-env-vars"
-    warn "Add your private environment variables to: $ENV_VARS_FILE"
-  fi
-fi
 
 # ------------------------------------------
 # 9. Set up machine-specific local overrides
