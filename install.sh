@@ -194,6 +194,11 @@ elif [ -f "$CURSOR_EXTENSIONS_FILE" ] && ! command -v cursor &>/dev/null; then
   warn "Cursor CLI not in PATH — skip extension install or add Cursor to PATH and re-run"
 fi
 
+# Agent skills (single source in t-configs, symlinked to Cursor and Antigravity)
+create_symlink "$DOTFILES_DIR/.agent/skills" "$HOME/.cursor/skills"
+mkdir -p "$HOME/.gemini/antigravity"
+create_symlink "$DOTFILES_DIR/.agent/skills" "$HOME/.gemini/antigravity/skills"
+
 # ------------------------------------------
 # 8. Set up private env vars
 # ------------------------------------------
