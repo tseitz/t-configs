@@ -24,7 +24,8 @@
     "filesystem": {
       "command": "npx",
       "args": [
-        "github:codemaestroai/filesystem-mcp",
+        "-y",
+        "@modelcontextprotocol/server-filesystem",
         "/Users/tseitz/t-configs",
         "/Users/tseitz/code/projects",
         "/Users/tseitz/Library/CloudStorage/Dropbox/Tegan/Obsidian/tegan",
