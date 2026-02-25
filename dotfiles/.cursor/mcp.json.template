@@ -20,6 +20,24 @@
       "type": "http",
       "_comment": "Replace YOUR_API_KEY with your Ref API key (ref.tools)",
       "url": "https://api.ref.tools/mcp?apiKey=REF_API_KEY_PLACEHOLDER"
+    },
+    "filesystem": {
+      "command": "npx",
+      "args": [
+        "github:codemaestroai/filesystem-mcp",
+        "/Users/tseitz/t-configs",
+        "/Users/tseitz/code/projects",
+        "/Users/tseitz/Library/CloudStorage/Dropbox/Tegan/Obsidian/tegan",
+        "/Users/tseitz/Library/CloudStorage/Dropbox/TransferMusic"
+      ]
+    },
+    "sqlite": {
+      "command": "uvx",
+      "args": [
+        "mcp-server-sqlite",
+        "--db-path",
+        "/Users/tseitz/code/projects/evolutionary-speakers/data/evolutionary_speakers.db"
+      ]
     }
   }
 }
