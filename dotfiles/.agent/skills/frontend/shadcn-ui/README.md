@@ -40,7 +40,7 @@ shadcn/ui is a collection of beautifully designed, accessible, and customizable 
 ## Skill Structure
 
 ```text
-skills/shadcn-ui/
+skills/frontend/shadcn-ui/
 ├── SKILL.md              — Core instructions & workflow
 ├── README.md             — This file
 ├── examples/             — Example implementations

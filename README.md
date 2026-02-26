@@ -68,7 +68,7 @@ Edit the file to remove any you don't want. On a new machine, `install.sh` will 
 
 ## Agent Skills
 
-Agent skills (Cursor, Antigravity, etc.) live in **`dotfiles/.agent/skills/`**. The install script symlinks this directory to `~/.cursor/skills` and `~/.gemini/antigravity/skills`, so the same skills are available in both tools. Add skills as subdirectories with a `SKILL.md` in each (see Cursor’s create-skill format). To support another tool later, add a `create_symlink` in `install.sh` pointing to the same `dotfiles/.agent/skills` source.
+Agent skills (Cursor, Antigravity, etc.) live in **`dotfiles/.agent/skills/`**. The install script symlinks this directory to `~/.cursor/skills` and `~/.gemini/antigravity/skills`, so the same skills are available in both tools. Add skills as subdirectories with a `SKILL.md` in each (see Cursor’s create-skill format). Skills may be grouped in category folders (e.g. `react/`, `frontend/`, `workflow/`). To support another tool later, add a `create_symlink` in `install.sh` pointing to the same `dotfiles/.agent/skills` source.
 
 **Adding a skill from GitHub:** From the repo root, pass the GitHub "tree" URL for the skill directory. The skill name defaults to the last path segment; you can override it with a second argument:
 
