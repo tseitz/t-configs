@@ -20,7 +20,7 @@
   "editor.suggestSelection": "first",
   "editor.suggest.localityBonus": true,
   "editor.quickSuggestions": {
-    "strings": true
+    "strings": true,
   },
   "editor.mouseWheelScrollSensitivity": 1.5,
   "editor.smoothScrolling": true,
@@ -35,21 +35,21 @@
   "workbench.editor.openPositioning": "right",
   "workbench.editor.pinnedTabSizing": "shrink",
   "workbench.editorAssociations": {
-    "*.ipynb": "jupyter-notebook"
+    "*.ipynb": "jupyter-notebook",
   },
 
   // ── Files ───────────────────────────────────────────────────────
   "files.exclude": {
     "**/*.js": {
-      "when": "$(basename).ts"
-    }
+      "when": "$(basename).ts",
+    },
   },
   "files.watcherExclude": {
     "**/__pycache__/*/**": true,
-    "**/.venv/*/**": true
+    "**/.venv/*/**": true,
   },
   "files.associations": {
-    "*.css": "tailwindcss"
+    "*.css": "tailwindcss",
   },
 
   // ── Search ──────────────────────────────────────────────────────
@@ -66,11 +66,11 @@
   "terminal.integrated.defaultProfile.osx": "zsh",
   "terminal.integrated.defaultProfile.linux": "zsh",
   "terminal.integrated.automationProfile.osx": {
-    "path": "/bin/zsh"
+    "path": "/bin/zsh",
   },
   "terminal.integrated.autoReplies": {
     "[Oh My Zsh] Would you like to check for updates? [Y/n]": "Y\r",
-    "[oh-my-zsh] Would you like to update? [Y/n]": "Y\r"
+    "[oh-my-zsh] Would you like to update? [Y/n]": "Y\r",
   },
   "terminal.explorerKind": "external",
 
@@ -92,20 +92,20 @@
     "editorTab": {
       "compare": false,
       "history": false,
-      "remote": true
+      "remote": true,
     },
     "explorer": {
       "compare": true,
       "history": true,
-      "remote": true
-    }
+      "remote": true,
+    },
   },
 
   // ── CSS & Tailwind ──────────────────────────────────────────────
   "css.lint.duplicateProperties": "warning",
   "css.lint.float": "warning",
   "tailwindCSS.includeLanguages": {
-    "plaintext": "html"
+    "plaintext": "html",
   },
 
   // ── JavaScript / TypeScript ─────────────────────────────────────
@@ -128,7 +128,7 @@
   // ── Notebook ────────────────────────────────────────────────────
   "notebook.cellToolbarLocation": {
     "default": "right",
-    "jupyter-notebook": "left"
+    "jupyter-notebook": "left",
   },
 
   // ── Security ────────────────────────────────────────────────────
@@ -139,10 +139,10 @@
   "markdownlint.config": {
     "MD001": false,
     "MD007": {
-      "indent": 2
+      "indent": 2,
     },
     "MD013": false,
-    "MD025": false
+    "MD025": false,
   },
   "todo-tree.general.tags": ["BUG", "HACK", "FIXME", "TODO", "XXX", "[ ]", "[x]"],
   "todo-tree.regex.regex": "(//|#|<!--|;|/\\*|^|^\\s*(-|\\d+.))\\s*($TAGS)",
@@ -156,7 +156,7 @@
     "gulp": false,
     "make": false,
     "maven": false,
-    "perl": false
+    "perl": false,
   },
   "taskExplorer.enableSideBar": true,
   "errorLens.excludeBySource": ["ts(2304)"],
@@ -170,87 +170,87 @@
   "vim.normalModeKeyBindings": [
     {
       "before": ["<leader>", "p", "v"],
-      "commands": ["vim.cmd.Ex"]
+      "commands": ["vim.cmd.Ex"],
     },
     {
       "before": ["<C-d>"],
-      "after": ["<C-d>", "z", "z"]
+      "after": ["<C-d>", "z", "z"],
     },
     {
       "before": ["<C-u>"],
-      "after": ["<C-u>", "z", "z"]
+      "after": ["<C-u>", "z", "z"],
     },
     {
       "before": ["n"],
-      "after": ["n", "z", "z", "z", "v"]
+      "after": ["n", "z", "z", "z", "v"],
     },
     {
       "before": ["N"],
-      "after": ["N", "z", "z", "z", "v"]
+      "after": ["N", "z", "z", "z", "v"],
     },
     {
       "before": ["Q"],
-      "after": ["<nop>"]
+      "after": ["<nop>"],
     },
     {
       "before": ["<C-k>"],
-      "commands": ["cnext", "zz"]
+      "commands": ["cnext", "zz"],
     },
     {
       "before": ["<C-j>"],
-      "commands": ["cprev", "zz"]
+      "commands": ["cprev", "zz"],
     },
     {
       "before": ["<leader>", "k"],
-      "commands": ["lnext", "zz"]
+      "commands": ["lnext", "zz"],
     },
     {
       "before": ["<leader>", "j"],
-      "commands": ["lprev", "zz"]
+      "commands": ["lprev", "zz"],
     },
     {
       "before": ["<leader>", "y"],
-      "after": ["\"", "+", "y"]
-    }
+      "after": ["\"", "+", "y"],
+    },
   ],
   "vim.visualModeKeyBindings": [
     {
       "before": ["J"],
-      "commands": ["editor.action.moveLinesDownAction"]
+      "commands": ["editor.action.moveLinesDownAction"],
     },
     {
       "before": ["K"],
-      "commands": ["editor.action.moveLinesUpAction"]
+      "commands": ["editor.action.moveLinesUpAction"],
     },
     {
       "before": ["<leader>", "p"],
-      "after": ["[", "_", "d", "P"]
+      "after": ["[", "_", "d", "P"],
     },
     {
       "before": ["<leader>", "Y"],
-      "after": ["\"", "+", "Y"]
+      "after": ["\"", "+", "Y"],
     },
     {
       "before": ["<leader>", "d"],
-      "after": ["[", "_", "d"]
-    }
+      "after": ["[", "_", "d"],
+    },
   ],
   "vim.insertModeKeyBindings": [
     {
       "before": ["<C-c>"],
-      "after": ["<Esc>"]
-    }
+      "after": ["<Esc>"],
+    },
   ],
 
   // ── Language-Specific Overrides ─────────────────────────────────
   "[python]": {
     "editor.tabSize": 4,
     "editor.formatOnSave": true,
-    "editor.detectIndentation": true
+    "editor.detectIndentation": true,
   },
   "[typescript]": {
     "editor.defaultFormatter": "esbenp.prettier-vscode",
-    "editor.formatOnSave": true
+    "editor.formatOnSave": true,
   },
   "[typescriptreact]": {
     "editor.formatOnSave": true,
@@ -258,34 +258,34 @@
   },
   "[javascript]": {
     "editor.defaultFormatter": "esbenp.prettier-vscode",
-    "editor.formatOnSave": false
+    "editor.formatOnSave": false,
   },
   "[javascriptreact]": {
     "editor.defaultFormatter": "esbenp.prettier-vscode",
-    "editor.formatOnSave": true
+    "editor.formatOnSave": true,
   },
   "[json]": {
-    "editor.defaultFormatter": "esbenp.prettier-vscode"
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
   },
   "[jsonc]": {
-    "editor.defaultFormatter": "esbenp.prettier-vscode"
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
   },
   "[html]": {
-    "editor.defaultFormatter": "esbenp.prettier-vscode"
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
   },
   "[css]": {
-    "editor.defaultFormatter": "esbenp.prettier-vscode"
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
   },
   "[svelte]": {
     "editor.formatOnSave": true,
-    "editor.defaultFormatter": "svelte.svelte-vscode"
+    "editor.defaultFormatter": "svelte.svelte-vscode",
   },
   "[ruby]": {
     "editor.formatOnSave": true,
-    "editor.defaultFormatter": "Shopify.ruby-lsp"
+    "editor.defaultFormatter": "Shopify.ruby-lsp",
   },
   "[astro]": {
-    "editor.defaultFormatter": "astro-build.astro-vscode"
+    "editor.defaultFormatter": "astro-build.astro-vscode",
   },
   "explorer.fileNesting.patterns": {
     "*.ts": "${capture}.js",
@@ -299,10 +299,13 @@
     "*.sqlite3": "${capture}.${extname}-*",
     "*.db3": "${capture}.${extname}-*",
     "*.sdb": "${capture}.${extname}-*",
-    "*.s3db": "${capture}.${extname}-*"
+    "*.s3db": "${capture}.${extname}-*",
   },
   "explorer.confirmDelete": false,
   "python.languageServer": "None",
   "cursorpyright.disableLanguageServices": true,
-  "python.defaultInterpreterPath": "/opt/homebrew/bin/python3"
+  "python.defaultInterpreterPath": "/opt/homebrew/bin/python3",
+  "[markdown]": {
+    "editor.defaultFormatter": "DavidAnson.vscode-markdownlint",
+  },
 }
