@@ -92,3 +92,6 @@ compinit
 # ===== Machine-Specific Overrides =====
 # Source local overrides last so they can extend or override anything above
 [ -f "$dotfiles_path/.zshrc-local" ] && source "$dotfiles_path/.zshrc-local"
+
+# Added by Antigravity
+export PATH="/Users/tseitz/.antigravity/antigravity/bin:$PATH"

@@ -10,5 +10,3 @@
 	smudge = git-lfs smudge -- %f
 [pull]
 	rebase = false
-[core]
-	hooksPath = ~/.config/git/hooks
