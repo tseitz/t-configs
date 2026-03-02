@@ -1,5 +1,8 @@
 aaron-bond.better-comments
 anysphere.cursorpyright
+anysphere.remote-containers
+anysphere.remote-ssh
+anysphere.remote-wsl
 astral-sh.ty
 astro-build.astro-vscode
 asvetliakov.vscode-neovim
@@ -7,12 +10,13 @@ bradlc.vscode-tailwindcss
 charliermarsh.ruff
 christian-kohler.npm-intellisense
 christian-kohler.path-intellisense
+cweijan.dbclient-jdbc
+cweijan.vscode-database-client2
 davidanson.vscode-markdownlint
 dbaeumer.vscode-eslint
 denoland.vscode-deno
 donjayamanne.githistory
 eamodio.gitlens
-esbenp.prettier-vscode
 ex-codes.pine-script-syntax-highlighter
 golang.go
 graphql.vscode-graphql
@@ -23,7 +27,6 @@ hashicorp.terraform
 hediet.vscode-drawio
 hverlin.mise-vscode
 jpoissonnier.vscode-styled-components
-juanblanco.solidity
 llvm-vs-code-extensions.vscode-clangd
 mechatroner.rainbow-csv
 meganrogge.template-string-converter
@@ -34,14 +37,8 @@ ms-python.debugpy
 ms-python.isort
 ms-python.python
 ms-python.vscode-python-envs
-ms-vscode-remote.remote-containers
-ms-vscode-remote.remote-ssh
-ms-vscode-remote.remote-ssh-edit
-ms-vscode-remote.remote-wsl
-ms-vscode.remote-explorer
 njpwerner.autodocstring
 nyxb.vscode-styled-colors
-orta.vscode-jest
 oxc.oxc-vscode
 philstainer.git-worktree
 pkief.material-icon-theme
@@ -51,9 +48,7 @@ rust-lang.rust-analyzer
 shopify.ruby-lsp
 spmeesseman.vscode-taskexplorer
 svelte.svelte-vscode
-tintinweb.solidity-metrics
 tintinweb.vscode-decompiler
-tintinweb.vscode-solidity-language
 tombi-toml.tombi
 unifiedjs.vscode-mdx
 usernamehw.errorlens
