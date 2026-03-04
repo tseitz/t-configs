@@ -5,6 +5,7 @@ brew "git"
 brew "direnv"
 brew "mise"
 brew "rbenv"
+brew "gh"
 
 # ===== Languages & Runtimes =====
 # Most versions managed by mise, but these provide system-level support
