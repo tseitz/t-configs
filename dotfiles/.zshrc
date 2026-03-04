@@ -1,5 +1,9 @@
 # Import private env variables
-dotfiles_path="$HOME/t-configs/dotfiles"
+# Resolve dotfiles path from this file's location (works when repo is anywhere, e.g. ~/t-configs or /mnt/c/.../t-configs)
+dotfiles_path="${${(%):-%x}:A:h}"
+[[ -z "$dotfiles_path" ]] && dotfiles_path="$HOME/t-configs/dotfiles"
+# Add Homebrew to PATH early on Linux/WSL so direnv, rbenv, mise are found below
+[[ "$OSTYPE" == linux* ]] && eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv 2>/dev/null)" || true
 source $dotfiles_path/.zshrc-env-vars
 
 # Path to your oh-my-zsh installation
@@ -74,15 +78,15 @@ export PATH="$BUN_INSTALL/bin:$PATH"
 
 # ===== Tool Initialization =====
 
-eval "$(direnv hook zsh)"
-eval "$(rbenv init - zsh)"
+command -v direnv &>/dev/null && eval "$(direnv hook zsh)"
+command -v rbenv &>/dev/null && eval "$(rbenv init - zsh)"
+command -v mise &>/dev/null && eval "$(mise activate zsh)"
 
 # Initialize zsh completions
 autoload -Uz compinit
 compinit
 
-eval "$(mise activate zsh)"
-
+# Docker Desktop CLI completions (if present)
 # The following lines have been added by Docker Desktop to enable Docker CLI completions.
 fpath=($HOME/.docker/completions $fpath)
 autoload -Uz compinit

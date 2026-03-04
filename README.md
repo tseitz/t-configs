@@ -98,8 +98,39 @@ The script uses a sparse checkout to fetch only that directory. Run it again wit
 | `dotfiles/.config/Cursor/extensions.txt` | List of Cursor extension IDs (one per line) |
 | `dotfiles/.agent/skills/` | Agent skills (symlinked to Cursor and Antigravity) |
 | `mise.toml` | Default runtimes managed by mise (e.g. Node) |
-| `Brewfile` | Homebrew packages, casks, and dependencies |
-| `install.sh` | Bootstrap script for new machines |
+| `Brewfile` | Homebrew packages, casks, and dependencies (macOS) |
+| `Brewfile.wsl` | Homebrew formulae for WSL/Linux (no casks) |
+| `winget-packages.json` | Windows app list for `winget import` (Cursor, Docker, Chrome, etc.) |
+| `install.sh` | Bootstrap script for new machines (macOS / WSL) |
+| `install-windows.ps1` | Sync Cursor settings, MCP, extensions, skills to Windows (run from repo root in PowerShell) |
+| `dotfiles/.zshrc-local.example.wsl` | Example WSL overrides for `brew_prefix` and PATH |
+
+## Windows (WSL)
+
+On Windows you can use WSL for the same shell/tooling and winget for GUI apps.
+
+**In WSL:** Clone the repo (e.g. under `/mnt/c/Users/.../t-configs`). Run `./install.sh`; it detects Linux and uses `Brewfile.wsl` (formulae only, no casks) automatically.
+
+```bash
+cd /mnt/c/Users/tdsei/Code/t-configs   # or your path
+./install.sh
+```
+
+If mise/Node fails with `libatomic.so.1`, install the system library then re-run: `sudo apt-get install libatomic1` then `mise install` or `./install.sh`. If you see `$'\r': command not found` when sourcing dotfiles, fix line endings: `sed -i 's/\r$//' dotfiles/.zshrc-env-vars dotfiles/.zshrc-local` (and re-copy from the `.example` files if needed).
+
+Use **zsh** to load the config (not bash): run `zsh` then `source ~/.zshrc`. To set zsh as default on WSL, add Homebrew's zsh to allowed shells then run chsh: `echo '/home/linuxbrew/.linuxbrew/bin/zsh' | sudo tee -a /etc/shells` then `chsh -s $(which zsh)` (log out and back in). Override Mac paths in `dotfiles/.zshrc-local` (e.g. set `brew_prefix` for Linux Homebrew). Copy the WSL example: `cp dotfiles/.zshrc-local.example.wsl dotfiles/.zshrc-local` then edit.
+
+**Cursor on Windows:** From PowerShell in the repo root, run `.\install-windows.ps1` to sync Cursor settings, MCP config, extensions, and agent skills to Windows. Set `$env:REF_API_KEY` before running if you use the Ref MCP server. Settings in the repo use Mac paths; set Python interpreter and workspace paths in Cursor once if needed.
+
+**Windows apps (winget):** From PowerShell in the repo root:
+
+```powershell
+winget import -i winget-packages.json --accept-package-agreements
+# or
+.\scripts\install-winget.ps1
+```
+
+Includes Cursor, Docker Desktop, Google Chrome, PowerToys, Windows Terminal. Fira Code is not in winget — install manually from [Fira Code releases](https://github.com/tonsky/FiraCode/releases) if you use it.
 
 ## Updating
 
