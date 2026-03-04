@@ -14,7 +14,8 @@
         { "PackageIdentifier": "Google.Chrome" },
         { "PackageIdentifier": "Google.GoogleDrive" },
         { "PackageIdentifier": "Microsoft.PowerToys" },
-        { "PackageIdentifier": "Microsoft.WindowsTerminal" }
+        { "PackageIdentifier": "Microsoft.WindowsTerminal" },
+        { "PackageIdentifier": "jdx.mise" }
       ]
     }
   ]
