@@ -54,7 +54,7 @@ Use this structure in your response:
 [Boundaries, data flow, design fit, scalability/maintainability]
 
 ## Implementation & details
-[Correctness, naming, performance, security where relevant]
+[Correctness, naming, performance, security where relevant, link to relevant code]
 
 ## Specific improvements
 [For each item:]
