@@ -3,3 +3,5 @@ dotfiles/.zshrc-local
 dotfiles/.cursor/mcp.json
 .DS_Store
 .tmp/
+
+**/skills/work/
