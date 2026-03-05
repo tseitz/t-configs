@@ -5,7 +5,6 @@ anysphere.remote-ssh
 anysphere.remote-wsl
 astral-sh.ty
 astro-build.astro-vscode
-asvetliakov.vscode-neovim
 bradlc.vscode-tailwindcss
 charliermarsh.ruff
 christian-kohler.npm-intellisense
@@ -42,11 +41,9 @@ nyxb.vscode-styled-colors
 oxc.oxc-vscode
 philstainer.git-worktree
 pkief.material-icon-theme
-quicktype.quicktype
 qwtel.sqlite-viewer
 rust-lang.rust-analyzer
 shopify.ruby-lsp
-spmeesseman.vscode-taskexplorer
 svelte.svelte-vscode
 tintinweb.vscode-decompiler
 tombi-toml.tombi

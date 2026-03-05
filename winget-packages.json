@@ -13,9 +13,10 @@
         { "PackageIdentifier": "Docker.DockerDesktop" },
         { "PackageIdentifier": "Google.Chrome" },
         { "PackageIdentifier": "Google.GoogleDrive" },
+        { "PackageIdentifier": "jdx.mise" },
         { "PackageIdentifier": "Microsoft.PowerToys" },
         { "PackageIdentifier": "Microsoft.WindowsTerminal" },
-        { "PackageIdentifier": "jdx.mise" }
+        { "PackageIdentifier": "Ollama.Ollama" }
       ]
     }
   ]
