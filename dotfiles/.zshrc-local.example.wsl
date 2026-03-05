@@ -1,0 +1,20 @@
+# ============================================
+# WSL / Linux overrides
+# ============================================
+# .zshrc references /opt/homebrew (macOS). On WSL, Homebrew uses a different prefix.
+# Copy this file to .zshrc-local and adjust if needed:
+#   cp dotfiles/.zshrc-local.example.wsl dotfiles/.zshrc-local
+#
+# NEVER commit .zshrc-local — it is gitignored.
+# ============================================
+
+# Homebrew on Linux (WSL): typical locations
+# - Default: /home/linuxbrew/.linuxbrew
+# - User install: $HOME/.linuxbrew
+brew_prefix="${HOMEBREW_PREFIX:-/home/linuxbrew/.linuxbrew}"
+export LDFLAGS="-L${brew_prefix}/opt/zlib/lib -L${brew_prefix}/opt/bzip2/lib -L${brew_prefix}/opt/openssl/lib -L${brew_prefix}/opt/libomp/lib"
+export CPPFLAGS="-I${brew_prefix}/opt/zlib/include -I${brew_prefix}/opt/bzip2/include -I${brew_prefix}/opt/openblas/include -I${brew_prefix}/opt/openssl/include -I${brew_prefix}/opt/libomp/include"
+export PKG_CONFIG_PATH="${brew_prefix}/opt/openblas/lib/pkgconfig"
+
+# Ensure brew is on PATH (install.sh or a new shell usually does this)
+eval "$(${brew_prefix}/bin/brew shellenv 2>/dev/null)" || true

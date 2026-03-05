@@ -31,17 +31,27 @@ if command -v brew &>/dev/null; then
 else
   info "Installing Homebrew..."
   /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-  # Add brew to PATH for the rest of this script
-  eval "$(/opt/homebrew/bin/brew shellenv)"
   success "Homebrew installed"
+fi
+# Ensure brew is in PATH for the rest of this script (Linux uses different prefix than macOS)
+if [[ "$OSTYPE" == linux* ]]; then
+  eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv 2>/dev/null)" || true
+else
+  eval "$(/opt/homebrew/bin/brew shellenv 2>/dev/null)" || true
 fi
 
 # ------------------------------------------
 # 2. Install Homebrew packages
 # ------------------------------------------
-if [ -f "$REPO_DIR/Brewfile" ]; then
-  info "Installing Homebrew packages from Brewfile..."
-  brew bundle --file="$REPO_DIR/Brewfile"
+# On Linux/WSL use Brewfile.wsl (formulae only); on macOS use Brewfile
+if [[ "$OSTYPE" == linux* ]] && [ -f "$REPO_DIR/Brewfile.wsl" ]; then
+  BREWFILE="$REPO_DIR/Brewfile.wsl"
+else
+  BREWFILE="$REPO_DIR/Brewfile"
+fi
+if [ -f "$BREWFILE" ]; then
+  info "Installing Homebrew packages from $(basename "$BREWFILE")..."
+  brew bundle --file="$BREWFILE"
   success "Homebrew packages installed"
 else
   warn "No Brewfile found, skipping"
@@ -187,7 +197,7 @@ if [ -f "$MCP_FILE" ] && ! grep -q "REF_API_KEY_PLACEHOLDER" "$MCP_FILE"; then
 else
   cp "$MCP_TEMPLATE" "$MCP_FILE"
   if [ -n "${REF_API_KEY:-}" ]; then
-    sed -i '' "s|REF_API_KEY_PLACEHOLDER|$REF_API_KEY|g" "$MCP_FILE"
+    sed "s|REF_API_KEY_PLACEHOLDER|$REF_API_KEY|g" "$MCP_FILE" > "${MCP_FILE}.tmp" && mv "${MCP_FILE}.tmp" "$MCP_FILE"
     success "Cursor MCP config generated with API keys"
   else
     success "Cursor MCP config generated (fill in REF_API_KEY_PLACEHOLDER in $MCP_FILE)"

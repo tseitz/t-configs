@@ -1,0 +1,23 @@
+# Brewfile for WSL / Linux
+# Formulae only — casks are macOS GUI apps and are not supported by brew on Linux.
+# For Windows GUI apps (Cursor, Docker, Chrome, etc.) use winget; see winget-packages.json.
+
+# ===== Core Tools =====
+brew "zsh"
+brew "neovim"
+brew "git"
+brew "direnv"
+brew "mise"
+brew "rbenv"
+brew "gh"
+
+# ===== Languages & Runtimes =====
+brew "deno"
+
+# ===== Build Dependencies =====
+brew "zlib"
+brew "bzip2"
+brew "openssl"
+brew "libomp"
+# openblas pulls in gcc; gcc postinstall often fails in WSL. Install manually if needed:
+#   brew postinstall gcc && brew install openblas

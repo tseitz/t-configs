@@ -1,0 +1,6 @@
+# Shell scripts and sourced configs must use LF so they run in WSL/Linux/macOS
+*.sh text eol=lf
+dotfiles/.zshrc-env-vars.example text eol=lf
+dotfiles/.zshrc-local.example text eol=lf
+dotfiles/.zshrc-local.example.wsl text eol=lf
+dotfiles/.zshrc text eol=lf
