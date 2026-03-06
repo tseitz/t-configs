@@ -231,10 +231,19 @@ elif [ -f "$CURSOR_EXTENSIONS_FILE" ] && ! command -v cursor &>/dev/null; then
   warn "Cursor CLI not in PATH — skip extension install or add Cursor to PATH and re-run"
 fi
 
-# Agent skills (single source in t-configs, symlinked to Cursor and Antigravity)
+# Agent skills (single source in t-configs, symlinked to Cursor, Claude Code, and Antigravity)
 create_symlink "$DOTFILES_DIR/.agent/skills" "$HOME/.cursor/skills"
 mkdir -p "$HOME/.gemini/antigravity"
 create_symlink "$DOTFILES_DIR/.agent/skills" "$HOME/.gemini/antigravity/skills"
+
+# Claude Code only scans one level deep (~/.claude/skills/<name>/SKILL.md),
+# so we create per-skill symlinks to flatten the category structure.
+CLAUDE_SKILLS_DIR="$HOME/.claude/skills"
+mkdir -p "$CLAUDE_SKILLS_DIR"
+while IFS= read -r skill_dir; do
+  skill_name="$(basename "$skill_dir")"
+  create_symlink "$skill_dir" "$CLAUDE_SKILLS_DIR/$skill_name"
+done < <(find "$DOTFILES_DIR/.agent/skills" -name "SKILL.md" -not -path "*/.claude/*" -exec dirname {} \; | sort)
 
 # ------------------------------------------
 # 9. Set up machine-specific local overrides
