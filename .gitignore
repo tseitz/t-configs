@@ -1,6 +1,9 @@
 dotfiles/.zshrc-env-vars
 dotfiles/.zshrc-local
 dotfiles/.cursor/mcp.json
+dotfiles/.claude/**/*
+.claude.json
+
 .DS_Store
 .tmp/
 

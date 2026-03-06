@@ -163,7 +163,7 @@
   "hediet.vscode-drawio.resizeImages": null,
 
   // ── Cursor ──────────────────────────────────────────────────────
-  "cursor.cpp.disabledLanguages": ["plaintext", "markdown", "scminput"],
+  "cursor.cpp.disabledLanguages": ["plaintext", "scminput"],
 
   // ── Vim ─────────────────────────────────────────────────────────
   "vim.leader": " ",
@@ -249,17 +249,17 @@
     "editor.detectIndentation": true,
   },
   "[typescript]": {
-    "editor.formatOnSave": true
+    "editor.formatOnSave": true,
   },
   "[typescriptreact]": {
     "editor.formatOnSave": true,
     "editor.defaultFormatter": "oxc.oxc-vscode",
   },
   "[javascript]": {
-    "editor.formatOnSave": false
+    "editor.formatOnSave": false,
   },
   "[javascriptreact]": {
-    "editor.formatOnSave": true
+    "editor.formatOnSave": true,
   },
   "[json]": {
     "editor.defaultFormatter": "esbenp.prettier-vscode",
