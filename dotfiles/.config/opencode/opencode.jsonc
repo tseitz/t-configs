@@ -1,0 +1,26 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "provider": {
+    "openrouter": {
+      "models": {
+        "qwen/qwen3.5-35b-a3b": {
+          "options": {
+            "provider": {
+              "order": ["alibaba"],
+              "allow_fallbacks": false
+            }
+          }
+        },
+        "qwen/qwen3-coder-next": {
+          "options": {
+            "provider": {
+            }
+          }
+        }
+      }
+    }
+  },
+  "model": "qwen/qwen3.5-35b-a3b",
+  "small_model": "qwen/qwen3-coder-next"
+}
+//ANTHROPIC_PROVIDER_ONLY=alibaba ANTHROPIC_MODEL=qwen/qwen3.5-35b-a3b CLAUDE_CODE_SUBAGENT_MODEL=qwen/qwen3-coder-next

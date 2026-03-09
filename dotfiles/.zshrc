@@ -96,3 +96,6 @@ compinit
 # ===== Machine-Specific Overrides =====
 # Source local overrides last so they can extend or override anything above
 [ -f "$dotfiles_path/.zshrc-local" ] && source "$dotfiles_path/.zshrc-local"
+
+# opencode
+export PATH="$HOME/.opencode/bin:$PATH"
