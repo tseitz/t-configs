@@ -1,7 +1,10 @@
 dotfiles/.zshrc-env-vars
 dotfiles/.zshrc-local
 dotfiles/.cursor/mcp.json
-dotfiles/.claude/**/*
+# Ignore all of dotfiles/.claude except agents/ (un-ignore requires dir + contents)
+dotfiles/.claude/**
+!dotfiles/.claude/agents/
+!dotfiles/.claude/agents/**
 .claude.json
 
 .DS_Store

@@ -31,14 +31,6 @@
         "/Users/tseitz/Library/CloudStorage/Dropbox/Tegan/Obsidian/tegan",
         "/Users/tseitz/Library/CloudStorage/Dropbox/TransferMusic"
       ]
-    },
-    "sqlite": {
-      "command": "uvx",
-      "args": [
-        "mcp-server-sqlite",
-        "--db-path",
-        "/Users/tseitz/code/projects/evolutionary-speakers/data/evolutionary_speakers.db"
-      ]
     }
   }
 }

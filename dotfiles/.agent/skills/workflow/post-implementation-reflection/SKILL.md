@@ -20,7 +20,6 @@ Do **not** use mid-implementation or before the main work is finished.
 
 ### 1. Summarize What Changed
 
-- List the files and areas that were modified
 - Briefly state what was implemented vs. the original plan (gaps, additions, simplifications)
 - Note any deviations from the plan and why
 
@@ -89,4 +88,5 @@ Then proceed to implement the Must/Should items (or the agreed subset).
 
 - **Evidence over opinion**: Point to specific code or behavior when describing pain or improvement.
 - **One thing at a time**: Implement follow-up items in logical order; avoid mixing unrelated refactors in one edit.
+- **Be sure to consider rules!**: Are there any hooks or rules to follow? Documentation to update?
 - **Verify**: After cleanup, run relevant tests or checks so reflection doesn’t introduce regressions.
