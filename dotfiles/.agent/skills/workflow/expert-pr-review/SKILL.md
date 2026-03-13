@@ -57,8 +57,8 @@ Use this structure in your response:
 [Correctness, naming, performance, security where relevant, link to relevant code]
 
 ## Specific improvements
-[For each item:]
-- **`path/to/file:start–end`** — [What]. [Why]. [Suggestion].
+[For each item link to the specific file and line number:]
+- [path/to/file:start–end](path/to/file:start–end) — [What]. [Why]. [Suggestion].
 ```
 
 ## Priorities
