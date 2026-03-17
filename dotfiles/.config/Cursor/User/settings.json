@@ -1,6 +1,8 @@
 {
   // ── Editor: Appearance ──────────────────────────────────────────
-  "editor.fontFamily": "Fira Code",
+  // "editor.fontFamily": "Fira Code",
+  // "editor.fontFamily": "'LythMono Nerd Font', Menlo, Monaco, 'Courier New', monospace",
+  "editor.fontFamily": "'Geist Mono', Menlo, Monaco, 'Courier New', monospace",
   "editor.fontLigatures": true,
   "editor.cursorBlinking": "phase",
   "editor.minimap.enabled": true,

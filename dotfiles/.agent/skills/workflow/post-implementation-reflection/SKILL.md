@@ -6,87 +6,95 @@ memory: user
 
 # Post-Implementation Reflection
 
-Run this workflow **after** a plan or large task has been implemented. Reflect on what was done, capture pain points and improvements, then implement the follow-up changes.
+Run **after** a plan or large feature is implemented. The goal is a codebase that stays simple,
+elegant, and easy to navigate — especially for the next agent session picking up where this one
+left off.
 
 ## When to Use
 
-- User explicitly asks to "reflect on the implementation," "retrospective," or "clean up after the plan"
-- A multi-step plan or large task was just completed and no reflection has been done yet
+- User asks to "reflect," "retrospective," or "clean up after the plan"
+- A multi-step plan or large task just completed and no reflection has been done
 - User says the implementation is done and wants improvements or cleanup
 
 Do **not** use mid-implementation or before the main work is finished.
+
+---
 
 ## Workflow
 
 ### 1. Summarize What Changed
 
-- Briefly state what was implemented vs. the original plan (gaps, additions, simplifications)
-- Note any deviations from the plan and why
+One short paragraph or bullet list: what was implemented, where it lives, any deviations from the
+original plan and why.
 
-### 2. Reflection (structured)
+### 2. Reflect Through These Lenses
 
-Produce a short reflection that includes:
+For each lens, be concrete — reference specific files, functions, or patterns. Skip any lens that
+doesn't apply.
 
-| Section | What to capture |
-|--------|------------------|
-| **Pain points** | Friction during implementation: unclear specs, missing context, awkward APIs, repetitive work, confusing structure |
-| **Do differently** | If redoing from scratch: different approach, order of steps, or design choices |
-| **Improvements** | Quick wins: naming, comments, error messages, logging, types, tests |
-| **Cleanup / refactor** | Technical debt: duplication, dead code, inconsistent patterns, unclear boundaries, missing abstractions |
+**Simplicity**
+- Does each function do one thing? Are there any that do two or three?
+- Is there logic that could be a well-named helper instead of an inline block?
+- Any unnecessary abstraction or over-engineering added during implementation?
 
-Be concrete: reference specific files, functions, or patterns. Avoid generic advice.
+**Elegance**
+- Are there awkward workarounds, defensive checks for things that can't happen, or temporary
+  scaffolding that wasn't removed?
+- Would a fresh reader find this implementation surprising, or does it feel like the obvious way?
+- Any naming that obscures intent (variables, functions, files)?
 
-### 3. Prioritize Follow-Up Work
+**Agent navigability** ← most important for this project
+- Can the next agent session find every relevant piece of this feature in one read of the relevant
+  file(s)?
+- Are there non-obvious decisions that lack a comment explaining *why* (not *what*)?
+- Does the code reference the right project primitives (`paths`, topology strings, driver IDs)?
+  Or did new one-off patterns creep in?
+- If something broke during implementation, is that gotcha now in `.claude/LESSONS.md`?
 
-From the reflection, list **actionable** items:
+**Technical debt**
+- Duplication, dead code, inconsistent patterns with the rest of the codebase
+- Missing or stale tests for the new behavior
+- Docs or README that need updating (check `update-readme.mdc`)
 
-- **Must do**: Fixes, correctness, or clarity that materially affect maintainability or behavior
-- **Should do**: Refactors and cleanups that are clearly worth doing now
-- **Nice to have**: Optional improvements to skip if time-constrained
+### 3. Prioritize Follow-Up
 
-Limit to a small set (e.g., 3–7 items total) so the next step is feasible.
+From the reflection, list actionable items only — skip anything vague:
 
-### 4. Implement the Changes
+- **Must:** Correctness, clarity, or navigability issues that will cost time next session
+- **Should:** Clean, clearly worth doing now
+- **Nice to have:** Optional; note and move on
 
-- Implement the **Must do** and **Should do** items (or a subset agreed with the user)
-- Prefer small, focused edits: one logical change per commit if the user uses version control
-- After editing, re-check the touched areas (tests, lint, build) and fix any regressions
+Keep the total to 3–7 items.
 
-### 5. Brief Close-Out
+### 4. Implement
 
-- One or two sentences on what was reflected on and what was changed
-- Optionally note any remaining "Nice to have" items for later
+- Implement Must and Should items (or agreed subset)
+- One logical change at a time
+- Run `make precommit` after edits — don't introduce regressions in cleanup
+
+### 5. Lessons
+
+If the reflection surfaces a non-obvious gotcha — something that bit you during implementation or
+that future sessions will need to know — append it to `.claude/LESSONS.md` before closing out.
+
+---
 
 ## Output Format
 
-Use this structure when presenting the reflection (before implementing):
+```
+### What changed
+[1–5 bullets]
 
-```markdown
-## Post-implementation reflection
+### Reflection
+**Simplicity:** [finding or "nothing to flag"]
+**Elegance:** [finding or "nothing to flag"]
+**Agent navigability:** [finding or "nothing to flag"]
+**Technical debt:** [finding or "nothing to flag"]
 
-### Summary of changes
-- [Bullet list of what was implemented and where]
-
-### Pain points
-- [Concrete items]
-
-### Would do differently
-- [Concrete items]
-
-### Improvements & cleanup
-- [Concrete, actionable items]
-
-### Follow-up (prioritized)
-- **Must:** ...
-- **Should:** ...
-- **Nice to have:** ...
+### Follow-up
+Must: ...
+Should: ...
+Nice to have: ...
 ```
 
-Then proceed to implement the Must/Should items (or the agreed subset).
-
-## Tips
-
-- **Evidence over opinion**: Point to specific code or behavior when describing pain or improvement.
-- **One thing at a time**: Implement follow-up items in logical order; avoid mixing unrelated refactors in one edit.
-- **Be sure to consider rules!**: Are there any hooks or rules to follow? Documentation to update?
-- **Verify**: After cleanup, run relevant tests or checks so reflection doesn’t introduce regressions.
+Then implement. Then update LESSONS.md if anything is worth remembering.
