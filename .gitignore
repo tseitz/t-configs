@@ -1,6 +1,5 @@
 dotfiles/.zshrc-env-vars
 dotfiles/.zshrc-local
-dotfiles/.cursor/mcp.json
 # Ignore all of dotfiles/.claude except tracked config (un-ignore requires dir + contents)
 dotfiles/.claude/**
 !dotfiles/.claude/agents/

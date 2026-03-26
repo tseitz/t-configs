@@ -180,32 +180,7 @@ create_symlink "$DOTFILES_DIR/.hushlogin"  "$HOME/.hushlogin"
 mkdir -p "$HOME/.config"
 create_symlink "$DOTFILES_DIR/.config/nvim" "$HOME/.config/nvim"
 
-# Cursor MCP config (copy from template + substitute API keys)
-# Load env vars so secrets are available for substitution
-ENV_VARS_FILE="$DOTFILES_DIR/.zshrc-env-vars"
-if [ -f "$ENV_VARS_FILE" ]; then
-  set +u  # env vars file may reference unset variables
-  source "$ENV_VARS_FILE"
-  set -u
-fi
-
-MCP_FILE="$DOTFILES_DIR/.cursor/mcp.json"
-MCP_TEMPLATE="$DOTFILES_DIR/.cursor/mcp.json.template"
-# Generate mcp.json from template if it doesn't exist or still has placeholders
-if [ -f "$MCP_FILE" ] && ! grep -q "REF_API_KEY_PLACEHOLDER" "$MCP_FILE"; then
-  success "Cursor MCP config already exists (with keys filled in)"
-else
-  cp "$MCP_TEMPLATE" "$MCP_FILE"
-  if [ -n "${REF_API_KEY:-}" ]; then
-    sed "s|REF_API_KEY_PLACEHOLDER|$REF_API_KEY|g" "$MCP_FILE" > "${MCP_FILE}.tmp" && mv "${MCP_FILE}.tmp" "$MCP_FILE"
-    success "Cursor MCP config generated with API keys"
-  else
-    success "Cursor MCP config generated (fill in REF_API_KEY_PLACEHOLDER in $MCP_FILE)"
-    warn "Or set REF_API_KEY in .zshrc-env-vars and re-run install.sh"
-  fi
-fi
 mkdir -p "$HOME/.cursor"
-create_symlink "$MCP_FILE" "$HOME/.cursor/mcp.json"
 
 # Cursor User settings (macOS vs Linux paths)
 if [[ "$OSTYPE" == darwin* ]]; then

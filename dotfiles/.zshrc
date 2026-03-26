@@ -85,16 +85,10 @@ command -v direnv &>/dev/null && eval "$(direnv hook zsh)"
 command -v rbenv &>/dev/null && eval "$(rbenv init - zsh)"
 command -v mise &>/dev/null && eval "$(mise activate zsh)"
 
-# Initialize zsh completions
-autoload -Uz compinit
-compinit
-
-# Docker Desktop CLI completions (if present)
-# The following lines have been added by Docker Desktop to enable Docker CLI completions.
+# Initialize zsh completions (Docker fpath added first so its completions are included)
 fpath=($HOME/.docker/completions $fpath)
 autoload -Uz compinit
 compinit
-# End of Docker CLI completions
 
 # ===== Machine-Specific Overrides =====
 # Source local overrides last so they can extend or override anything above
