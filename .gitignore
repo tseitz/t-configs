@@ -1,10 +1,14 @@
 dotfiles/.zshrc-env-vars
 dotfiles/.zshrc-local
 dotfiles/.cursor/mcp.json
-# Ignore all of dotfiles/.claude except agents/ (un-ignore requires dir + contents)
+# Ignore all of dotfiles/.claude except tracked config (un-ignore requires dir + contents)
 dotfiles/.claude/**
 !dotfiles/.claude/agents/
 !dotfiles/.claude/agents/**
+!dotfiles/.claude/settings.json
+!dotfiles/.claude/plugins/
+dotfiles/.claude/plugins/**
+!dotfiles/.claude/plugins/installed_plugins.json
 .claude.json
 
 .DS_Store
