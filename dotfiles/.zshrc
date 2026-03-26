@@ -76,6 +76,9 @@ export BUN_INSTALL="$HOME/.bun"
 export PATH="$BUN_INSTALL/bin:$PATH"
 [ -s "$HOME/.bun/_bun" ] && source "$HOME/.bun/_bun"
 
+# Obsidian CLI binary (macOS app bundle)
+[[ -d "/Applications/Obsidian.app/Contents/MacOS" ]] && export PATH="$PATH:/Applications/Obsidian.app/Contents/MacOS"
+
 # ===== Tool Initialization =====
 
 command -v direnv &>/dev/null && eval "$(direnv hook zsh)"
