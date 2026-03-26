@@ -130,7 +130,7 @@
   },
   "statusLine": {
     "type": "command",
-    "command": "bash /Users/tseitz/.claude/statusline-command.sh"
+    "command": "bash $HOME/.claude/statusline-command.sh"
   },
   "enabledPlugins": {
     "claude-md-management@claude-plugins-official": true,
@@ -158,16 +158,16 @@
     "autoAllowBashIfSandboxed": true,
     "network": {
       "allowUnixSockets": [
-        "/Users/tseitz/.docker/run/docker.sock"
+        "~/.docker/run/docker.sock"
       ],
       "allowLocalBinding": true
     },
     "filesystem": {
       "allowWrite": [
-        "/Users/tseitz/.cache/uv",
-        "/Users/tseitz/.cache/pre-commit",
-        "/Users/tseitz/.matplotlib",
-        "/Users/tseitz/Library/Caches/mise"
+        "~/.cache/uv",
+        "~/.cache/pre-commit",
+        "~/.matplotlib",
+        "~/Library/Caches/mise"
       ]
     },
     "enableWeakerNetworkIsolation": true,

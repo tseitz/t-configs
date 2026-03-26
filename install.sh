@@ -246,7 +246,21 @@ while IFS= read -r skill_dir; do
 done < <(find "$DOTFILES_DIR/.agent/skills" -name "SKILL.md" -not -path "*/.claude/*" -exec dirname {} \; | sort)
 
 # ------------------------------------------
-# 9. Set up machine-specific local overrides
+# 9. Install Claude Code plugins
+# ------------------------------------------
+CLAUDE_PLUGINS_MANIFEST="$DOTFILES_DIR/.claude/plugins/installed_plugins.json"
+if [ -f "$CLAUDE_PLUGINS_MANIFEST" ] && command -v claude &>/dev/null; then
+  info "Installing Claude plugins from manifest..."
+  while IFS= read -r plugin; do
+    claude plugin install "$plugin" &>/dev/null && success "Claude plugin installed: $plugin" || warn "Claude plugin already installed or failed: $plugin"
+  done < <(python3 -c "import json,sys; [print(k) for k in json.load(open('$CLAUDE_PLUGINS_MANIFEST'))['plugins']]")
+  success "Claude plugins processed"
+elif [ -f "$CLAUDE_PLUGINS_MANIFEST" ] && ! command -v claude &>/dev/null; then
+  warn "claude CLI not in PATH — skipping plugin install (re-run after adding Claude to PATH)"
+fi
+
+# ------------------------------------------
+# 10. Set up machine-specific local overrides
 # ------------------------------------------
 LOCAL_FILE="$DOTFILES_DIR/.zshrc-local"
 LOCAL_EXAMPLE="$DOTFILES_DIR/.zshrc-local.example"
