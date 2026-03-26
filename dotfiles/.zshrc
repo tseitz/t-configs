@@ -2,9 +2,13 @@
 # Resolve dotfiles path from this file's location (works when repo is anywhere, e.g. ~/t-configs or /mnt/c/.../t-configs)
 dotfiles_path="${${(%):-%x}:A:h}"
 [[ -z "$dotfiles_path" ]] && dotfiles_path="$HOME/t-configs/dotfiles"
-# Add Homebrew to PATH early on Linux/WSL so direnv, rbenv, mise are found below
-[[ "$OSTYPE" == linux* ]] && eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv 2>/dev/null)" || true
-source $dotfiles_path/.zshrc-env-vars
+# Add Homebrew to PATH early so direnv, rbenv, mise are found below
+if [[ "$OSTYPE" == linux* ]]; then
+  eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv 2>/dev/null)" || true
+else
+  eval "$(/opt/homebrew/bin/brew shellenv 2>/dev/null)" || true
+fi
+[ -f "$dotfiles_path/.zshrc-env-vars" ] && source "$dotfiles_path/.zshrc-env-vars"
 
 # Path to your oh-my-zsh installation
 export ZSH="$HOME/.oh-my-zsh"
@@ -30,10 +34,6 @@ alias zshr="source ~/.zshrc"
 alias brewup="brew update; brew upgrade; brew cleanup; brew doctor"
 alias codeconf="code $HOME/t-configs"
 
-# Navigation
-alias cdcode="cd ~/code"
-alias notes="cd $HOME/Library/CloudStorage/Dropbox/Tegan/Obsidian/tegan"
-
 # ===== Functions =====
 
 # cd up to n dirs (usage: cd.. 10 or cd.. dir)
@@ -51,18 +51,19 @@ alias 'cd..'='cd_up'
 
 # ===== Environment Variables =====
 
-# Build flags (for Python packages with native dependencies)
-brew_prefix="/opt/homebrew"
-export LDFLAGS="-L${brew_prefix}/opt/zlib/lib -L${brew_prefix}/opt/bzip2/lib -L${brew_prefix}/opt/openssl/lib -L${brew_prefix}/opt/libomp/lib"
-export CPPFLAGS="-I${brew_prefix}/opt/zlib/include -I${brew_prefix}/opt/bzip2/include -I${brew_prefix}/opt/openblas/include -I${brew_prefix}/opt/openssl/include -I${brew_prefix}/opt/libomp/include"
-export PKG_CONFIG_PATH="${brew_prefix}/opt/openblas/lib/pkgconfig"
+# Build flags (for Python packages with native dependencies — macOS only)
+if [[ "$OSTYPE" == darwin* ]]; then
+  brew_prefix="${HOMEBREW_PREFIX:-/opt/homebrew}"
+  export LDFLAGS="-L${brew_prefix}/opt/zlib/lib -L${brew_prefix}/opt/bzip2/lib -L${brew_prefix}/opt/openssl/lib -L${brew_prefix}/opt/libomp/lib"
+  export CPPFLAGS="-I${brew_prefix}/opt/zlib/include -I${brew_prefix}/opt/bzip2/include -I${brew_prefix}/opt/openblas/include -I${brew_prefix}/opt/openssl/include -I${brew_prefix}/opt/libomp/include"
+  export PKG_CONFIG_PATH="${brew_prefix}/opt/openblas/lib/pkgconfig"
+fi
 
 # ===== PATH =====
-
-eval "$(/opt/homebrew/bin/brew shellenv 2>/dev/null)" || true
 export PATH="$PATH:$HOME/.local/bin"
 export PATH="$PATH:$HOME/.foundry/bin"
-export PATH="${brew_prefix}/opt/mysql-client/bin:$PATH"
+export PATH="$HOME/.opencode/bin:$PATH"
+[[ "$OSTYPE" == darwin* ]] && export PATH="${HOMEBREW_PREFIX:-/opt/homebrew}/opt/mysql-client/bin:$PATH"
 
 # pnpm
 export PNPM_HOME="$HOME/Library/pnpm"
@@ -93,6 +94,3 @@ compinit
 # ===== Machine-Specific Overrides =====
 # Source local overrides last so they can extend or override anything above
 [ -f "$dotfiles_path/.zshrc-local" ] && source "$dotfiles_path/.zshrc-local"
-
-# opencode
-export PATH="$HOME/.opencode/bin:$PATH"
