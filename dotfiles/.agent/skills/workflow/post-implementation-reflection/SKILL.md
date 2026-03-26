@@ -6,9 +6,10 @@ memory: user
 
 # Post-Implementation Reflection
 
+If you were to do this feature again, what would you do differently? What could be improved? Refactored? Simplified? Made more elegant? Reflect on the changes made.
+
 Run **after** a plan or large feature is implemented. The goal is a codebase that stays simple,
-elegant, and easy to navigate — especially for the next agent session picking up where this one
-left off.
+elegant, and easy to navigate — especially for any future agent sessions having to navigate the codebase.
 
 ## When to Use
 
@@ -47,14 +48,12 @@ doesn't apply.
 - Can the next agent session find every relevant piece of this feature in one read of the relevant
   file(s)?
 - Are there non-obvious decisions that lack a comment explaining *why* (not *what*)?
-- Does the code reference the right project primitives (`paths`, topology strings, driver IDs)?
-  Or did new one-off patterns creep in?
-- If something broke during implementation, is that gotcha now in `.claude/LESSONS.md`?
+- Does the code reference the right project primitives and utilize project conventions?
 
 **Technical debt**
 - Duplication, dead code, inconsistent patterns with the rest of the codebase
 - Missing or stale tests for the new behavior
-- Docs or README that need updating (check `update-readme.mdc`)
+- Docs or README that need updating (check skill `update-readme.mdc`)
 
 ### 3. Prioritize Follow-Up
 
@@ -70,12 +69,7 @@ Keep the total to 3–7 items.
 
 - Implement Must and Should items (or agreed subset)
 - One logical change at a time
-- Run `make precommit` after edits — don't introduce regressions in cleanup
-
-### 5. Lessons
-
-If the reflection surfaces a non-obvious gotcha — something that bit you during implementation or
-that future sessions will need to know — append it to `.claude/LESSONS.md` before closing out.
+- Run validation checks to ensure no regressions were introduced
 
 ---
 
@@ -97,4 +91,4 @@ Should: ...
 Nice to have: ...
 ```
 
-Then implement. Then update LESSONS.md if anything is worth remembering.
+Then implement. Then update documentation if anything is worth remembering.
