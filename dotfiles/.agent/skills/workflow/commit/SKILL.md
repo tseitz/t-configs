@@ -1,6 +1,6 @@
 ---
 name: commit
-description: ALWAYS use this skill when committing code changes — never commit directly without it. Creates commits following Sentry conventions with proper conventional commit format and issue references. Trigger on any commit, git commit, save changes, or commit message task.
+description: Always use this skill when committing code changes — never commit directly without it. Creates commits following Sentry conventions with proper conventional commit format and issue references. Trigger on any commit, git commit, save changes, or commit message task.
 ---
 
 # Sentry Commit Messages
@@ -58,7 +58,7 @@ The header is required. Scope is optional. All lines must stay under 100 charact
 - Use imperative, present tense: "Add feature" not "Added feature"
 - Capitalize the first letter
 - No period at the end
-- Maximum 70 characters
+- Maximum 60 characters
 
 ## Body Guidelines
 
@@ -66,20 +66,6 @@ The header is required. Scope is optional. All lines must stay under 100 charact
 - Use imperative mood and present tense
 - Include motivation for the change
 - Contrast with previous behavior when relevant
-
-## Footer: Issue References
-
-Reference issues in the footer using these patterns:
-
-```
-Fixes GH-1234
-Fixes #1234
-Fixes SENTRY-1234
-Refs LINEAR-ABC-123
-```
-
-- `Fixes` closes the issue when merged
-- `Refs` links without closing
 
 ## Examples
 
@@ -90,20 +76,16 @@ fix(api): Handle null response in user endpoint
 
 The user API could return null for deleted accounts, causing a crash
 in the dashboard. Add null check before accessing user properties.
-
-Fixes SENTRY-5678
 ```
 
 ### Feature with scope
 
 ```
-feat(alerts): Add Slack thread replies for alert updates
+feat(MF-5555): Add Slack thread replies for alert updates
 
 When an alert is updated or resolved, post a reply to the original
 Slack thread instead of creating a new message. This keeps related
 notifications grouped together.
-
-Refs GH-1234
 ```
 
 ### Refactor
@@ -142,7 +124,4 @@ Reason: Caused performance regression in production.
 - Each commit should be a single, stable change
 - Commits should be independently reviewable
 - The repository should be in a working state after each commit
-
-## References
-
-- [Sentry Commit Messages](https://develop.sentry.dev/engineering-practices/commit-messages/)
+- Use a Jira ticket if you have it (MF-5555)
