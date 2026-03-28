@@ -8,7 +8,6 @@
     "commit": "",
     "pr": ""
   },
-  "model": "sonnet",
   "hooks": {
     "PermissionRequest": [
       {
@@ -167,7 +166,8 @@
         "~/.cache/uv",
         "~/.cache/pre-commit",
         "~/.matplotlib",
-        "~/Library/Caches/mise"
+        "~/Library/Caches/mise",
+        "~/.superset/worktrees/"
       ]
     },
     "enableWeakerNetworkIsolation": true,
