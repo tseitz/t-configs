@@ -15,7 +15,7 @@ Before committing, always check the current branch:
 git branch --show-current
 ```
 
-**If you're on `main` or `master`, you MUST create a feature branch first** — unless the user explicitly asked to commit to main. Do not ask for confirmation; default to creating the branch.
+**If you're on `main` or `master`, you MUST create a feature branch first** — unless the user explicitly asked to commit to main, or CLAUDE.md says to develop directly on main. Do not ask for confirmation; default to creating the branch. Check CLAUDE.md first if unsure.
 
 ```bash
 # Create and switch to a new branch
