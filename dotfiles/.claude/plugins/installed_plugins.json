@@ -24,10 +24,10 @@
     "superpowers@claude-plugins-official": [
       {
         "scope": "user",
-        "installPath": "/Users/tseitz/.claude/plugins/cache/claude-plugins-official/superpowers/5.0.5",
-        "version": "5.0.5",
+        "installPath": "/Users/tseitz/.claude/plugins/cache/claude-plugins-official/superpowers/5.0.7",
+        "version": "5.0.7",
         "installedAt": "2026-03-20T20:39:19.402Z",
-        "lastUpdated": "2026-03-20T20:39:19.402Z",
+        "lastUpdated": "2026-04-01T15:42:41.652Z",
         "gitCommitSha": "8ea39819eed74fe2a0338e71789f06b30e953041"
       }
     ],
@@ -44,10 +44,10 @@
     "playwright@claude-plugins-official": [
       {
         "scope": "user",
-        "installPath": "/Users/tseitz/.claude/plugins/cache/claude-plugins-official/playwright/205b6e0b3036",
-        "version": "205b6e0b3036",
+        "installPath": "/Users/tseitz/.claude/plugins/cache/claude-plugins-official/playwright/b091cb4179d3",
+        "version": "b091cb4179d3",
         "installedAt": "2026-03-20T20:39:19.413Z",
-        "lastUpdated": "2026-03-20T20:39:19.413Z",
+        "lastUpdated": "2026-04-01T15:42:41.058Z",
         "gitCommitSha": "205b6e0b30366a969412d9aab7b99bea99d58db1"
       }
     ],
@@ -64,10 +64,10 @@
     "explanatory-output-style@claude-plugins-official": [
       {
         "scope": "user",
-        "installPath": "/Users/tseitz/.claude/plugins/cache/claude-plugins-official/explanatory-output-style/205b6e0b3036",
-        "version": "205b6e0b3036",
+        "installPath": "/Users/tseitz/.claude/plugins/cache/claude-plugins-official/explanatory-output-style/1.0.0",
+        "version": "1.0.0",
         "installedAt": "2026-03-20T20:39:19.425Z",
-        "lastUpdated": "2026-03-20T20:39:19.425Z",
+        "lastUpdated": "2026-04-01T15:42:41.054Z",
         "gitCommitSha": "205b6e0b30366a969412d9aab7b99bea99d58db1"
       }
     ],
@@ -84,20 +84,20 @@
     "pr-review-toolkit@claude-plugins-official": [
       {
         "scope": "user",
-        "installPath": "/Users/tseitz/.claude/plugins/cache/claude-plugins-official/pr-review-toolkit/205b6e0b3036",
-        "version": "205b6e0b3036",
+        "installPath": "/Users/tseitz/.claude/plugins/cache/claude-plugins-official/pr-review-toolkit/b091cb4179d3",
+        "version": "b091cb4179d3",
         "installedAt": "2026-03-26T18:56:26.413Z",
-        "lastUpdated": "2026-03-26T18:56:26.413Z",
+        "lastUpdated": "2026-04-01T15:42:41.060Z",
         "gitCommitSha": "205b6e0b30366a969412d9aab7b99bea99d58db1"
       }
     ],
     "code-review@claude-plugins-official": [
       {
         "scope": "user",
-        "installPath": "/Users/tseitz/.claude/plugins/cache/claude-plugins-official/code-review/205b6e0b3036",
-        "version": "205b6e0b3036",
+        "installPath": "/Users/tseitz/.claude/plugins/cache/claude-plugins-official/code-review/b091cb4179d3",
+        "version": "b091cb4179d3",
         "installedAt": "2026-03-26T18:56:30.680Z",
-        "lastUpdated": "2026-03-26T18:56:30.680Z",
+        "lastUpdated": "2026-04-01T15:42:41.061Z",
         "gitCommitSha": "205b6e0b30366a969412d9aab7b99bea99d58db1"
       }
     ]

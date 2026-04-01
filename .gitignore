@@ -1,16 +1,18 @@
 dotfiles/.zshrc-env-vars
 dotfiles/.zshrc-local
-# Ignore all of dotfiles/.claude except tracked config (un-ignore requires dir + contents)
-dotfiles/.claude/**
-!dotfiles/.claude/agents/
-!dotfiles/.claude/agents/**
-!dotfiles/.claude/settings.json
-!dotfiles/.claude/plugins/
-dotfiles/.claude/plugins/**
-!dotfiles/.claude/plugins/installed_plugins.json
 .claude.json
+
+# dotfiles/.claude — track everything EXCEPT runtime state and secrets
+dotfiles/.claude/settings.local.json
+dotfiles/.claude/plugins/cache/
+dotfiles/.claude/plugins/blocklist.json
+dotfiles/.claude/plugins/install-counts-cache.json
+dotfiles/.claude/plugins/known_marketplaces.json
+dotfiles/.claude/plugins/data/
+dotfiles/.claude/plugins/marketplaces/
+
+# Skills: ignore work-specific skills (may contain company-internal references)
+dotfiles/.claude/skills/work/
 
 .DS_Store
 .tmp/
-
-**/skills/work/

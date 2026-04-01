@@ -233,18 +233,45 @@ step_symlinks() {
   mkdir -p "$CURSOR_USER_DIR"
   create_symlink "$DOTFILES_DIR/.config/Cursor/User/settings.json" "$CURSOR_USER_DIR/settings.json"
 
-  # Agent skills
-  create_symlink "$DOTFILES_DIR/.agent/skills" "$HOME/.cursor/skills"
-  mkdir -p "$HOME/.gemini/antigravity"
-  create_symlink "$DOTFILES_DIR/.agent/skills" "$HOME/.gemini/antigravity/skills"
+  # ── Claude Code (.claude is the first-class citizen) ──────────────────
+  mkdir -p "$HOME/.claude"
 
-  # Claude Code skills (delegate to link-skills.sh which handles stale cleanup + category dirs)
-  LINK_SKILLS_SCRIPT="$DOTFILES_DIR/.agent/skills/link-skills.sh"
-  if [ -f "$LINK_SKILLS_SCRIPT" ]; then
-    bash "$LINK_SKILLS_SCRIPT"
+  # Directories (symlink entire dirs)
+  create_symlink "$DOTFILES_DIR/.claude/skills"   "$HOME/.claude/skills"
+  create_symlink "$DOTFILES_DIR/.claude/rules"    "$HOME/.claude/rules"
+  create_symlink "$DOTFILES_DIR/.claude/agents"   "$HOME/.claude/agents"
+  create_symlink "$DOTFILES_DIR/.claude/commands" "$HOME/.claude/commands"
+  create_symlink "$DOTFILES_DIR/.claude/hooks"    "$HOME/.claude/hooks"
+  create_symlink "$DOTFILES_DIR/.claude/scripts"  "$HOME/.claude/scripts"
+
+  # Individual files
+  create_symlink "$DOTFILES_DIR/.claude/settings.json"          "$HOME/.claude/settings.json"
+  create_symlink "$DOTFILES_DIR/.claude/AGENTS.md"              "$HOME/.claude/AGENTS.md"
+  create_symlink "$DOTFILES_DIR/.claude/README.md"              "$HOME/.claude/README.md"
+  create_symlink "$DOTFILES_DIR/.claude/plugin.json"            "$HOME/.claude/plugin.json"
+  create_symlink "$DOTFILES_DIR/.claude/marketplace.json"       "$HOME/.claude/marketplace.json"
+  create_symlink "$DOTFILES_DIR/.claude/statusline-command.sh"  "$HOME/.claude/statusline-command.sh"
+  create_symlink "$DOTFILES_DIR/.claude/the-security-guide.md"  "$HOME/.claude/the-security-guide.md"
+  create_symlink "$DOTFILES_DIR/.claude/PLUGIN_SCHEMA_NOTES.md" "$HOME/.claude/PLUGIN_SCHEMA_NOTES.md"
+
+  # Plugins: only the manifest, not cache/state
+  mkdir -p "$HOME/.claude/plugins"
+  create_symlink "$DOTFILES_DIR/.claude/plugins/installed_plugins.json" "$HOME/.claude/plugins/installed_plugins.json"
+
+  # settings.local.json: create from example if it doesn't exist (account-specific overrides)
+  if [ ! -f "$HOME/.claude/settings.local.json" ]; then
+    if [ -f "$DOTFILES_DIR/.claude/settings.local.json.example" ]; then
+      cp "$DOTFILES_DIR/.claude/settings.local.json.example" "$HOME/.claude/settings.local.json"
+      success "Created settings.local.json from example (edit for your account preferences)"
+    fi
   else
-    warn "link-skills.sh not found, skipping Claude skills linking"
+    success "settings.local.json already exists (account-specific overrides preserved)"
   fi
+
+  # ── Other tools (symlink from .claude, not .agent) ────────────────────
+  create_symlink "$DOTFILES_DIR/.claude/skills" "$HOME/.cursor/skills"
+  mkdir -p "$HOME/.gemini/antigravity"
+  create_symlink "$DOTFILES_DIR/.claude/skills" "$HOME/.gemini/antigravity/skills"
 }
 
 # ------------------------------------------

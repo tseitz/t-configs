@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "defaultMode": "bypassPermissions"
+  },
+  "model": "opus[1m]",
+  "env": {
+    "CLAUDE_PLUGIN_ROOT": "/Users/YOURUSER/.claude"
+  }
+}
