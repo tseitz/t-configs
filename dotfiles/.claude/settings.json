@@ -8,6 +8,7 @@
     "commit": "",
     "pr": ""
   },
+  "model": "sonnet",
   "hooks": {
     "PermissionRequest": [
       {
@@ -188,6 +189,5 @@
     ]
   },
   "effortLevel": "medium",
-  "skipDangerousModePermissionPrompt": true,
-  "model": "sonnet[1m]"
+  "skipDangerousModePermissionPrompt": true
 }
