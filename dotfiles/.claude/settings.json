@@ -10,39 +10,6 @@
   },
   "model": "sonnet",
   "hooks": {
-    "PermissionRequest": [
-      {
-        "matcher": "*",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "[ -n \"$SUPERSET_HOME_DIR\" ] && [ -x \"$SUPERSET_HOME_DIR/hooks/notify.sh\" ] && \"$SUPERSET_HOME_DIR/hooks/notify.sh\" || true"
-          }
-        ]
-      }
-    ],
-    "PostToolUse": [
-      {
-        "matcher": "*",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "[ -n \"$SUPERSET_HOME_DIR\" ] && [ -x \"$SUPERSET_HOME_DIR/hooks/notify.sh\" ] && \"$SUPERSET_HOME_DIR/hooks/notify.sh\" || true"
-          }
-        ]
-      }
-    ],
-    "PostToolUseFailure": [
-      {
-        "matcher": "*",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "[ -n \"$SUPERSET_HOME_DIR\" ] && [ -x \"$SUPERSET_HOME_DIR/hooks/notify.sh\" ] && \"$SUPERSET_HOME_DIR/hooks/notify.sh\" || true"
-          }
-        ]
-      }
-    ],
     "SessionEnd": [
       {
         "matcher": ".*",
@@ -72,14 +39,6 @@
           {
             "type": "command",
             "command": "__claudebar_hook() { PORT=$(cat \"$HOME/.claude/claudebar-hook-port\" 2>/dev/null || echo 19847); cat | curl -s -X POST \"http://localhost:${PORT}/hook\" -H 'Content-Type: application/json' -d @- > /dev/null 2>&1 & }; __claudebar_hook"
-          }
-        ]
-      },
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "[ -n \"$SUPERSET_HOME_DIR\" ] && [ -x \"$SUPERSET_HOME_DIR/hooks/notify.sh\" ] && \"$SUPERSET_HOME_DIR/hooks/notify.sh\" || true"
           }
         ]
       },
@@ -131,7 +90,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "[ -n \"$SUPERSET_HOME_DIR\" ] && [ -x \"$SUPERSET_HOME_DIR/hooks/notify.sh\" ] && \"$SUPERSET_HOME_DIR/hooks/notify.sh\" || true"
+            "command": "input=$(cat); echo \"$input\" | jq -e '.prompt | test(\"^\\\\s*/extra-usage\\\\s*$\")' > /dev/null 2>&1 && echo '{\"continue\": false, \"stopReason\": \"Blocked /extra-usage — run it intentionally from settings if needed.\"}' || true"
           }
         ]
       }
