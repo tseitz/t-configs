@@ -31,6 +31,17 @@
       }
     ]
   },
+  "tools": {
+    "sandbox": "docker",
+    "sandboxNetworkAccess": true,
+    "sandboxAllowedPaths": [
+      "~/.cache/uv",
+      "~/.cache/pre-commit",
+      "~/.matplotlib",
+      "~/Library/Caches/mise",
+      "~/.superset/worktrees/"
+    ]
+  },
   "skills": {
     "disabled": [
       "agent-harness-construction",
@@ -40,17 +51,11 @@
       "api-design",
       "api-fastapi",
       "article-writing",
-      "ask-questions-if-underspecified",
       "backend-patterns",
       "blueprint",
       "claude-api",
-      "coding-standards",
-      "composition-patterns",
       "configure-ecc",
       "content-hash-cache-pattern",
-      "continuous-learning",
-      "continuous-learning-v2",
-      "cost-aware-llm-pipeline",
       "data-scraper-agent",
       "database-migrations",
       "deep-research",
@@ -66,11 +71,8 @@
       "enhance-prompt",
       "enterprise-agent-ops",
       "eval-harness",
-      "exa-search",
-      "expert-pr-review",
       "fal-ai-media",
       "find-bugs",
-      "finding-duplicate-functions",
       "foundation-models-on-device",
       "frontend-design",
       "frontend-patterns",
@@ -87,7 +89,6 @@
       "mesh-generation",
       "modern-python",
       "numerical-stability",
-      "obsidian",
       "parameter-optimization",
       "performance-profiling",
       "post-processing",
@@ -95,33 +96,19 @@
       "project-flow-ops",
       "project-guidelines-example",
       "prompt-optimizer",
-      "python-patterns",
-      "python-testing",
       "rails-upgrade",
       "react-best-practices",
       "react-components",
       "readme",
-      "refactor-expert",
-      "regex-vs-llm-structured-text",
       "remotion-video-creation",
       "rust-patterns",
       "rust-testing",
       "search-first",
       "security-review",
       "security-scan",
-      "shadcn-ui",
-      "simulation-orchestrator",
       "skill-stocktake",
       "soul",
       "strategic-compact",
-      "svelte-components",
-      "svelte-deployment",
-      "svelte-runes",
-      "svelte-template-directives",
-      "sveltekit-data-flow",
-      "sveltekit-remote-functions",
-      "sveltekit-structure",
-      "tdd-workflow",
       "team-builder",
       "threejs-animation",
       "threejs-fundamentals",
@@ -165,10 +152,5 @@
   },
   "ide": {
     "enabled": true
-  },
-  "skills": {
-    "disabled": [
-      "x-api"
-    ]
   }
 }
