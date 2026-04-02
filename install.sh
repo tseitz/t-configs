@@ -270,8 +270,19 @@ step_symlinks() {
 
   # ── Other tools (symlink from .claude, not .agent) ────────────────────
   create_symlink "$DOTFILES_DIR/.claude/skills" "$HOME/.cursor/skills"
+
+  # ── Gemini CLI ────────────────────
   mkdir -p "$HOME/.gemini/antigravity"
-  create_symlink "$DOTFILES_DIR/.claude/skills" "$HOME/.gemini/antigravity/skills"
+
+  # Support both legacy/antigravity and modern paths
+  create_symlink "$DOTFILES_DIR/.claude/skills"   "$HOME/.gemini/antigravity/skills"
+  create_symlink "$DOTFILES_DIR/.claude/skills"   "$HOME/.gemini/skills"
+  create_symlink "$DOTFILES_DIR/.claude/agents"   "$HOME/.gemini/agents"
+  create_symlink "$DOTFILES_DIR/.claude/rules"    "$HOME/.gemini/rules"
+  create_symlink "$DOTFILES_DIR/.claude/hooks"    "$HOME/.gemini/hooks"
+  create_symlink "$DOTFILES_DIR/.claude/scripts"  "$HOME/.gemini/scripts"
+  create_symlink "$DOTFILES_DIR/.claude/AGENTS.md"              "$HOME/.gemini/AGENTS.md"
+  create_symlink "$DOTFILES_DIR/.claude/the-security-guide.md"  "$HOME/.gemini/the-security-guide.md"
 }
 
 # ------------------------------------------
