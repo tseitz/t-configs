@@ -1,38 +1,6 @@
 {
-  "hooks": {
-    "BeforeAgent": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "/Users/tseitz/.superset/hooks/gemini-hook.sh"
-          }
-        ]
-      }
-    ],
-    "AfterAgent": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "/Users/tseitz/.superset/hooks/gemini-hook.sh"
-          }
-        ]
-      }
-    ],
-    "AfterTool": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "/Users/tseitz/.superset/hooks/gemini-hook.sh"
-          }
-        ]
-      }
-    ]
-  },
+  "hooks": {},
   "tools": {
-    "sandbox": "docker",
     "sandboxNetworkAccess": true,
     "sandboxAllowedPaths": [
       "~/.cache/uv",
@@ -132,17 +100,9 @@
       "x-api"
     ]
   },
-  "security": {
-    "auth": {
-      "selectedType": "oauth-personal"
-    }
-  },
   "general": {
     "defaultApprovalMode": "auto_edit",
-    "enableNotifications": true,
-    "plan": {
-      "directory": ""
-    }
+    "enableNotifications": true
   },
   "ui": {
     "showStatusInTitle": true,
@@ -152,5 +112,10 @@
   },
   "ide": {
     "enabled": true
+  },
+  "security": {
+    "auth": {
+      "selectedType": "oauth-personal"
+    }
   }
 }
