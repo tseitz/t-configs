@@ -1,0 +1,41 @@
+{
+  "mcpServers": {
+    "exa": {
+      "serverUrl": "https://mcp.exa.ai/mcp"
+    },
+    "svelte": {
+      "command": "npx",
+      "args": ["-y", "@sveltejs/mcp"]
+    },
+    "chrome-devtools": {
+      "command": "npx",
+      "args": ["-y", "chrome-devtools-mcp@latest"]
+    },
+    "mui-mcp": {
+      "command": "npx",
+      "args": ["-y", "@mui/mcp@latest"]
+    },
+    "Ref": {
+      "serverUrl": "https://api.ref.tools/mcp?apiKey=YOUR_REF_API_KEY_HERE"
+    },
+    "filesystem": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-filesystem",
+        "/Users/tseitz/t-configs",
+        "/Users/tseitz/code/projects",
+        "/Users/tseitz/vault",
+        "/Users/tseitz/Library/CloudStorage/GoogleDrive-tdseitz10@gmail.com/My Drive/TransferMusic"
+      ]
+    },
+    "sqlite": {
+      "command": "uvx",
+      "args": [
+        "mcp-server-sqlite",
+        "--db-path",
+        "/Users/tseitz/code/projects/evolutionary-speakers/data/evolutionary_speakers.db"
+      ]
+    }
+  }
+}

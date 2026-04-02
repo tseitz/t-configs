@@ -1,0 +1,174 @@
+{
+  "hooks": {
+    "BeforeAgent": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "/Users/tseitz/.superset/hooks/gemini-hook.sh"
+          }
+        ]
+      }
+    ],
+    "AfterAgent": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "/Users/tseitz/.superset/hooks/gemini-hook.sh"
+          }
+        ]
+      }
+    ],
+    "AfterTool": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "/Users/tseitz/.superset/hooks/gemini-hook.sh"
+          }
+        ]
+      }
+    ]
+  },
+  "skills": {
+    "disabled": [
+      "agent-harness-construction",
+      "agentic-engineering",
+      "ai-first-engineering",
+      "ai-regression-testing",
+      "api-design",
+      "api-fastapi",
+      "article-writing",
+      "ask-questions-if-underspecified",
+      "backend-patterns",
+      "blueprint",
+      "claude-api",
+      "coding-standards",
+      "composition-patterns",
+      "configure-ecc",
+      "content-hash-cache-pattern",
+      "continuous-learning",
+      "continuous-learning-v2",
+      "cost-aware-llm-pipeline",
+      "data-scraper-agent",
+      "database-migrations",
+      "deep-research",
+      "deployment-patterns",
+      "design-md",
+      "design-patterns",
+      "django-patterns",
+      "django-security",
+      "django-tdd",
+      "django-verification",
+      "docker-patterns",
+      "e2e-testing",
+      "enhance-prompt",
+      "enterprise-agent-ops",
+      "eval-harness",
+      "exa-search",
+      "expert-pr-review",
+      "fal-ai-media",
+      "find-bugs",
+      "finding-duplicate-functions",
+      "foundation-models-on-device",
+      "frontend-design",
+      "frontend-patterns",
+      "frontend-slides",
+      "golang-patterns",
+      "golang-testing",
+      "google-workspace-ops",
+      "iterate-pr",
+      "iterative-retrieval",
+      "learned",
+      "liquid-glass-design",
+      "market-research",
+      "mcp-server-patterns",
+      "mesh-generation",
+      "modern-python",
+      "numerical-stability",
+      "obsidian",
+      "parameter-optimization",
+      "performance-profiling",
+      "post-processing",
+      "postgres-patterns",
+      "project-flow-ops",
+      "project-guidelines-example",
+      "prompt-optimizer",
+      "python-patterns",
+      "python-testing",
+      "rails-upgrade",
+      "react-best-practices",
+      "react-components",
+      "readme",
+      "refactor-expert",
+      "regex-vs-llm-structured-text",
+      "remotion-video-creation",
+      "rust-patterns",
+      "rust-testing",
+      "search-first",
+      "security-review",
+      "security-scan",
+      "shadcn-ui",
+      "simulation-orchestrator",
+      "skill-stocktake",
+      "soul",
+      "strategic-compact",
+      "svelte-components",
+      "svelte-deployment",
+      "svelte-runes",
+      "svelte-template-directives",
+      "sveltekit-data-flow",
+      "sveltekit-remote-functions",
+      "sveltekit-structure",
+      "tdd-workflow",
+      "team-builder",
+      "threejs-animation",
+      "threejs-fundamentals",
+      "threejs-geometry",
+      "threejs-interaction",
+      "threejs-lighting",
+      "threejs-loaders",
+      "threejs-materials",
+      "threejs-postprocessing",
+      "threejs-shaders",
+      "threejs-textures",
+      "ui-demo",
+      "ui-ux-pro-max",
+      "verification-loop",
+      "video-editing",
+      "videodb",
+      "visa-doc-translate",
+      "web-design-guidelines",
+      "web-perf",
+      "workspace-surface-audit",
+      "x-api"
+    ]
+  },
+  "security": {
+    "auth": {
+      "selectedType": "oauth-personal"
+    }
+  },
+  "general": {
+    "defaultApprovalMode": "auto_edit",
+    "enableNotifications": true,
+    "plan": {
+      "directory": ""
+    }
+  },
+  "ui": {
+    "showStatusInTitle": true,
+    "footer": {
+      "hideContextPercentage": false
+    }
+  },
+  "ide": {
+    "enabled": true
+  },
+  "skills": {
+    "disabled": [
+      "x-api"
+    ]
+  }
+}

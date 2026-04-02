@@ -1,0 +1,36 @@
+# Runtime & machine-specific state
+acknowledgments/
+antigravity-browser-profile/
+history/
+tmp/
+projects.json
+state.json
+installation_id
+trustedFolders.json
+
+# Credentials
+oauth_creds.json
+google_accounts.json
+
+# Antigravity runtime (keep mcp_config.json.example but not the real one)
+antigravity/brain
+antigravity/code_tracker
+antigravity/context_state
+antigravity/conversations
+antigravity/daemon
+antigravity/html_artifacts
+antigravity/implicit
+antigravity/installation_id
+antigravity/knowledge
+antigravity/mcp_config.json
+antigravity/playground
+antigravity/skills
+
+# Already symlinked from .claude — not managed here
+AGENTS.md
+agents
+hooks
+rules
+scripts
+skills
+the-security-guide.md
