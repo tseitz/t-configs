@@ -8,7 +8,6 @@
     "commit": "",
     "pr": ""
   },
-  "model": "sonnet",
   "hooks": {
     "SessionEnd": [
       {
@@ -124,13 +123,8 @@
     "enabled": true,
     "autoAllowBashIfSandboxed": true,
     "network": {
-      "allowedDomains": [
-        "github.com",
-        "api.github.com"
-      ],
-      "allowUnixSockets": [
-        "~/.docker/run/docker.sock"
-      ],
+      "allowedDomains": ["github.com", "api.github.com"],
+      "allowUnixSockets": ["~/.docker/run/docker.sock"],
       "allowLocalBinding": true
     },
     "filesystem": {
@@ -143,9 +137,7 @@
       ]
     },
     "enableWeakerNetworkIsolation": true,
-    "excludedCommands": [
-      "chrome-headless-shell"
-    ]
+    "excludedCommands": ["chrome-headless-shell"]
   },
   "effortLevel": "medium",
   "skipDangerousModePermissionPrompt": true
