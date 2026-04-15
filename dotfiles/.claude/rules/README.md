@@ -7,12 +7,8 @@ Rules are organized into a **common** layer plus **language-specific** directori
 rules/
 ├── common/          # Language-agnostic principles (always install)
 │   ├── coding-style.md
-│   ├── git-workflow.md
 │   ├── testing.md
 │   ├── performance.md
-│   ├── patterns.md
-│   ├── hooks.md
-│   ├── agents.md
 │   └── security.md
 ├── typescript/      # TypeScript/JavaScript specific
 ├── python/          # Python specific
@@ -59,7 +55,6 @@ cp -r rules/golang ~/.claude/rules/golang
 cp -r rules/swift ~/.claude/rules/swift
 cp -r rules/php ~/.claude/rules/php
 
-# Attention ! ! ! Configure according to your actual project requirements; the configuration here is for reference only.
 ```
 
 ## Rules vs Skills
@@ -74,17 +69,11 @@ Language-specific rule files reference relevant skills where appropriate. Rules 
 To add support for a new language (e.g., `rust/`):
 
 1. Create a `rules/rust/` directory
-2. Add files that extend the common rules:
+2. Add files that extend the common rules as needed:
    - `coding-style.md` — formatting tools, idioms, error handling patterns
    - `testing.md` — test framework, coverage tools, test organization
    - `patterns.md` — language-specific design patterns
-   - `hooks.md` — PostToolUse hooks for formatters, linters, type checkers
-   - `security.md` — secret management, security scanning tools
-3. Each file should start with:
-   ```
-   > This file extends [common/xxx.md](../common/xxx.md) with <Language> specific content.
-   ```
-4. Reference existing skills if available, or create new ones under `skills/`.
+3. Reference existing skills if available, or create new ones under `skills/`.
 
 ## Rule Priority
 

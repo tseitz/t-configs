@@ -7,23 +7,6 @@ paths:
 ---
 # TypeScript/JavaScript Patterns
 
-> This file extends [common/patterns.md](../common/patterns.md) with TypeScript/JavaScript specific content.
-
-## API Response Format
-
-```typescript
-interface ApiResponse<T> {
-  success: boolean
-  data?: T
-  error?: string
-  meta?: {
-    total: number
-    page: number
-    limit: number
-  }
-}
-```
-
 ## Custom Hooks Pattern
 
 ```typescript
