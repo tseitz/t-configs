@@ -57,29 +57,46 @@ Before marking code complete:
 | MEDIUM | Maintainability concern | **INFO** - Consider fixing |
 | LOW | Style or minor suggestion | **NOTE** - Optional |
 
-## Agent Usage
+## Personal Code Review (your own work)
 
-Use these agents for code review:
+**Before committing:**
+```
+/code-review                                    # security + quality on uncommitted changes
+/test-coverage                                  # verify 80%+ coverage
+commit skill                                    # runs lint/typecheck/format automatically
+```
+
+**Before creating a PR:**
+```
+/pr-review-toolkit:review-pr code errors        # quality + silent failures
+/pr-review-toolkit:review-pr types              # if new types added
+/pr-review-toolkit:review-pr comments           # if documentation added
+/prp:pr                                         # create the PR
+```
+
+## External PR Review (someone else's code)
+
+```
+/pr-review-toolkit:review-pr all               # runs all specialized agents against the diff
+```
+
+Specialized agents invoked:
+
+| Agent | Catches |
+|-------|---------|
+| **code-reviewer** | Style violations, bugs, CLAUDE.md compliance |
+| **silent-failure-hunter** | Suppressed errors, bad fallbacks, swallowed exceptions |
+| **pr-test-analyzer** | Test coverage gaps, missing edge cases |
+| **comment-analyzer** | Misleading or stale comments, comment rot |
+| **type-design-analyzer** | Weak type invariants, poor encapsulation (TypeScript) |
+
+## General Agents
 
 | Agent | Purpose |
 |-------|---------|
-| **code-reviewer** | General code quality, patterns, best practices |
 | **security-reviewer** | Security vulnerabilities, OWASP Top 10 |
 | **typescript-reviewer** | TypeScript/JavaScript specific issues |
 | **python-reviewer** | Python specific issues |
-| **go-reviewer** | Go specific issues |
-| **rust-reviewer** | Rust specific issues |
-
-## Review Workflow
-
-```
-1. Run git diff to understand changes
-2. Check security checklist first
-3. Review code quality checklist
-4. Run relevant tests
-5. Verify coverage >= 80%
-6. Use appropriate agent for detailed review
-```
 
 ## Common Issues to Catch
 

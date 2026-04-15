@@ -29,10 +29,17 @@ The Feature Implementation Workflow describes the development pipeline: research
    - RED → GREEN → REFACTOR, always in that order
    - Verify 80%+ coverage before marking work done
 
-3. **Code Review**
-   - Use **code-reviewer** agent immediately after writing code
-   - Address CRITICAL and HIGH issues
-   - Fix MEDIUM issues when possible
+3. **Code Review** — two phases depending on where you are
+
+   **Before committing** (catching issues early):
+   - `/code-review` — security + quality check on uncommitted local changes
+   - Address all CRITICAL and HIGH issues before proceeding
+
+   **Before creating a PR** (fuller sweep):
+   - `/pr-review-toolkit:review-pr code errors` — quality + silent failure check
+   - `/pr-review-toolkit:review-pr types` — if new types were added
+   - `/pr-review-toolkit:review-pr comments` — if documentation was added
+   - See [code-review.md](code-review.md) for severity levels and agent reference
 
 4. **Test Coverage**
    - Run `/test-coverage` after implementation to verify 80%+ coverage
