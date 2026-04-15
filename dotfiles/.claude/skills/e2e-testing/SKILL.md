@@ -155,8 +155,8 @@ test('conditional skip', async ({ page }) => {
 ### Identify Flakiness
 
 ```bash
-npx playwright test tests/search.spec.ts --repeat-each=10
-npx playwright test tests/search.spec.ts --retries=3
+pnpm playwright test tests/search.spec.ts --repeat-each=10
+pnpm playwright test tests/search.spec.ts --retries=3
 ```
 
 ### Common Causes & Fixes
@@ -238,8 +238,8 @@ jobs:
         with:
           node-version: 20
       - run: npm ci
-      - run: npx playwright install --with-deps
-      - run: npx playwright test
+      - run: pnpm playwright install --with-deps
+      - run: pnpm playwright test
         env:
           BASE_URL: ${{ vars.STAGING_URL }}
       - uses: actions/upload-artifact@v4
@@ -277,50 +277,3 @@ jobs:
 - Traces: artifacts/*.zip
 ```
 
-## Wallet / Web3 Testing
-
-```typescript
-test('wallet connection', async ({ page, context }) => {
-  // Mock wallet provider
-  await context.addInitScript(() => {
-    window.ethereum = {
-      isMetaMask: true,
-      request: async ({ method }) => {
-        if (method === 'eth_requestAccounts')
-          return ['0x1234567890123456789012345678901234567890']
-        if (method === 'eth_chainId') return '0x1'
-      }
-    }
-  })
-
-  await page.goto('/')
-  await page.locator('[data-testid="connect-wallet"]').click()
-  await expect(page.locator('[data-testid="wallet-address"]')).toContainText('0x1234')
-})
-```
-
-## Financial / Critical Flow Testing
-
-```typescript
-test('trade execution', async ({ page }) => {
-  // Skip on production — real money
-  test.skip(process.env.NODE_ENV === 'production', 'Skip on production')
-
-  await page.goto('/markets/test-market')
-  await page.locator('[data-testid="position-yes"]').click()
-  await page.locator('[data-testid="trade-amount"]').fill('1.0')
-
-  // Verify preview
-  const preview = page.locator('[data-testid="trade-preview"]')
-  await expect(preview).toContainText('1.0')
-
-  // Confirm and wait for blockchain
-  await page.locator('[data-testid="confirm-trade"]').click()
-  await page.waitForResponse(
-    resp => resp.url().includes('/api/trade') && resp.status() === 200,
-    { timeout: 30000 }
-  )
-
-  await expect(page.locator('[data-testid="trade-success"]')).toBeVisible()
-})
-```

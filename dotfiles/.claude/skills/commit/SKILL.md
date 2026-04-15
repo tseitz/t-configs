@@ -1,127 +1,140 @@
 ---
 name: commit
-description: Always use this skill when committing code changes — never commit directly without it. Creates commits following Sentry conventions with proper conventional commit format and issue references. Trigger on any commit, git commit, save changes, or commit message task.
+description: Always use this skill when committing code changes — never commit directly without it. Handles branch safety, conventional commit format, and smart file staging. Trigger on any commit, git commit, save changes, or commit message task.
 ---
 
-# Sentry Commit Messages
+# Commit
 
-Follow these conventions when creating commits for Sentry projects.
-
-## Prerequisites
-
-Before committing, always check the current branch:
+## Step 1 — Branch Guard
 
 ```bash
 git branch --show-current
 ```
 
-**If you're on `main` or `master`, you MUST create a feature branch first** — unless the user explicitly asked to commit to main, or CLAUDE.md says to develop directly on main. Do not ask for confirmation; default to creating the branch. Check CLAUDE.md first if unsure.
+**If on `main` or `master`**, create a feature branch first — unless the user explicitly asked to commit to main, or CLAUDE.md says to develop directly on main.
 
 ```bash
-# Create and switch to a new branch
 git checkout -b <type>/<short-description>
 ```
 
-Branch naming should follow the pattern: `<type>/<short-description>` where type matches the commit type (e.g., `feat/add-user-auth`, `fix/null-pointer-error`, `ref/extract-validation`).
+Branch naming: `<type>/<short-description>` matching the commit type (e.g., `feat/add-user-auth`, `fix/null-pointer-error`, `refactor/extract-validation`).
 
-## Format
+## Step 2 — Pre-Commit Checks
 
+Run the project's local checks before staging anything. Check `package.json`, `Makefile`, `pyproject.toml`, etc. to find the right commands. Typical checks:
+
+- **Tests** — run the test suite (or relevant subset)
+- **Typecheck** — e.g., `tsc --noEmit`, `mypy`, `pyright`
+- **Lint / Format** — e.g., `eslint`, `ruff check`, `prettier --check`
+
+If any check fails, stop and report. Do not proceed to staging until the working tree is clean.
+
+If no check commands are discoverable, note it and continue.
+
+## Step 3 — Staging
+
+**Does the user's request target specific files or describe a subset of changes?**
+
+Examples of targeted requests:
+- "commit the auth changes"
+- "commit what we've been working on"
+- "commit everything except tests"
+- "commit only the new files"
+- "commit the migration"
+
+If **yes** → use the Skill tool to invoke `/prp/stage-commit <description>` to handle staging, then continue to Step 4.
+
+If **no** (e.g., "commit my changes", "commit everything", no description) → stage directly:
+
+```bash
+git add -A
+git diff --cached --stat
+```
+
+If nothing staged, stop: "Nothing to commit."
+
+## Step 4 — Commit Message
+
+Format:
 ```
 <type>(<scope>): <subject>
 
 <body>
-
-<footer>
 ```
 
-The header is required. Scope is optional. All lines must stay under 100 characters.
+Header required. Scope optional. All lines under 100 characters.
 
-## Commit Types
+### Types
 
 | Type | Purpose |
 |------|---------|
 | `feat` | New feature |
 | `fix` | Bug fix |
-| `ref` | Refactoring (no behavior change) |
+| `refactor` | Code restructuring, no behavior change |
 | `perf` | Performance improvement |
 | `docs` | Documentation only |
 | `test` | Test additions or corrections |
 | `build` | Build system or dependencies |
 | `ci` | CI configuration |
 | `chore` | Maintenance tasks |
-| `style` | Code formatting (no logic change) |
-| `meta` | Repository metadata |
-| `license` | License changes |
+| `style` | Code formatting, no logic change |
 
-## Subject Line Rules
+### Subject Line Rules
 
-- Use imperative, present tense: "Add feature" not "Added feature"
-- Capitalize the first letter
+- Imperative, present tense: "Add feature" not "Added feature"
 - No period at the end
-- Maximum 60 characters
+- Under 72 characters
 
-## Body Guidelines
+### Body Guidelines
 
 - Explain **what** and **why**, not how
-- Use imperative mood and present tense
-- Include motivation for the change
-- Contrast with previous behavior when relevant
+- Only include if the subject line isn't self-explanatory
+
+```bash
+git commit -m "<type>(<scope>): <subject>"
+# or with body:
+git commit -m "$(cat <<'EOF'
+<type>(<scope>): <subject>
+
+<body>
+EOF
+)"
+```
 
 ## Examples
 
-### Simple fix
-
 ```
-fix(api): Handle null response in user endpoint
-
-The user API could return null for deleted accounts, causing a crash
-in the dashboard. Add null check before accessing user properties.
+fix(api): handle null response in user endpoint
 ```
 
-### Feature with scope
-
 ```
-feat(MF-5555): Add Slack thread replies for alert updates
-
-When an alert is updated or resolved, post a reply to the original
-Slack thread instead of creating a new message. This keeps related
-notifications grouped together.
+feat: add real-time market resolution notifications
 ```
 
-### Refactor
-
 ```
-ref: Extract common validation logic to shared module
+refactor: extract validation logic to shared module
 
-Move duplicate validation code from three endpoints into a shared
-validator class. No behavior change.
+Move duplicate validation from three endpoints into a shared
+validator. No behavior change.
 ```
 
-### Breaking change
-
 ```
-feat(api)!: Remove deprecated v1 endpoints
-
-Remove all v1 API endpoints that were deprecated in version 23.1.
-Clients should migrate to v2 endpoints.
+feat(api)!: remove deprecated v1 endpoints
 
 BREAKING CHANGE: v1 endpoints no longer available
-Fixes SENTRY-9999
 ```
 
-## Revert Format
+### Revert
 
 ```
-revert: feat(api): Add new endpoint
+revert: feat(api): add new endpoint
 
 This reverts commit abc123def456.
-
-Reason: Caused performance regression in production.
+Reason: caused performance regression in production.
 ```
 
 ## Principles
 
 - Each commit should be a single, stable change
 - Commits should be independently reviewable
-- The repository should be in a working state after each commit
-- Use a Jira ticket if you have it (MF-5555)
+- The repo should be in a working state after each commit

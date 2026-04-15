@@ -2,29 +2,24 @@
 
 ## Model Selection Strategy
 
-**Haiku 4.5** (90% of Sonnet capability, 3x cost savings):
-- Lightweight agents with frequent invocation
-- Pair programming and code generation
-- Worker agents in multi-agent systems
+Choose the right model for the task. Cheaper models are significantly faster and cost less — only escalate when the task genuinely requires it.
 
-**Sonnet 4.6** (Best coding model):
-- Main development work
-- Orchestrating multi-agent workflows
-- Complex coding tasks
+| Model | API ID | Use for |
+|-------|--------|---------|
+| **Haiku 4.5** | `claude-haiku-4-5-20251001` | Lightweight agents, frequent invocation, worker agents in multi-agent systems |
+| **Sonnet 4.6** | `claude-sonnet-4-6` | Main development work, complex coding tasks, orchestrating multi-agent workflows |
+| **Opus 4.6** | `claude-opus-4-6` | Complex architectural decisions, maximum reasoning, deep research and analysis |
 
-**Opus 4.5** (Deepest reasoning):
-- Complex architectural decisions
-- Maximum reasoning requirements
-- Research and analysis tasks
+**Default to Sonnet 4.6.** Drop to Haiku for high-frequency or simple tasks. Escalate to Opus only when depth of reasoning is the bottleneck.
 
 ## Context Window Management
 
-Avoid last 20% of context window for:
+Avoid the last 20% of the context window for:
 - Large-scale refactoring
 - Feature implementation spanning multiple files
 - Debugging complex interactions
 
-Lower context sensitivity tasks:
+Lower context sensitivity tasks (fine to run anywhere):
 - Single-file edits
 - Independent utility creation
 - Documentation updates
