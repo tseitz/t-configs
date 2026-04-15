@@ -9,6 +9,17 @@
     "pr": ""
   },
   "hooks": {
+    "PreCompact": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "~/.claude/scripts/hooks/pre-compact.js"
+          }
+        ]
+      }
+    ],
     "SessionEnd": [
       {
         "matcher": ".*",
@@ -27,6 +38,10 @@
           {
             "type": "command",
             "command": "__claudebar_hook() { PORT=$(cat \"$HOME/.claude/claudebar-hook-port\" 2>/dev/null || echo 19847); cat | curl -s -X POST \"http://localhost:${PORT}/hook\" -H 'Content-Type: application/json' -d @- > /dev/null 2>&1 & }; __claudebar_hook"
+          },
+          {
+            "type": "command",
+            "command": "~/.claude/scripts/hooks/session-start.js"
           }
         ]
       }
@@ -38,6 +53,10 @@
           {
             "type": "command",
             "command": "__claudebar_hook() { PORT=$(cat \"$HOME/.claude/claudebar-hook-port\" 2>/dev/null || echo 19847); cat | curl -s -X POST \"http://localhost:${PORT}/hook\" -H 'Content-Type: application/json' -d @- > /dev/null 2>&1 & }; __claudebar_hook"
+          },
+          {
+            "type": "command",
+            "command": "~/.claude/scripts/hooks/session-end.js"
           }
         ]
       },

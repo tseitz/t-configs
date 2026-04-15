@@ -10,6 +10,11 @@
       "~/.superset/worktrees/"
     ]
   },
+  "mcpServers": {
+    "ref": {
+      "httpUrl": "https://api.ref.tools/mcp?apiKey=${REF_API_KEY}"
+    }
+  },
   "skills": {
     "disabled": [
       "agent-harness-construction",
@@ -108,7 +113,8 @@
     "showStatusInTitle": true,
     "footer": {
       "hideContextPercentage": false
-    }
+    },
+    "hideFooter": false
   },
   "ide": {
     "enabled": true

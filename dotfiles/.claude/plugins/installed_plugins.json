@@ -101,16 +101,6 @@
         "gitCommitSha": "205b6e0b30366a969412d9aab7b99bea99d58db1"
       }
     ],
-    "context7@claude-plugins-official": [
-      {
-        "scope": "user",
-        "installPath": "/Users/tseitz/.claude/plugins/cache/claude-plugins-official/context7/b091cb4179d3",
-        "version": "b091cb4179d3",
-        "installedAt": "2026-04-02T04:12:10.748Z",
-        "lastUpdated": "2026-04-02T04:12:10.748Z",
-        "gitCommitSha": "b091cb4179d3b62a6e2a39910461c7ec7165b1ef"
-      }
-    ],
     "astral@astral-sh": [
       {
         "scope": "user",
