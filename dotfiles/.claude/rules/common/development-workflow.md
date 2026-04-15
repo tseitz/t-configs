@@ -34,10 +34,15 @@ The Feature Implementation Workflow describes the development pipeline: research
    - Address CRITICAL and HIGH issues
    - Fix MEDIUM issues when possible
 
-4. **Pre-Commit Checks**
+4. **Test Coverage**
+   - Run `/test-coverage` after implementation to verify 80%+ coverage
+   - Generates missing tests for uncovered branches, error paths, and edge cases
+   - Re-run until coverage passes before moving to commit
+
+5. **Pre-Commit Checks**
    - Resolve any merge conflicts and ensure branch is up to date with target branch
    - The `commit` skill runs tests, typechecks, lint, and formatting automatically before staging
 
-5. **Commit & Push**
+6. **Commit & Push**
    - Use the `commit` skill — handles branch safety, staging, and conventional commit format
    - For targeted staging ("commit the auth changes") it routes through `/prp/stage-commit` automatically
