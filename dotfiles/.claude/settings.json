@@ -167,18 +167,25 @@
     "command": "bash $HOME/.claude/statusline-command.sh"
   },
   "enabledPlugins": {
+    "astral@astral-sh": true,
     "claude-md-management@claude-plugins-official": true,
+    "code-review@claude-plugins-official": false,
     "code-simplifier@claude-plugins-official": true,
     "explanatory-output-style@claude-plugins-official": true,
     "firecrawl@claude-plugins-official": false,
     "playwright@claude-plugins-official": true,
+    "pr-review-toolkit@claude-plugins-official": true,
     "pyright-lsp@claude-plugins-official": false,
     "superpowers@claude-plugins-official": true,
-    "typescript-lsp@claude-plugins-official": true,
-    "pr-review-toolkit@claude-plugins-official": true,
-    "code-review@claude-plugins-official": false
+    "typescript-lsp@claude-plugins-official": true
   },
   "extraKnownMarketplaces": {
+    "astral-sh": {
+      "source": {
+        "source": "github",
+        "repo": "astral-sh/claude-code-plugins"
+      }
+    },
     "cc-marketplace": {
       "source": {
         "source": "github",
