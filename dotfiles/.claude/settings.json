@@ -17,8 +17,7 @@
             "type": "command",
             "command": "~/.claude/scripts/hooks/config-protection.js"
           }
-        ],
-        "description": "Block modifications to linter/formatter config files"
+        ]
       }
     ],
     "PostToolUse": [
@@ -29,8 +28,7 @@
             "type": "command",
             "command": "~/.claude/scripts/hooks/post-edit-accumulator.js"
           }
-        ],
-        "description": "Accumulate edited JS/TS files for batch format+typecheck at Stop"
+        ]
       },
       {
         "matcher": "Bash",
@@ -39,8 +37,7 @@
             "type": "command",
             "command": "~/.claude/scripts/hooks/post-bash-pr-created.js"
           }
-        ],
-        "description": "Log PR URL after gh pr create"
+        ]
       }
     ],
     "PreCompact": [
@@ -102,8 +99,7 @@
             "command": "~/.claude/scripts/hooks/stop-format-typecheck.js",
             "timeout": 300
           }
-        ],
-        "description": "Batch format (Biome/Prettier) and typecheck all JS/TS files edited this response"
+        ]
       },
       {
         "matcher": "*",
@@ -111,11 +107,10 @@
           {
             "type": "command",
             "command": "~/.claude/scripts/hooks/desktop-notify.js",
-            "async": true,
-            "timeout": 10
+            "timeout": 10,
+            "async": true
           }
-        ],
-        "description": "Send macOS desktop notification when Claude responds"
+        ]
       }
     ],
     "SubagentStart": [
@@ -197,8 +192,13 @@
     "enabled": true,
     "autoAllowBashIfSandboxed": true,
     "network": {
-      "allowedDomains": ["github.com", "api.github.com"],
-      "allowUnixSockets": ["~/.docker/run/docker.sock"],
+      "allowedDomains": [
+        "github.com",
+        "api.github.com"
+      ],
+      "allowUnixSockets": [
+        "~/.docker/run/docker.sock"
+      ],
       "allowLocalBinding": true
     },
     "filesystem": {
@@ -211,8 +211,11 @@
       ]
     },
     "enableWeakerNetworkIsolation": true,
-    "excludedCommands": ["chrome-headless-shell"]
+    "excludedCommands": [
+      "chrome-headless-shell"
+    ]
   },
   "effortLevel": "medium",
-  "skipDangerousModePermissionPrompt": true
+  "skipDangerousModePermissionPrompt": true,
+  "model": "sonnet"
 }

@@ -20,8 +20,6 @@ const {
   stripAnsi,
   log
 } = require('../lib/utils');
-const { getPackageManager, getSelectionPrompt } = require('../lib/package-manager');
-const { listAliases } = require('../lib/session-aliases');
 const { detectProjectType } = require('../lib/project-detect');
 const path = require('path');
 const fs = require('fs');
@@ -197,23 +195,11 @@ async function main() {
     log(`[SessionStart] ${learnedSkills.length} learned skill(s) available in ${learnedDir}`);
   }
 
-  // Check for available session aliases
-  const aliases = listAliases({ limit: 5 });
-
-  if (aliases.length > 0) {
-    const aliasNames = aliases.map(a => a.name).join(', ');
-    log(`[SessionStart] ${aliases.length} session alias(es) available: ${aliasNames}`);
-    log(`[SessionStart] Use /sessions load <alias> to continue a previous session`);
-  }
-
-  // Detect and report package manager
-  const pm = getPackageManager();
-  log(`[SessionStart] Package manager: ${pm.name} (${pm.source})`);
-
-  // If no explicit package manager config was found, show selection prompt
-  if (pm.source === 'default') {
-    log('[SessionStart] No package manager preference found.');
-    log(getSelectionPrompt());
+  // Detect package manager from lock files
+  const PM_LOCKFILES = { 'pnpm-lock.yaml': 'pnpm', 'yarn.lock': 'yarn', 'bun.lockb': 'bun', 'package-lock.json': 'npm' };
+  const pmEntry = Object.entries(PM_LOCKFILES).find(([f]) => fs.existsSync(path.join(cwd, f)));
+  if (pmEntry) {
+    log(`[SessionStart] Package manager: ${pmEntry[1]}`);
   }
 
   // Detect project type and frameworks (#293)
