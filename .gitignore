@@ -7,6 +7,7 @@ dotfiles/.claude/settings.local.json
 dotfiles/.claude/plugins/cache/
 dotfiles/.claude/plugins/blocklist.json
 dotfiles/.claude/plugins/install-counts-cache.json
+dotfiles/.claude/plugins/installed_plugins.json
 dotfiles/.claude/plugins/known_marketplaces.json
 dotfiles/.claude/plugins/data/
 dotfiles/.claude/plugins/marketplaces/

@@ -128,7 +128,7 @@
     "superpowers@claude-plugins-official": true,
     "typescript-lsp@claude-plugins-official": true,
     "pr-review-toolkit@claude-plugins-official": true,
-    "code-review@claude-plugins-official": true
+    "code-review@claude-plugins-official": false
   },
   "extraKnownMarketplaces": {
     "cc-marketplace": {
