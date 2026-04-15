@@ -99,15 +99,6 @@
         "hooks": [
           {
             "type": "command",
-            "command": "~/.claude/skills/continuous-learning/evaluate-session.sh"
-          }
-        ]
-      },
-      {
-        "matcher": "*",
-        "hooks": [
-          {
-            "type": "command",
             "command": "~/.claude/scripts/hooks/stop-format-typecheck.js",
             "timeout": 300
           }
