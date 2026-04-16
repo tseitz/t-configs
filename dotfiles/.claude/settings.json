@@ -192,13 +192,8 @@
     "enabled": true,
     "autoAllowBashIfSandboxed": true,
     "network": {
-      "allowedDomains": [
-        "github.com",
-        "api.github.com"
-      ],
-      "allowUnixSockets": [
-        "~/.docker/run/docker.sock"
-      ],
+      "allowedDomains": ["github.com", "api.github.com"],
+      "allowUnixSockets": ["~/.docker/run/docker.sock"],
       "allowLocalBinding": true
     },
     "filesystem": {
@@ -211,10 +206,7 @@
       ]
     },
     "enableWeakerNetworkIsolation": true,
-    "excludedCommands": [
-      "chrome-headless-shell",
-      "mkdir"
-    ]
+    "excludedCommands": ["chrome-headless-shell", "mkdir"]
   },
   "effortLevel": "medium",
   "skipDangerousModePermissionPrompt": true
