@@ -212,10 +212,10 @@
     },
     "enableWeakerNetworkIsolation": true,
     "excludedCommands": [
-      "chrome-headless-shell"
+      "chrome-headless-shell",
+      "mkdir"
     ]
   },
   "effortLevel": "medium",
-  "skipDangerousModePermissionPrompt": true,
-  "model": "sonnet"
+  "skipDangerousModePermissionPrompt": true
 }
