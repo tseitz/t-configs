@@ -170,7 +170,7 @@
     "firecrawl@claude-plugins-official": false,
     "playwright@claude-plugins-official": true,
     "pr-review-toolkit@claude-plugins-official": true,
-    "pyright-lsp@claude-plugins-official": false,
+    "pyright-lsp@claude-plugins-official": true,
     "superpowers@claude-plugins-official": true,
     "typescript-lsp@claude-plugins-official": true
   },
@@ -192,8 +192,13 @@
     "enabled": true,
     "autoAllowBashIfSandboxed": true,
     "network": {
-      "allowedDomains": ["github.com", "api.github.com"],
-      "allowUnixSockets": ["~/.docker/run/docker.sock"],
+      "allowedDomains": [
+        "github.com",
+        "api.github.com"
+      ],
+      "allowUnixSockets": [
+        "~/.docker/run/docker.sock"
+      ],
       "allowLocalBinding": true
     },
     "filesystem": {
@@ -206,7 +211,10 @@
       ]
     },
     "enableWeakerNetworkIsolation": true,
-    "excludedCommands": ["chrome-headless-shell", "mkdir"]
+    "excludedCommands": [
+      "chrome-headless-shell",
+      "mkdir"
+    ]
   },
   "effortLevel": "medium",
   "skipDangerousModePermissionPrompt": true
