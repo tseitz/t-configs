@@ -8,6 +8,7 @@
     "commit": "",
     "pr": ""
   },
+  "model": "opus[1m]",
   "hooks": {
     "PreToolUse": [
       {
@@ -216,6 +217,6 @@
       "mkdir"
     ]
   },
-  "effortLevel": "medium",
+  "effortLevel": "xhigh",
   "skipDangerousModePermissionPrompt": true
 }
