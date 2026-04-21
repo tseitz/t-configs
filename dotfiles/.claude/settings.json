@@ -193,13 +193,8 @@
     "enabled": true,
     "autoAllowBashIfSandboxed": true,
     "network": {
-      "allowedDomains": [
-        "github.com",
-        "api.github.com"
-      ],
-      "allowUnixSockets": [
-        "~/.docker/run/docker.sock"
-      ],
+      "allowedDomains": ["github.com", "api.github.com"],
+      "allowUnixSockets": ["~/.docker/run/docker.sock"],
       "allowLocalBinding": true
     },
     "filesystem": {
@@ -207,15 +202,11 @@
         "~/.cache/uv",
         "~/.cache/pre-commit",
         "~/.matplotlib",
-        "~/Library/Caches/mise",
-        "~/.superset/worktrees/"
+        "~/Library/Caches/mise"
       ]
     },
     "enableWeakerNetworkIsolation": true,
-    "excludedCommands": [
-      "chrome-headless-shell",
-      "mkdir"
-    ]
+    "excludedCommands": ["chrome-headless-shell", "mkdir"]
   },
   "effortLevel": "xhigh",
   "skipDangerousModePermissionPrompt": true

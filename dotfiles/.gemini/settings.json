@@ -6,8 +6,7 @@
       "~/.cache/uv",
       "~/.cache/pre-commit",
       "~/.matplotlib",
-      "~/Library/Caches/mise",
-      "~/.superset/worktrees/"
+      "~/Library/Caches/mise"
     ]
   },
   "mcpServers": {
