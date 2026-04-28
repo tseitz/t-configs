@@ -106,14 +106,18 @@
   },
   "general": {
     "defaultApprovalMode": "auto_edit",
-    "enableNotifications": true
+    "enableNotifications": true,
+    "vimMode": true
   },
   "ui": {
     "showStatusInTitle": true,
     "footer": {
       "hideContextPercentage": false
     },
-    "hideFooter": false
+    "showModelInfoInChat": true,
+    "terminalBuffer": true,
+    "loadingPhrases": "tips",
+    "errorVerbosity": "full"
   },
   "ide": {
     "enabled": true
@@ -122,5 +126,12 @@
     "auth": {
       "selectedType": "oauth-personal"
     }
+  },
+  "model": {
+    "name": "",
+    "compressionThreshold": 0.5
+  },
+  "experimental": {
+    "directWebFetch": false
   }
 }
