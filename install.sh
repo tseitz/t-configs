@@ -244,8 +244,17 @@ step_symlinks() {
   create_symlink "$DOTFILES_DIR/.claude/hooks"    "$HOME/.claude/hooks"
   create_symlink "$DOTFILES_DIR/.claude/scripts"  "$HOME/.claude/scripts"
 
-  # Individual files
-  create_symlink "$DOTFILES_DIR/.claude/settings.json"          "$HOME/.claude/settings.json"
+  # settings.json is COPIED (not symlinked) because Claude Code uses atomic writes
+  # (write-temp + rename) which replace symlinks with regular files. Copy it so
+  # the app can write settings normally. To sync changes back, run:
+  #   cp ~/.claude/settings.json t-configs/dotfiles/.claude/settings.json
+  if [ -f "$HOME/.claude/settings.json" ] && [ ! -L "$HOME/.claude/settings.json" ]; then
+    info "settings.json already exists as a regular file (good — Claude Code atomic writes require this)"
+  else
+    [ -L "$HOME/.claude/settings.json" ] && warn "Replacing settings.json symlink with a copy (symlinks break Claude Code atomic writes)" && rm "$HOME/.claude/settings.json"
+    cp "$DOTFILES_DIR/.claude/settings.json" "$HOME/.claude/settings.json"
+    success "settings.json copied to ~/.claude/"
+  fi
   create_symlink "$DOTFILES_DIR/.claude/AGENTS.md"              "$HOME/.claude/AGENTS.md"
   create_symlink "$DOTFILES_DIR/.claude/README.md"              "$HOME/.claude/README.md"
   create_symlink "$DOTFILES_DIR/.claude/plugin.json"            "$HOME/.claude/plugin.json"

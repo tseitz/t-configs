@@ -8,19 +8,7 @@
     "commit": "",
     "pr": ""
   },
-  "model": "opus[1m]",
   "hooks": {
-    "PreToolUse": [
-      {
-        "matcher": "Write|Edit|MultiEdit",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "~/.claude/scripts/hooks/config-protection.js"
-          }
-        ]
-      }
-    ],
     "PostToolUse": [
       {
         "matcher": "Edit|Write|MultiEdit",
@@ -39,6 +27,15 @@
             "command": "~/.claude/scripts/hooks/post-bash-pr-created.js"
           }
         ]
+      },
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "[ -n \"$SUPERSET_HOME_DIR\" ] && [ -x \"$SUPERSET_HOME_DIR/hooks/notify.sh\" ] && \"$SUPERSET_HOME_DIR/hooks/notify.sh\" || true"
+          }
+        ]
       }
     ],
     "PreCompact": [
@@ -52,6 +49,17 @@
         ]
       }
     ],
+    "PreToolUse": [
+      {
+        "matcher": "Write|Edit|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "~/.claude/scripts/hooks/config-protection.js"
+          }
+        ]
+      }
+    ],
     "SessionEnd": [
       {
         "matcher": ".*",
@@ -59,6 +67,15 @@
           {
             "type": "command",
             "command": "__claudebar_hook() { PORT=$(cat \"$HOME/.claude/claudebar-hook-port\" 2>/dev/null || echo 19847); cat | curl -s -X POST \"http://localhost:${PORT}/hook\" -H 'Content-Type: application/json' -d @- > /dev/null 2>&1 & }; __claudebar_hook"
+          }
+        ]
+      },
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "cmp -s \"$HOME/.claude/settings.json\" \"$HOME/t-configs/dotfiles/.claude/settings.json\" || cp \"$HOME/.claude/settings.json\" \"$HOME/t-configs/dotfiles/.claude/settings.json\"",
+            "async": true
           }
         ]
       }
@@ -70,28 +87,11 @@
           {
             "type": "command",
             "command": "__claudebar_hook() { PORT=$(cat \"$HOME/.claude/claudebar-hook-port\" 2>/dev/null || echo 19847); cat | curl -s -X POST \"http://localhost:${PORT}/hook\" -H 'Content-Type: application/json' -d @- > /dev/null 2>&1 & }; __claudebar_hook"
-          },
-          {
-            "type": "command",
-            "command": "~/.claude/scripts/hooks/session-start.js"
           }
         ]
       }
     ],
     "Stop": [
-      {
-        "matcher": ".*",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "__claudebar_hook() { PORT=$(cat \"$HOME/.claude/claudebar-hook-port\" 2>/dev/null || echo 19847); cat | curl -s -X POST \"http://localhost:${PORT}/hook\" -H 'Content-Type: application/json' -d @- > /dev/null 2>&1 & }; __claudebar_hook"
-          },
-          {
-            "type": "command",
-            "command": "~/.claude/scripts/hooks/session-end.js"
-          }
-        ]
-      },
       {
         "matcher": "*",
         "hooks": [
@@ -110,6 +110,23 @@
             "command": "~/.claude/scripts/hooks/desktop-notify.js",
             "timeout": 10,
             "async": true
+          }
+        ]
+      },
+      {
+        "matcher": ".*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "__claudebar_hook() { PORT=$(cat \"$HOME/.claude/claudebar-hook-port\" 2>/dev/null || echo 19847); cat | curl -s -X POST \"http://localhost:${PORT}/hook\" -H 'Content-Type: application/json' -d @- > /dev/null 2>&1 & }; __claudebar_hook"
+          }
+        ]
+      },
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "[ -n \"$SUPERSET_HOME_DIR\" ] && [ -x \"$SUPERSET_HOME_DIR/hooks/notify.sh\" ] && \"$SUPERSET_HOME_DIR/hooks/notify.sh\" || true"
           }
         ]
       }
@@ -155,6 +172,36 @@
             "command": "input=$(cat); echo \"$input\" | jq -e '.prompt | test(\"^\\\\s*/extra-usage\\\\s*$\")' > /dev/null 2>&1 && echo '{\"continue\": false, \"stopReason\": \"Blocked /extra-usage — run it intentionally from settings if needed.\"}' || true"
           }
         ]
+      },
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "[ -n \"$SUPERSET_HOME_DIR\" ] && [ -x \"$SUPERSET_HOME_DIR/hooks/notify.sh\" ] && \"$SUPERSET_HOME_DIR/hooks/notify.sh\" || true"
+          }
+        ]
+      }
+    ],
+    "PostToolUseFailure": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "[ -n \"$SUPERSET_HOME_DIR\" ] && [ -x \"$SUPERSET_HOME_DIR/hooks/notify.sh\" ] && \"$SUPERSET_HOME_DIR/hooks/notify.sh\" || true"
+          }
+        ]
+      }
+    ],
+    "PermissionRequest": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "[ -n \"$SUPERSET_HOME_DIR\" ] && [ -x \"$SUPERSET_HOME_DIR/hooks/notify.sh\" ] && \"$SUPERSET_HOME_DIR/hooks/notify.sh\" || true"
+          }
+        ]
       }
     ]
   },
@@ -173,7 +220,12 @@
     "pr-review-toolkit@claude-plugins-official": true,
     "pyright-lsp@claude-plugins-official": true,
     "superpowers@claude-plugins-official": true,
-    "typescript-lsp@claude-plugins-official": true
+    "typescript-lsp@claude-plugins-official": true,
+    "github@claude-plugins-official": true,
+    "security-guidance@claude-plugins-official": true,
+    "atlassian@claude-plugins-official": true,
+    "chrome-devtools-mcp@claude-plugins-official": true,
+    "sentry@claude-plugins-official": true
   },
   "extraKnownMarketplaces": {
     "astral-sh": {
@@ -193,8 +245,13 @@
     "enabled": true,
     "autoAllowBashIfSandboxed": true,
     "network": {
-      "allowedDomains": ["github.com", "api.github.com"],
-      "allowUnixSockets": ["~/.docker/run/docker.sock"],
+      "allowedDomains": [
+        "github.com",
+        "api.github.com"
+      ],
+      "allowUnixSockets": [
+        "~/.docker/run/docker.sock"
+      ],
       "allowLocalBinding": true
     },
     "filesystem": {
@@ -202,12 +259,18 @@
         "~/.cache/uv",
         "~/.cache/pre-commit",
         "~/.matplotlib",
-        "~/Library/Caches/mise"
+        "~/Library/Caches/mise",
+        "~/.superset/worktrees/"
       ]
     },
     "enableWeakerNetworkIsolation": true,
-    "excludedCommands": ["chrome-headless-shell", "mkdir"]
+    "excludedCommands": [
+      "chrome-headless-shell",
+      "mkdir"
+    ]
   },
   "effortLevel": "xhigh",
-  "skipDangerousModePermissionPrompt": true
+  "awaySummaryEnabled": false,
+  "skipDangerousModePermissionPrompt": true,
+  "editorMode": "vim"
 }
