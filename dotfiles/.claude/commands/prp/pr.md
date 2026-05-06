@@ -116,11 +116,7 @@ Use this default format:
 
 ## Changes
 
-<bulleted list of changes grouped by area>
-
-## Files Changed
-
-<table or list of changed files with change type: Added/Modified/Deleted>
+<High-level bulleted list — what changed conceptually, not a file-by-file enumeration. The reviewer can see exact files in the diff. 3–6 bullets is typical; group related work together.>
 
 ## Testing
 
@@ -133,11 +129,16 @@ Use this default format:
 
 ### Create the PR
 
+Pass the body via a single-quoted heredoc so backticks, `$`, and other special characters render literally. **Do not** put the body inside a double-quoted `--body "..."` — bash will interpret backticks as command substitution, and pre-emptive `\`` escaping leaks the literal backslash into the PR description.
+
 ```bash
 gh pr create \
   --title "<PR title>" \
   --base <base-branch> \
-  --body "<PR body>"
+  --body "$(cat <<'EOF'
+<PR body — use `backticks` and $vars freely, no escaping needed>
+EOF
+)"
   # Add --draft if the --draft flag was parsed from $ARGUMENTS
 ```
 
