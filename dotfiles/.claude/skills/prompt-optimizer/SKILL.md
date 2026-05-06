@@ -124,7 +124,7 @@ Map intent + scope + tech stack (from Phase 0) to specific ECC components.
 | Testing | /tdd, /e2e, /test-coverage | tdd-workflow, e2e-testing | tdd-guide, e2e-runner |
 | Review | /code-review | security-review | code-reviewer, security-reviewer |
 | Documentation | /update-docs, /update-codemaps | — | doc-updater |
-| Infrastructure | /plan, /verify | docker-patterns, deployment-patterns, database-migrations | architect |
+| Infrastructure | /plan, /verify | docker-patterns, database-migrations | architect |
 | Design (MEDIUM-HIGH) | /plan | — | planner, architect |
 | Design (EPIC) | — | blueprint (invoke as skill) | planner, architect |
 
