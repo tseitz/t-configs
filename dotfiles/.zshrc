@@ -2,7 +2,7 @@
 # Resolve dotfiles path from this file's location (works when repo is anywhere, e.g. ~/t-configs or /mnt/c/.../t-configs)
 dotfiles_path="${${(%):-%x}:A:h}"
 [[ -z "$dotfiles_path" ]] && dotfiles_path="$HOME/t-configs/dotfiles"
-# Add Homebrew to PATH early so direnv, rbenv, mise are found below
+# Add Homebrew to PATH early so direnv and mise are found below
 if [[ "$OSTYPE" == linux* ]]; then
   eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv 2>/dev/null)" || true
 else
@@ -85,7 +85,6 @@ export PATH="$BUN_INSTALL/bin:$PATH"
 # ===== Tool Initialization =====
 
 command -v direnv &>/dev/null && eval "$(direnv hook zsh)"
-command -v rbenv &>/dev/null && eval "$(rbenv init - zsh)"
 command -v mise &>/dev/null && eval "$(mise activate zsh)"
 
 # Initialize zsh completions (Docker fpath added first so its completions are included)

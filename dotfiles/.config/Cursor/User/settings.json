@@ -304,9 +304,10 @@
   "explorer.confirmDelete": false,
   "python.languageServer": "None",
   "cursorpyright.disableLanguageServices": true,
-  "python.defaultInterpreterPath": "/opt/homebrew/bin/python3",
+  "python.defaultInterpreterPath": "/Users/tseitz/.local/share/mise/installs/python/3.13/bin/python",
   "[markdown]": {
     "editor.defaultFormatter": "DavidAnson.vscode-markdownlint",
   },
   "claudeCode.preferredLocation": "panel",
+  "window.autoDetectColorScheme": false,
 }

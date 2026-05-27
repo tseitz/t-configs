@@ -1,305 +1,316 @@
 {
-  "env": {
-    "CLAUDE_CODE_ATTRIBUTION_HEADER": "0",
-    "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": "1",
-    "CLAUDE_CODE_ENABLE_TELEMETRY": "0"
+  "attribution" : {
+    "commit" : "",
+    "pr" : ""
   },
-  "attribution": {
-    "commit": "",
-    "pr": ""
+  "awaySummaryEnabled" : false,
+  "editorMode" : "vim",
+  "effortLevel" : "xhigh",
+  "enabledPlugins" : {
+    "astral@astral-sh" : true,
+    "atlassian@claude-plugins-official" : true,
+    "chrome-devtools-mcp@claude-plugins-official" : true,
+    "claude-md-management@claude-plugins-official" : true,
+    "code-review@claude-plugins-official" : false,
+    "code-simplifier@claude-plugins-official" : true,
+    "explanatory-output-style@claude-plugins-official" : false,
+    "github@claude-plugins-official" : true,
+    "playwright@claude-plugins-official" : true,
+    "pr-review-toolkit@claude-plugins-official" : true,
+    "pyright-lsp@claude-plugins-official" : true,
+    "security-guidance@claude-plugins-official" : true,
+    "sentry@claude-plugins-official" : true,
+    "superpowers@claude-plugins-official" : true,
+    "typescript-lsp@claude-plugins-official" : true
   },
-  "hooks": {
-    "PostToolUse": [
-      {
-        "matcher": "Edit|Write|MultiEdit",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "~/.claude/scripts/hooks/post-edit-accumulator.js"
-          }
-        ]
-      },
-      {
-        "matcher": "Bash",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "~/.claude/scripts/hooks/post-bash-pr-created.js"
-          }
-        ]
-      },
-      {
-        "matcher": "Edit|Write|MultiEdit",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "f=$(cat | jq -r '.tool_input.file_path // \"\"'); [ \"$f\" = \"$HOME/.claude/settings.json\" ] && cp \"$HOME/.claude/settings.json\" \"$HOME/t-configs/dotfiles/.claude/settings.json\" 2>/dev/null; true"
-          }
-        ]
-      },
-      {
-        "matcher": "*",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "[ -n \"$SUPERSET_HOME_DIR\" ] && [ -x \"$SUPERSET_HOME_DIR/hooks/notify.sh\" ] && \"$SUPERSET_HOME_DIR/hooks/notify.sh\" || true"
-          }
-        ]
-      }
-    ],
-    "PreCompact": [
-      {
-        "matcher": "*",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "~/.claude/scripts/hooks/pre-compact.js"
-          }
-        ]
-      }
-    ],
-    "PreToolUse": [
-      {
-        "matcher": "Write|Edit|MultiEdit",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "~/.claude/scripts/hooks/config-protection.js"
-          }
-        ]
-      }
-    ],
-    "SessionEnd": [
-      {
-        "matcher": ".*",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "__claudebar_hook() { PORT=$(cat \"$HOME/.claude/claudebar-hook-port\" 2>/dev/null || echo 19847); cat | curl -s -X POST \"http://localhost:${PORT}/hook\" -H 'Content-Type: application/json' -d @- > /dev/null 2>&1 & }; __claudebar_hook"
-          }
-        ]
-      },
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "cmp -s \"$HOME/.claude/settings.json\" \"$HOME/t-configs/dotfiles/.claude/settings.json\" || cp \"$HOME/.claude/settings.json\" \"$HOME/t-configs/dotfiles/.claude/settings.json\"",
-            "async": true
-          }
-        ]
-      }
-    ],
-    "SessionStart": [
-      {
-        "matcher": ".*",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "__claudebar_hook() { PORT=$(cat \"$HOME/.claude/claudebar-hook-port\" 2>/dev/null || echo 19847); cat | curl -s -X POST \"http://localhost:${PORT}/hook\" -H 'Content-Type: application/json' -d @- > /dev/null 2>&1 & }; __claudebar_hook"
-          }
-        ]
-      }
-    ],
-    "Stop": [
-      {
-        "matcher": "*",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "~/.claude/scripts/hooks/stop-format-typecheck.js",
-            "timeout": 300
-          }
-        ]
-      },
-      {
-        "matcher": "*",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "~/.claude/scripts/hooks/desktop-notify.js",
-            "timeout": 10,
-            "async": true
-          }
-        ]
-      },
-      {
-        "matcher": ".*",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "__claudebar_hook() { PORT=$(cat \"$HOME/.claude/claudebar-hook-port\" 2>/dev/null || echo 19847); cat | curl -s -X POST \"http://localhost:${PORT}/hook\" -H 'Content-Type: application/json' -d @- > /dev/null 2>&1 & }; __claudebar_hook"
-          }
-        ]
-      },
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "[ -n \"$SUPERSET_HOME_DIR\" ] && [ -x \"$SUPERSET_HOME_DIR/hooks/notify.sh\" ] && \"$SUPERSET_HOME_DIR/hooks/notify.sh\" || true"
-          }
-        ]
-      }
-    ],
-    "SubagentStart": [
-      {
-        "matcher": ".*",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "__claudebar_hook() { PORT=$(cat \"$HOME/.claude/claudebar-hook-port\" 2>/dev/null || echo 19847); cat | curl -s -X POST \"http://localhost:${PORT}/hook\" -H 'Content-Type: application/json' -d @- > /dev/null 2>&1 & }; __claudebar_hook"
-          }
-        ]
-      }
-    ],
-    "SubagentStop": [
-      {
-        "matcher": ".*",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "__claudebar_hook() { PORT=$(cat \"$HOME/.claude/claudebar-hook-port\" 2>/dev/null || echo 19847); cat | curl -s -X POST \"http://localhost:${PORT}/hook\" -H 'Content-Type: application/json' -d @- > /dev/null 2>&1 & }; __claudebar_hook"
-          }
-        ]
-      }
-    ],
-    "TaskCompleted": [
-      {
-        "matcher": ".*",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "__claudebar_hook() { PORT=$(cat \"$HOME/.claude/claudebar-hook-port\" 2>/dev/null || echo 19847); cat | curl -s -X POST \"http://localhost:${PORT}/hook\" -H 'Content-Type: application/json' -d @- > /dev/null 2>&1 & }; __claudebar_hook"
-          }
-        ]
-      }
-    ],
-    "UserPromptSubmit": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "input=$(cat); echo \"$input\" | jq -e '.prompt | test(\"^\\\\s*/extra-usage\\\\s*$\")' > /dev/null 2>&1 && echo '{\"continue\": false, \"stopReason\": \"Blocked /extra-usage — run it intentionally from settings if needed.\"}' || true"
-          }
-        ]
-      },
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "[ -n \"$SUPERSET_HOME_DIR\" ] && [ -x \"$SUPERSET_HOME_DIR/hooks/notify.sh\" ] && \"$SUPERSET_HOME_DIR/hooks/notify.sh\" || true"
-          }
-        ]
-      }
-    ],
-    "PostToolUseFailure": [
-      {
-        "matcher": "*",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "[ -n \"$SUPERSET_HOME_DIR\" ] && [ -x \"$SUPERSET_HOME_DIR/hooks/notify.sh\" ] && \"$SUPERSET_HOME_DIR/hooks/notify.sh\" || true"
-          }
-        ]
-      }
-    ],
-    "PermissionRequest": [
-      {
-        "matcher": "*",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "[ -n \"$SUPERSET_HOME_DIR\" ] && [ -x \"$SUPERSET_HOME_DIR/hooks/notify.sh\" ] && \"$SUPERSET_HOME_DIR/hooks/notify.sh\" || true"
-          }
-        ]
-      }
-    ]
+  "env" : {
+    "ANTHROPIC_CUSTOM_MODEL_OPTION" : "claude-opus-4-6[1m]",
+    "ANTHROPIC_CUSTOM_MODEL_OPTION_NAME" : "Opus 4.6 (1M Context)",
+    "ANTHROPIC_CUSTOM_MODEL_OPTION_DESCRIPTION" : "Opus 4.6 with 1 million token context window",
+    "CLAUDE_CODE_ATTRIBUTION_HEADER" : "0",
+    "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC" : "1",
+    "CLAUDE_CODE_ENABLE_TELEMETRY" : "0"
   },
-  "statusLine": {
-    "type": "command",
-    "command": "bash $HOME/.claude/statusline-command.sh"
-  },
-  "enabledPlugins": {
-    "astral@astral-sh": true,
-    "claude-md-management@claude-plugins-official": true,
-    "code-review@claude-plugins-official": false,
-    "code-simplifier@claude-plugins-official": true,
-    "explanatory-output-style@claude-plugins-official": false,
-    "playwright@claude-plugins-official": true,
-    "pr-review-toolkit@claude-plugins-official": true,
-    "pyright-lsp@claude-plugins-official": true,
-    "superpowers@claude-plugins-official": true,
-    "typescript-lsp@claude-plugins-official": true,
-    "github@claude-plugins-official": true,
-    "security-guidance@claude-plugins-official": true,
-    "atlassian@claude-plugins-official": true,
-    "chrome-devtools-mcp@claude-plugins-official": true,
-    "sentry@claude-plugins-official": true
-  },
-  "skillOverrides": {
-    "sentry:sentry-android-sdk": "off",
-    "sentry:sentry-cloudflare-sdk": "off",
-    "sentry:sentry-cocoa-sdk": "off",
-    "sentry:sentry-dotnet-sdk": "off",
-    "sentry:sentry-elixir-sdk": "off",
-    "sentry:sentry-flutter-sdk": "off",
-    "sentry:sentry-go-sdk": "off",
-    "sentry:sentry-nestjs-sdk": "off",
-    "sentry:sentry-nextjs-sdk": "off",
-    "sentry:sentry-php-sdk": "off",
-    "sentry:sentry-react-native-sdk": "off",
-    "sentry:sentry-react-router-framework-sdk": "off",
-    "sentry:sentry-ruby-sdk": "off",
-    "sentry:sentry-svelte-sdk": "off",
-    "sentry:sentry-tanstack-start-sdk": "off",
-    "sentry:sentry-otel-exporter-setup": "off",
-    "sentry:sentry-sdk-setup": "off",
-    "sentry:sentry-sdk-upgrade": "off",
-    "sentry:sentry-sdk-skill-creator": "off"
-  },
-  "extraKnownMarketplaces": {
-    "astral-sh": {
-      "source": {
-        "source": "github",
-        "repo": "astral-sh/claude-code-plugins"
+  "extraKnownMarketplaces" : {
+    "astral-sh" : {
+      "source" : {
+        "repo" : "astral-sh\/claude-code-plugins",
+        "source" : "github"
       }
     },
-    "cc-marketplace": {
-      "source": {
-        "source": "github",
-        "repo": "ananddtyagi/cc-marketplace"
+    "cc-marketplace" : {
+      "source" : {
+        "repo" : "ananddtyagi\/cc-marketplace",
+        "source" : "github"
       }
     }
   },
-  "sandbox": {
-    "enabled": true,
-    "autoAllowBashIfSandboxed": true,
-    "network": {
-      "allowedDomains": [
+  "hooks" : {
+    "PermissionRequest" : [
+      {
+        "hooks" : [
+          {
+            "command" : "[ -n \"$SUPERSET_HOME_DIR\" ] && [ -x \"$SUPERSET_HOME_DIR\/hooks\/notify.sh\" ] && \"$SUPERSET_HOME_DIR\/hooks\/notify.sh\" || true",
+            "type" : "command"
+          }
+        ],
+        "matcher" : "*"
+      }
+    ],
+    "PostToolUse" : [
+      {
+        "hooks" : [
+          {
+            "command" : "~\/.claude\/scripts\/hooks\/post-edit-accumulator.js",
+            "type" : "command"
+          }
+        ],
+        "matcher" : "Edit|Write|MultiEdit"
+      },
+      {
+        "hooks" : [
+          {
+            "command" : "~\/.claude\/scripts\/hooks\/post-bash-pr-created.js",
+            "type" : "command"
+          }
+        ],
+        "matcher" : "Bash"
+      },
+      {
+        "hooks" : [
+          {
+            "command" : "f=$(cat | jq -r '.tool_input.file_path \/\/ \"\"'); [ \"$f\" = \"$HOME\/.claude\/settings.json\" ] && cp \"$HOME\/.claude\/settings.json\" \"$HOME\/t-configs\/dotfiles\/.claude\/settings.json\" 2>\/dev\/null; true",
+            "type" : "command"
+          }
+        ],
+        "matcher" : "Edit|Write|MultiEdit"
+      },
+      {
+        "hooks" : [
+          {
+            "command" : "[ -n \"$SUPERSET_HOME_DIR\" ] && [ -x \"$SUPERSET_HOME_DIR\/hooks\/notify.sh\" ] && \"$SUPERSET_HOME_DIR\/hooks\/notify.sh\" || true",
+            "type" : "command"
+          }
+        ],
+        "matcher" : "*"
+      }
+    ],
+    "PostToolUseFailure" : [
+      {
+        "hooks" : [
+          {
+            "command" : "[ -n \"$SUPERSET_HOME_DIR\" ] && [ -x \"$SUPERSET_HOME_DIR\/hooks\/notify.sh\" ] && \"$SUPERSET_HOME_DIR\/hooks\/notify.sh\" || true",
+            "type" : "command"
+          }
+        ],
+        "matcher" : "*"
+      }
+    ],
+    "PreCompact" : [
+      {
+        "hooks" : [
+          {
+            "command" : "~\/.claude\/scripts\/hooks\/pre-compact.js",
+            "type" : "command"
+          }
+        ],
+        "matcher" : "*"
+      }
+    ],
+    "PreToolUse" : [
+      {
+        "hooks" : [
+          {
+            "command" : "~\/.claude\/scripts\/hooks\/config-protection.js",
+            "type" : "command"
+          }
+        ],
+        "matcher" : "Write|Edit|MultiEdit"
+      },
+      {
+        "hooks" : [
+          {
+            "command" : "jq -c '.tool_input as $orig | {hookSpecificOutput: {hookEventName: \"PreToolUse\", updatedInput: ($orig | .command = (\"eval \\\"$(direnv export bash 2>\/dev\/null)\\\" && \" + .command))}}'",
+            "type" : "command"
+          }
+        ],
+        "matcher" : "Bash"
+      }
+    ],
+    "SessionEnd" : [
+      {
+        "hooks" : [
+          {
+            "async" : true,
+            "command" : "cmp -s \"$HOME\/.claude\/settings.json\" \"$HOME\/t-configs\/dotfiles\/.claude\/settings.json\" || cp \"$HOME\/.claude\/settings.json\" \"$HOME\/t-configs\/dotfiles\/.claude\/settings.json\"",
+            "type" : "command"
+          }
+        ]
+      },
+      {
+        "hooks" : [
+          {
+            "command" : "__claudebar_hook() { PORT=$(cat \"$HOME\/.claude\/claudebar-hook-port\" 2>\/dev\/null || echo 19847); cat | curl -s -X POST \"http:\/\/localhost:${PORT}\/hook\" -H 'Content-Type: application\/json' -d @- > \/dev\/null 2>&1 & }; __claudebar_hook",
+            "type" : "command"
+          }
+        ],
+        "matcher" : ".*"
+      }
+    ],
+    "SessionStart" : [
+      {
+        "hooks" : [
+          {
+            "command" : "__claudebar_hook() { PORT=$(cat \"$HOME\/.claude\/claudebar-hook-port\" 2>\/dev\/null || echo 19847); cat | curl -s -X POST \"http:\/\/localhost:${PORT}\/hook\" -H 'Content-Type: application\/json' -d @- > \/dev\/null 2>&1 & }; __claudebar_hook",
+            "type" : "command"
+          }
+        ],
+        "matcher" : ".*"
+      }
+    ],
+    "Stop" : [
+      {
+        "hooks" : [
+          {
+            "command" : "~\/.claude\/scripts\/hooks\/stop-format-typecheck.js",
+            "timeout" : 300,
+            "type" : "command"
+          }
+        ],
+        "matcher" : "*"
+      },
+      {
+        "hooks" : [
+          {
+            "async" : true,
+            "command" : "~\/.claude\/scripts\/hooks\/desktop-notify.js",
+            "timeout" : 10,
+            "type" : "command"
+          }
+        ],
+        "matcher" : "*"
+      },
+      {
+        "hooks" : [
+          {
+            "command" : "[ -n \"$SUPERSET_HOME_DIR\" ] && [ -x \"$SUPERSET_HOME_DIR\/hooks\/notify.sh\" ] && \"$SUPERSET_HOME_DIR\/hooks\/notify.sh\" || true",
+            "type" : "command"
+          }
+        ]
+      },
+      {
+        "hooks" : [
+          {
+            "command" : "__claudebar_hook() { PORT=$(cat \"$HOME\/.claude\/claudebar-hook-port\" 2>\/dev\/null || echo 19847); cat | curl -s -X POST \"http:\/\/localhost:${PORT}\/hook\" -H 'Content-Type: application\/json' -d @- > \/dev\/null 2>&1 & }; __claudebar_hook",
+            "type" : "command"
+          }
+        ],
+        "matcher" : ".*"
+      }
+    ],
+    "SubagentStart" : [
+      {
+        "hooks" : [
+          {
+            "command" : "__claudebar_hook() { PORT=$(cat \"$HOME\/.claude\/claudebar-hook-port\" 2>\/dev\/null || echo 19847); cat | curl -s -X POST \"http:\/\/localhost:${PORT}\/hook\" -H 'Content-Type: application\/json' -d @- > \/dev\/null 2>&1 & }; __claudebar_hook",
+            "type" : "command"
+          }
+        ],
+        "matcher" : ".*"
+      }
+    ],
+    "SubagentStop" : [
+      {
+        "hooks" : [
+          {
+            "command" : "__claudebar_hook() { PORT=$(cat \"$HOME\/.claude\/claudebar-hook-port\" 2>\/dev\/null || echo 19847); cat | curl -s -X POST \"http:\/\/localhost:${PORT}\/hook\" -H 'Content-Type: application\/json' -d @- > \/dev\/null 2>&1 & }; __claudebar_hook",
+            "type" : "command"
+          }
+        ],
+        "matcher" : ".*"
+      }
+    ],
+    "TaskCompleted" : [
+      {
+        "hooks" : [
+          {
+            "command" : "__claudebar_hook() { PORT=$(cat \"$HOME\/.claude\/claudebar-hook-port\" 2>\/dev\/null || echo 19847); cat | curl -s -X POST \"http:\/\/localhost:${PORT}\/hook\" -H 'Content-Type: application\/json' -d @- > \/dev\/null 2>&1 & }; __claudebar_hook",
+            "type" : "command"
+          }
+        ],
+        "matcher" : ".*"
+      }
+    ],
+    "UserPromptSubmit" : [
+      {
+        "hooks" : [
+          {
+            "command" : "input=$(cat); echo \"$input\" | jq -e '.prompt | test(\"^\\\\s*\/extra-usage\\\\s*$\")' > \/dev\/null 2>&1 && echo '{\"continue\": false, \"stopReason\": \"Blocked \/extra-usage — run it intentionally from settings if needed.\"}' || true",
+            "type" : "command"
+          }
+        ]
+      },
+      {
+        "hooks" : [
+          {
+            "command" : "[ -n \"$SUPERSET_HOME_DIR\" ] && [ -x \"$SUPERSET_HOME_DIR\/hooks\/notify.sh\" ] && \"$SUPERSET_HOME_DIR\/hooks\/notify.sh\" || true",
+            "type" : "command"
+          }
+        ]
+      }
+    ]
+  },
+  "sandbox" : {
+    "autoAllowBashIfSandboxed" : true,
+    "enabled" : true,
+    "enableWeakerNetworkIsolation" : true,
+    "excludedCommands" : [
+      "chrome-headless-shell",
+      "mkdir"
+    ],
+    "filesystem" : {
+      "allowWrite" : [
+        "~\/.cache",
+        "~\/.matplotlib",
+        "~\/Library\/Caches\/mise",
+        "~\/.superset\/worktrees\/"
+      ]
+    },
+    "network" : {
+      "allowedDomains" : [
         "github.com",
         "api.github.com"
       ],
-      "allowUnixSockets": [
-        "~/.docker/run/docker.sock"
-      ],
-      "allowLocalBinding": true
-    },
-    "filesystem": {
-      "allowWrite": [
-        "~/.cache/uv",
-        "~/.cache/pre-commit",
-        "~/.matplotlib",
-        "~/Library/Caches/mise",
-        "~/.superset/worktrees/"
+      "allowLocalBinding" : true,
+      "allowUnixSockets" : [
+        "~\/.docker\/run\/docker.sock"
       ]
-    },
-    "enableWeakerNetworkIsolation": true,
-    "excludedCommands": [
-      "chrome-headless-shell",
-      "mkdir"
-    ]
+    }
   },
-  "effortLevel": "xhigh",
-  "awaySummaryEnabled": false,
-  "skipDangerousModePermissionPrompt": true,
-  "editorMode": "vim"
+  "skillOverrides" : {
+    "sentry:sentry-android-sdk" : "off",
+    "sentry:sentry-cloudflare-sdk" : "off",
+    "sentry:sentry-cocoa-sdk" : "off",
+    "sentry:sentry-dotnet-sdk" : "off",
+    "sentry:sentry-elixir-sdk" : "off",
+    "sentry:sentry-flutter-sdk" : "off",
+    "sentry:sentry-go-sdk" : "off",
+    "sentry:sentry-nestjs-sdk" : "off",
+    "sentry:sentry-nextjs-sdk" : "off",
+    "sentry:sentry-otel-exporter-setup" : "off",
+    "sentry:sentry-php-sdk" : "off",
+    "sentry:sentry-react-native-sdk" : "off",
+    "sentry:sentry-react-router-framework-sdk" : "off",
+    "sentry:sentry-ruby-sdk" : "off",
+    "sentry:sentry-sdk-setup" : "off",
+    "sentry:sentry-sdk-skill-creator" : "off",
+    "sentry:sentry-sdk-upgrade" : "off",
+    "sentry:sentry-svelte-sdk" : "off",
+    "sentry:sentry-tanstack-start-sdk" : "off"
+  },
+  "skipDangerousModePermissionPrompt" : true,
+  "statusLine" : {
+    "command" : "bash $HOME\/.claude\/statusline-command.sh",
+    "type" : "command"
+  }
 }
