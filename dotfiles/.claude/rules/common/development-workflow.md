@@ -53,3 +53,11 @@ The Feature Implementation Workflow describes the development pipeline: research
 6. **Commit & Push**
    - Use the `commit` skill — handles branch safety, staging, and conventional commit format
    - For targeted staging ("commit the auth changes") it routes through `/prp/stage-commit` automatically
+
+## Workspace Isolation (Git Worktrees)
+
+When creating a git worktree — including via the `using-git-worktrees` skill — use this fixed convention. Do NOT improvise a location from `git worktree list`, external tooling paths (e.g. `~/.superset/worktrees/`), or the skill's `~/.config/superpowers/...` fallback, and do NOT ask which directory to use.
+
+- **Location:** `<repo-root>/.claude/worktrees/<branch-name>` — always project-local, inside the repo's own `.claude/` directory.
+- **Before creating:** ensure `.claude/worktrees/` is gitignored (add the line and commit if missing). `.claude/` itself is often tracked; the `worktrees/` subdirectory must not be.
+- This preference overrides the skill's default directory-selection priority.

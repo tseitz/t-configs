@@ -256,7 +256,7 @@
   },
   "[typescriptreact]": {
     "editor.formatOnSave": true,
-    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "editor.defaultFormatter": "oxc.oxc-vscode",
   },
   "[javascript]": {
     "editor.formatOnSave": false,
@@ -310,4 +310,5 @@
   },
   "claudeCode.preferredLocation": "panel",
   "window.autoDetectColorScheme": false,
+  "terminal.integrated.enableMultiLinePasteWarning": "never",
 }
