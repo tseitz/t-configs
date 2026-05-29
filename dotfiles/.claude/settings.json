@@ -46,17 +46,6 @@
     }
   },
   "hooks" : {
-    "PermissionRequest" : [
-      {
-        "hooks" : [
-          {
-            "command" : "[ -n \"$SUPERSET_HOME_DIR\" ] && [ -x \"$SUPERSET_HOME_DIR\/hooks\/notify.sh\" ] && \"$SUPERSET_HOME_DIR\/hooks\/notify.sh\" || true",
-            "type" : "command"
-          }
-        ],
-        "matcher" : "*"
-      }
-    ],
     "PostToolUse" : [
       {
         "hooks" : [
@@ -84,26 +73,6 @@
           }
         ],
         "matcher" : "Edit|Write|MultiEdit"
-      },
-      {
-        "hooks" : [
-          {
-            "command" : "[ -n \"$SUPERSET_HOME_DIR\" ] && [ -x \"$SUPERSET_HOME_DIR\/hooks\/notify.sh\" ] && \"$SUPERSET_HOME_DIR\/hooks\/notify.sh\" || true",
-            "type" : "command"
-          }
-        ],
-        "matcher" : "*"
-      }
-    ],
-    "PostToolUseFailure" : [
-      {
-        "hooks" : [
-          {
-            "command" : "[ -n \"$SUPERSET_HOME_DIR\" ] && [ -x \"$SUPERSET_HOME_DIR\/hooks\/notify.sh\" ] && \"$SUPERSET_HOME_DIR\/hooks\/notify.sh\" || true",
-            "type" : "command"
-          }
-        ],
-        "matcher" : "*"
       }
     ],
     "PreCompact" : [
@@ -193,14 +162,6 @@
       {
         "hooks" : [
           {
-            "command" : "[ -n \"$SUPERSET_HOME_DIR\" ] && [ -x \"$SUPERSET_HOME_DIR\/hooks\/notify.sh\" ] && \"$SUPERSET_HOME_DIR\/hooks\/notify.sh\" || true",
-            "type" : "command"
-          }
-        ]
-      },
-      {
-        "hooks" : [
-          {
             "command" : "__claudebar_hook() { PORT=$(cat \"$HOME\/.claude\/claudebar-hook-port\" 2>\/dev\/null || echo 19847); cat | curl -s -X POST \"http:\/\/localhost:${PORT}\/hook\" -H 'Content-Type: application\/json' -d @- > \/dev\/null 2>&1 & }; __claudebar_hook",
             "type" : "command"
           }
@@ -249,14 +210,6 @@
             "type" : "command"
           }
         ]
-      },
-      {
-        "hooks" : [
-          {
-            "command" : "[ -n \"$SUPERSET_HOME_DIR\" ] && [ -x \"$SUPERSET_HOME_DIR\/hooks\/notify.sh\" ] && \"$SUPERSET_HOME_DIR\/hooks\/notify.sh\" || true",
-            "type" : "command"
-          }
-        ]
       }
     ]
   },
@@ -272,8 +225,7 @@
       "allowWrite" : [
         "~\/.cache",
         "~\/.matplotlib",
-        "~\/Library\/Caches\/mise",
-        "~\/.superset\/worktrees\/"
+        "~\/Library\/Caches\/mise"
       ]
     },
     "network" : {
