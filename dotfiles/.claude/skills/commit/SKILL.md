@@ -25,7 +25,10 @@ Run the project's local checks before staging anything. Check `package.json`, `M
 
 - **Tests** — run the test suite (or relevant subset)
 - **Typecheck** — e.g., `tsc --noEmit`, `mypy`, `pyright`
-- **Lint / Format** — e.g., `eslint`, `ruff check`, `prettier --check`
+- **Lint / Format** — e.g., `eslint`, `oxlint`, `ruff check`, `prettier --check`
+- **Dead code / unused exports** — if the project defines a `knip` script (or `ts-prune`, `depcheck`), run it; these pass typecheck and lint, so they get missed otherwise
+
+Run every check the project defines, not just the obvious ones — scan all relevant `package.json` scripts (e.g. `lint`, `typecheck`, `knip`, `format`) rather than assuming a standard set.
 
 If any check fails, stop and report. Do not proceed to staging until the working tree is clean.
 
