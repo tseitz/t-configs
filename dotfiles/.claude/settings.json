@@ -5,7 +5,6 @@
   },
   "awaySummaryEnabled" : false,
   "editorMode" : "vim",
-  "effortLevel" : "xhigh",
   "enabledPlugins" : {
     "astral@astral-sh" : true,
     "atlassian@claude-plugins-official" : true,
