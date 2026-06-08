@@ -244,16 +244,18 @@ step_symlinks() {
   create_symlink "$DOTFILES_DIR/.claude/hooks"    "$HOME/.claude/hooks"
   create_symlink "$DOTFILES_DIR/.claude/scripts"  "$HOME/.claude/scripts"
 
-  # settings.json is COPIED (not symlinked) because Claude Code uses atomic writes
-  # (write-temp + rename) which replace symlinks with regular files. Copy it so
-  # the app can write settings normally. To sync changes back, run:
-  #   cp ~/.claude/settings.json t-configs/dotfiles/.claude/settings.json
+  # settings.json is SEEDED from settings.base.json once, then OWNED by this
+  # machine — it is never symlinked and never synced back to the repo. The base
+  # is a hand-curated, sanitized template; each machine extends it freely
+  # (Claude Code's atomic writes, /config edits, plugin toggles, effort level).
+  # Account-specific overrides go in settings.local.json (see below). To evolve
+  # the shared baseline, edit settings.base.json deliberately.
   if [ -f "$HOME/.claude/settings.json" ] && [ ! -L "$HOME/.claude/settings.json" ]; then
-    info "settings.json already exists as a regular file (good — Claude Code atomic writes require this)"
+    info "settings.json already exists (machine-owned, left untouched)"
   else
     [ -L "$HOME/.claude/settings.json" ] && warn "Replacing settings.json symlink with a copy (symlinks break Claude Code atomic writes)" && rm "$HOME/.claude/settings.json"
-    cp "$DOTFILES_DIR/.claude/settings.json" "$HOME/.claude/settings.json"
-    success "settings.json copied to ~/.claude/"
+    cp "$DOTFILES_DIR/.claude/settings.base.json" "$HOME/.claude/settings.json"
+    success "settings.json seeded from settings.base.json (now machine-owned)"
   fi
   create_symlink "$DOTFILES_DIR/.claude/AGENTS.md"              "$HOME/.claude/AGENTS.md"
   create_symlink "$DOTFILES_DIR/.claude/README.md"              "$HOME/.claude/README.md"
