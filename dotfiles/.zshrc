@@ -26,6 +26,7 @@ source $ZSH/oh-my-zsh.sh
 # General
 export LS_COLORS="di=1;36:ln=35:so=32:pi=33:ex=1;31:bd=34;46:cd=36;43:su=37;41:sg=30;46:tw=30;42:ow=37;43"
 alias lsa="ls -al"
+export HOMEBREW_NO_UPGRADE_AUTO_UPDATES_CASKS=1
 
 # Config shortcuts
 alias zshconf="nvim ~/.zshrc"
