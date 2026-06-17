@@ -34,7 +34,6 @@ alias zshr="source ~/.zshrc"
 alias brewup="brew update; brew upgrade; brew cleanup; brew doctor; claude upgrade;"
 alias codeconf="code $HOME/t-configs"
 alias claw="claude --dangerously-skip-permissions"
-alias claw-wt="claude --dangerously-skip-permissions --worktree"
 
 # ===== Functions =====
 

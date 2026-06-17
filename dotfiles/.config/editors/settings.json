@@ -191,7 +191,7 @@
   // ── Python ──────────────────────────────────────────────────────
   "autoDocstring.startOnNewLine": true,
   "python.languageServer": "Pylance",
-  "python.defaultInterpreterPath": "/opt/homebrew/bin/python3",
+  "python.defaultInterpreterPath": "/Users/tseitz/.local/share/mise/installs/python/3.13/bin/python",
 
   // ── Ruby ────────────────────────────────────────────────────────
   "rubyLsp.formatter": "rubocop",
@@ -376,4 +376,5 @@
   "[markdown]": {
     "editor.defaultFormatter": "DavidAnson.vscode-markdownlint",
   },
+  "githubPullRequests.pullBranch": "never",
 }
