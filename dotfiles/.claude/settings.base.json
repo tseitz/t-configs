@@ -14,7 +14,6 @@
     "code-review@claude-plugins-official" : false,
     "code-simplifier@claude-plugins-official" : true,
     "explanatory-output-style@claude-plugins-official" : false,
-    "firecrawl@claude-plugins-official" : false,
     "github@claude-plugins-official" : true,
     "playwright@claude-plugins-official" : true,
     "pr-review-toolkit@claude-plugins-official" : true,
@@ -22,7 +21,6 @@
     "security-guidance@claude-plugins-official" : true,
     "sentry@claude-plugins-official" : true,
     "superpowers@claude-plugins-official" : true,
-    "svelte@svelte" : true,
     "typescript-lsp@claude-plugins-official" : true
   },
   "env" : {
@@ -40,12 +38,6 @@
     "cc-marketplace" : {
       "source" : {
         "repo" : "ananddtyagi\/cc-marketplace",
-        "source" : "github"
-      }
-    },
-    "svelte" : {
-      "source" : {
-        "repo" : "sveltejs\/ai-tools",
         "source" : "github"
       }
     }
@@ -69,15 +61,6 @@
           }
         ],
         "matcher" : "Bash"
-      },
-      {
-        "hooks" : [
-          {
-            "command" : "f=$(cat | jq -r '.tool_input.file_path \/\/ \"\"'); [ \"$f\" = \"$HOME\/.claude\/settings.json\" ] && cp \"$HOME\/.claude\/settings.json\" \"$HOME\/t-configs\/dotfiles\/.claude\/settings.json\" 2>\/dev\/null; true",
-            "type" : "command"
-          }
-        ],
-        "matcher" : "Edit|Write|MultiEdit"
       }
     ],
     "PreCompact" : [
@@ -112,15 +95,6 @@
       }
     ],
     "SessionEnd" : [
-      {
-        "hooks" : [
-          {
-            "async" : true,
-            "command" : "cmp -s \"$HOME\/.claude\/settings.json\" \"$HOME\/t-configs\/dotfiles\/.claude\/settings.json\" || cp \"$HOME\/.claude\/settings.json\" \"$HOME\/t-configs\/dotfiles\/.claude\/settings.json\"",
-            "type" : "command"
-          }
-        ]
-      },
       {
         "hooks" : [
           {
@@ -230,16 +204,13 @@
       "allowWrite" : [
         "~\/.cache",
         "~\/.matplotlib",
-        "~\/Library\/Caches\/mise",
-        "~\/.npm",
-        "~\/.local\/share\/pnpm"
+        "~\/Library\/Caches\/mise"
       ]
     },
     "network" : {
       "allowedDomains" : [
         "github.com",
-        "api.github.com",
-        "registry.npmjs.org"
+        "api.github.com"
       ],
       "allowLocalBinding" : true,
       "allowUnixSockets" : [

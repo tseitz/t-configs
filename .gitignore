@@ -3,6 +3,9 @@ dotfiles/.zshrc-local
 .claude.json
 
 # dotfiles/.claude — track everything EXCEPT runtime state and secrets
+# settings.json is machine-owned (seeded from settings.base.json); never commit it.
+# settings.base.json is the shared, hand-curated baseline — that one IS tracked.
+dotfiles/.claude/settings.json
 dotfiles/.claude/settings.local.json
 dotfiles/.claude/plugins/cache/
 dotfiles/.claude/plugins/blocklist.json
