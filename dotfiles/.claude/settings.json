@@ -5,6 +5,7 @@
   },
   "awaySummaryEnabled" : false,
   "editorMode" : "vim",
+  "effortLevel" : "high",
   "enabledPlugins" : {
     "astral@astral-sh" : true,
     "atlassian@claude-plugins-official" : true,
@@ -25,9 +26,6 @@
     "typescript-lsp@claude-plugins-official" : true
   },
   "env" : {
-    "ANTHROPIC_CUSTOM_MODEL_OPTION" : "claude-opus-4-6[1m]",
-    "ANTHROPIC_CUSTOM_MODEL_OPTION_NAME" : "Opus 4.6 (1M Context)",
-    "ANTHROPIC_CUSTOM_MODEL_OPTION_DESCRIPTION" : "Opus 4.6 with 1 million token context window",
     "CLAUDE_CODE_ATTRIBUTION_HEADER" : "0",
     "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC" : "1",
     "CLAUDE_CODE_ENABLE_TELEMETRY" : "0"

@@ -312,4 +312,5 @@
   "claudeCode.preferredLocation": "panel",
   "window.autoDetectColorScheme": false,
   "terminal.integrated.enableMultiLinePasteWarning": "never",
+  "mise.binPath": "/Users/tseitz/.local/bin/mise",
 }
