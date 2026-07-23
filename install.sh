@@ -257,6 +257,10 @@ step_symlinks() {
     cp "$DOTFILES_DIR/.claude/settings.base.json" "$HOME/.claude/settings.json"
     success "settings.json seeded from settings.base.json (now machine-owned)"
   fi
+  # CLAUDE.md IS symlinked (unlike settings.json). Claude Code edits it in place,
+  # so a symlink is safe — and it means "update my global instructions" edits land
+  # in the repo automatically. Machine-specific config belongs in settings.local.json.
+  create_symlink "$DOTFILES_DIR/.claude/CLAUDE.md"              "$HOME/.claude/CLAUDE.md"
   create_symlink "$DOTFILES_DIR/.claude/AGENTS.md"              "$HOME/.claude/AGENTS.md"
   create_symlink "$DOTFILES_DIR/.claude/README.md"              "$HOME/.claude/README.md"
   create_symlink "$DOTFILES_DIR/.claude/plugin.json"            "$HOME/.claude/plugin.json"
