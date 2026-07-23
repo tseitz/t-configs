@@ -191,6 +191,7 @@
   // ── Python ──────────────────────────────────────────────────────
   "autoDocstring.startOnNewLine": true,
   "python.languageServer": "Pylance",
+  "python.envFile": "",
   "python.defaultInterpreterPath": "/Users/tseitz/.local/share/mise/installs/python/3.13/bin/python",
 
   // ── Ruby ────────────────────────────────────────────────────────
@@ -375,5 +376,6 @@
   "[markdown]": {
     "editor.defaultFormatter": "DavidAnson.vscode-markdownlint",
   },
-  "mise.binPath": "/Users/tseitz/.local/bin/mise",
+  "mise.binPath": "/opt/homebrew/bin/mise",
+  "githubPullRequests.pullBranch": "never",
 }
