@@ -30,6 +30,8 @@ Before reflecting, get accurate context — don't rely on working memory alone:
 - Run `git log --oneline -10` to confirm what commits landed
 - Run `git diff HEAD~N` (where N = number of commits in the feature) to see the actual diff
 - Check for a session state doc (HANDOFF.md, CONTEXT.md, or equivalent) and read it
+- Read `.claude/sandbox-friction.jsonl` if present — the capture hook logs sandbox blocks that hit
+  during the work but are gone from working memory. These feed the Agent QoL lens.
 - Skim the key changed files — reflection is only as good as what you actually re-read
 
 ### 1. Summarize What Changed
@@ -39,8 +41,16 @@ original plan and why.
 
 ### 2. Reflect Through These Lenses
 
-For each lens, be concrete — reference specific files, functions, or patterns. Skip any lens that
-doesn't apply.
+Every finding **must cite a `file:line`** (or a specific function/pattern). A lens with no citation
+is not a finding — write "nothing to flag" and move on. This is a forcing function: the same model
+that wrote the code is grading it, so "looks fine" is the default failure mode, not a result.
+
+**Counter author bias on large changes.** If the diff spans many files or the logic is subtle,
+dispatch a **fresh-context subagent** (`Explore` or `code-reviewer`) to do the reflection instead of
+self-reviewing — give it the diff and these lenses, and have it return findings with citations. For
+small, self-contained changes, inline self-review is fine.
+
+For each lens, be concrete. Skip any lens that doesn't apply.
 
 **Simplicity**
 - Does each function do one thing? Are there any that do two or three?
@@ -62,7 +72,10 @@ doesn't apply.
 **Agent Quality of Life**
 - Did any tool call fail unexpectedly? What did you do instead, and what would the right path have looked like?
 - Were any make/pnpm/npm/script targets missing that would have been useful? What would you have named them?
-- Did sandbox restrictions block you? What command or permission would have helped?
+- Did sandbox restrictions block you? Check `.claude/sandbox-friction.jsonl` and your own memory of
+  the session. For anything worth a durable fix, **delegate to the `sandbox-friction` skill** to
+  diagnose the layer and propose the correctly-schemaed settings.json change — don't hand-write
+  sandbox config from here.
 - Was anything in CLAUDE.md (or equivalent) **wrong** (actively misleading to a future agent)? Flag these first — they're the most dangerous. Then note any plain gaps.
 - Did you read 3+ files to answer something that should have had one authoritative source? What would that source look like?
 - Were there any repeated lookups — files, functions, patterns — that suggest a missing convention or shortcut?
@@ -73,7 +86,7 @@ doesn't apply.
 - Duplication, dead code, inconsistent patterns with the rest of the codebase
 - Missing or stale tests for the new behavior
 - Any tests for existing behavior that we might've touched, or boundaries we created that we need to test?
-- Docs or README that need updating (check skill `update-readme.mdc`)
+- Docs or README that need updating
 
 ### 3. Prioritize Follow-Up
 
@@ -85,24 +98,35 @@ From the reflection, list actionable items only — skip anything vague:
 
 Keep the total to 3–7 items.
 
-### 4. Implement
+### 4. Checkpoint — Get Approval Before Editing
 
-- Implement Must and Should items (or agreed subset)
-- One logical change at a time
-- Run validation checks to ensure no regressions were introduced
+**Stop here.** Present the Must/Should list and wait for the user to confirm the subset to
+implement. The feature is already "done"; do not start refactoring it unprompted. If the user is
+absent or has pre-authorized cleanup, proceed with Must items only and note what you skipped.
 
-### 5. Close the Loop
+### 5. Implement
+
+- Implement only the approved items, one logical change at a time
+- **Keep cleanup separate from the feature** — its own commit(s), not amended into the feature's
+  history, so it stays reviewable and revertable on its own
+- **Stay in scope:** do not fix unrelated pre-existing issues or start new features. Reflection
+  surfaces tangents; capture them as follow-up notes, don't act on them here
+- Run the project's validation gate to confirm no regressions (see Close the Loop)
+
+### 6. Close the Loop
 
 This step is project-specific. Check **CLAUDE.md** (or the project's equivalent conventions file)
 and your **memory / lessons system** for the right commands and documents. Typical things to do:
 
-- **Run the precommit / validation gate** — CLAUDE.md usually names this (e.g. `make precommit`,
-  `pnpm check`, `./scripts/validate.sh`). Run it now if you haven't.
+- **Run the validation gate** — CLAUDE.md usually names this (e.g. `make precommit`, `pnpm check`,
+  `./scripts/validate.sh`). This is the one place to run it; don't claim "done" without its output
+  (see `verification-before-completion`).
 - **Update session state** — if the project uses a HANDOFF.md, CONTEXT.md, or similar doc, overwrite
   it to reflect the current state of the codebase. The next agent session starts cold.
-- **Capture learnings** — if the project has a lessons or gotchas system (e.g. `.claude/lessons/`),
-  write anything non-obvious that came up during this feature. Focus on: unexpected behavior,
-  workarounds, decisions that aren't obvious from the code, and QoL friction found above.
+- **Capture learnings via existing tooling, don't hand-roll it.** The Agent QoL findings above are
+  the raw material. Route them: durable cross-project patterns → `/learn` or `lessons-to-skills`;
+  wrong/misleading CLAUDE.md lines → `claude-md-improver`; project facts not derivable from code →
+  memory. Only write a freeform `.claude/lessons/` note if the project has no such system.
 - **Flag if docs need updating** — README, architecture docs, or API docs that are now stale.
 
 If you're unsure where these live, check CLAUDE.md first, then your memory files.
@@ -128,4 +152,5 @@ Should: ...
 Nice to have: ...
 ```
 
-Then implement. Then close the loop: run the validation gate, update session state, capture learnings.
+Then **stop for approval** (step 4). Once approved, implement in separate commits, then close the
+loop: run the validation gate, update session state, route learnings to the right tooling.

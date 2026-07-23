@@ -18,5 +18,8 @@ dotfiles/.claude/plugins/marketplaces/
 # Skills: ignore work-specific skills (may contain company-internal references)
 dotfiles/.claude/skills/work/
 
+# Sandbox-friction capture log — per-project runtime state, written by the hook
+.claude/sandbox-friction.jsonl
+
 .DS_Store
 .tmp/

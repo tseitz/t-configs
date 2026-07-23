@@ -58,6 +58,10 @@
           {
             "command" : "~\/.claude\/scripts\/hooks\/post-bash-pr-created.js",
             "type" : "command"
+          },
+          {
+            "command" : "~\/.claude\/scripts\/hooks\/capture-sandbox-friction.sh",
+            "type" : "command"
           }
         ],
         "matcher" : "Bash"
