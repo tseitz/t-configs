@@ -15,11 +15,22 @@
 
 'use strict';
 
+const fs = require('fs');
 const { spawnSync } = require('child_process');
 const { isMacOS, log } = require('../lib/utils');
 
 const TITLE = 'Claude Code';
 const MAX_BODY_LENGTH = 100;
+
+// terminal-notifier gives a proper app icon and harmless click behavior.
+// osascript notifications are attributed to Script Editor (wrong icon, and
+// clicking one launches Script Editor), so prefer terminal-notifier when present.
+const TERMINAL_NOTIFIER_PATHS = [
+  '/opt/homebrew/bin/terminal-notifier', // Apple Silicon Homebrew
+  '/usr/local/bin/terminal-notifier',    // Intel Homebrew
+];
+// Collapses repeat notifications into one instead of stacking.
+const NOTIFY_GROUP = 'claude-code';
 
 /**
  * Memoized WSL detection at module load (avoids repeated /proc/version reads).
@@ -99,11 +110,85 @@ function extractSummary(message) {
 }
 
 /**
- * Send a macOS notification via osascript.
- * AppleScript strings do not support backslash escapes, so we replace
- * double quotes with curly quotes and strip backslashes before embedding.
+ * Read the last *main-agent* assistant text from a Claude Code transcript.
+ * The transcript is JSONL; subagent (Task) messages are marked isSidechain:true,
+ * so we skip them and return the main conversation's final text — never a
+ * subagent's output. Returns null if unreadable or no such message exists.
+ */
+function extractSummaryFromTranscript(transcriptPath) {
+  if (!transcriptPath || typeof transcriptPath !== 'string') return null;
+
+  let raw;
+  try {
+    raw = fs.readFileSync(transcriptPath, 'utf8');
+  } catch {
+    return null;
+  }
+
+  const lines = raw.split('\n');
+  for (let i = lines.length - 1; i >= 0; i--) {
+    const line = lines[i].trim();
+    if (!line) continue;
+
+    let entry;
+    try {
+      entry = JSON.parse(line);
+    } catch {
+      continue;
+    }
+
+    if (entry.type !== 'assistant' || entry.isSidechain === true) continue;
+
+    const content = entry.message && entry.message.content;
+    if (!Array.isArray(content)) continue;
+
+    const textBlock = content.find(c => c && c.type === 'text' && typeof c.text === 'string' && c.text.trim());
+    if (textBlock) return textBlock.text;
+  }
+
+  return null;
+}
+
+/**
+ * Locate a terminal-notifier binary, or null if not installed.
+ * Cached at module load — install path does not change between hook runs.
+ */
+function findTerminalNotifier() {
+  for (const path of TERMINAL_NOTIFIER_PATHS) {
+    try {
+      if (fs.existsSync(path)) return path;
+    } catch {
+      // continue
+    }
+  }
+  return null;
+}
+
+const terminalNotifierPath = isMacOS ? findTerminalNotifier() : null;
+
+/**
+ * Send a macOS notification.
+ *
+ * Prefers terminal-notifier (proper icon, harmless click, -group collapses
+ * repeats). Args are passed directly to spawnSync, so no shell/AppleScript
+ * escaping is needed. Falls back to osascript when terminal-notifier is
+ * absent \u2014 note osascript notifications are attributed to Script Editor.
  */
 function notifyMacOS(title, body) {
+  if (terminalNotifierPath) {
+    const result = spawnSync(
+      terminalNotifierPath,
+      ['-title', title, '-message', body, '-group', NOTIFY_GROUP],
+      { stdio: 'ignore', timeout: 5000 },
+    );
+    if (result.error || result.status !== 0) {
+      log(`[DesktopNotify] terminal-notifier failed: ${result.error ? result.error.message : `exit ${result.status}`}`);
+    }
+    return;
+  }
+
+  // Fallback: osascript. AppleScript strings do not support backslash escapes,
+  // so replace double quotes with curly quotes and strip backslashes.
   const safeBody = body.replace(/\\/g, '').replace(/"/g, '\u201C');
   const safeTitle = title.replace(/\\/g, '').replace(/"/g, '\u201C');
   const script = `display notification "${safeBody}" with title "${safeTitle}"`;
@@ -119,7 +204,18 @@ function notifyMacOS(title, body) {
 function run(raw) {
   try {
     const input = raw.trim() ? JSON.parse(raw) : {};
-    const summary = extractSummary(input.last_assistant_message);
+
+    // Skip re-entrant stops (a Stop hook continuing Claude) to avoid double-fires.
+    if (input.stop_hook_active === true) {
+      return raw;
+    }
+
+    // Prefer the real last main-agent message from the transcript; the Stop
+    // payload itself does not carry last_assistant_message, which is why the
+    // old path always fell back to "Done".
+    const message = extractSummaryFromTranscript(input.transcript_path)
+      || input.last_assistant_message;
+    const summary = extractSummary(message);
 
     if (isMacOS) {
       notifyMacOS(TITLE, summary);
