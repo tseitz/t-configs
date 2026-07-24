@@ -32,7 +32,7 @@ export HOMEBREW_NO_UPGRADE_AUTO_UPDATES_CASKS=1
 alias zshconf="nvim ~/.zshrc"
 alias zshre="source ~/.zshrc; clear"
 alias zshr="source ~/.zshrc"
-alias brewup="brew update; brew upgrade; brew cleanup; brew doctor; claude upgrade;"
+alias brewup="brew update; brew upgrade -y; brew cleanup; brew doctor; claude upgrade;"
 alias codeconf="code $HOME/t-configs"
 alias claw="claude --dangerously-skip-permissions"
 
