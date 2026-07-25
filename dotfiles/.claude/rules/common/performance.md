@@ -2,15 +2,23 @@
 
 ## Model Selection Strategy
 
-Choose the right model for the task. Cheaper models are significantly faster and cost less — only escalate when the task genuinely requires it.
+This table is the *what* — which model to name once you've decided to route. For the *when*
+(session model vs. delegated task, and the cold-brief gate on downshifting), see
+[development-workflow.md](development-workflow.md) §3, which is authoritative on routing.
 
 | Model | API ID | Use for |
 |-------|--------|---------|
-| **Haiku 4.5** | `claude-haiku-4-5-20251001` | Lightweight agents, frequent invocation, worker agents in multi-agent systems |
-| **Sonnet 4.6** | `claude-sonnet-4-6` | Main development work, complex coding tasks, orchestrating multi-agent workflows |
-| **Opus 4.6** | `claude-opus-4-6` | Complex architectural decisions, maximum reasoning, deep research and analysis |
+| **Haiku 4.5** | `claude-haiku-4-5-20251001` | Mechanical, fully-specified work; high-frequency invocation; parallel fan-out workers |
+| **Sonnet 5** | `claude-sonnet-5` | Implementation, refactors, integration, debugging, multi-file coordination |
+| **Opus 5** | `claude-opus-5` | Architecture, ambiguous requirements, deep review and research |
+| **Fable 5** | `claude-fable-5` | Hardest reasoning — the tier above Opus |
 
-**Default to Sonnet 4.6.** Drop to Haiku for high-frequency or simple tasks. Escalate to Opus only when depth of reasoning is the bottleneck.
+Cheaper models are significantly faster and cost less, so downshift wherever the task allows —
+but the gate is whether the task can be *specified cold*, not a gut feel about difficulty.
+Escalate only when depth of reasoning is the actual bottleneck.
+
+**Effort (`low`→`max`) is a second, independent knob** and a large cost/latency lever on top of
+model choice. Default effort: `high`. Set both together, never one implicitly.
 
 ## Context Window Management
 

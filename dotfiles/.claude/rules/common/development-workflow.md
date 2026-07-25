@@ -62,14 +62,53 @@ trivial changes, the "design" can be one sentence — but still confirm intent b
 
 ### 3. Model & Effort Plan — ALWAYS propose, wait for confirmation
 
-Before executing anything non-trivial, **propose a model + effort assignment per stage/task as
-a table and wait for my OK.** Do not silently inherit the session model for subagents. Use the
-`/model-route` heuristic. This is a required, visible beat — not buried advice. See the
-reference table below.
+Before executing anything non-trivial, **propose a model + effort plan as a table and wait for
+my OK.** This is a required, visible beat — not buried advice. Use the `/model-route` heuristic.
+See the reference table below.
+
+**The unit of routing is the subagent, not the phase.** The session model is ONE decision, made
+once at the top and held for the whole session — switching it mid-session busts the prompt cache
+and re-ingests the entire conversation. Per-task model assignment applies *only to delegated
+work*, because a subagent carries its own context and its own model: dispatching a Haiku subagent
+from an Opus session costs the main thread nothing.
+
+This collapses the two axes into one decision:
+
+> **If a task's right model differs from the session model, that IS the signal to delegate it.
+> If it stays inline, it inherits the session model and there is nothing to route.**
+
+So the table has two kinds of rows, and they must be labeled as such:
+
+| Task | Mode | Model / effort |
+|------|------|----------------|
+| Design the schema change | inline | *session model* |
+| Port 6 call sites to the new signature | delegated | Haiku / low |
+| Security review of the auth path | delegated (`security-reviewer`) | pinned Sonnet |
+
+Never propose a table that implies the main thread changes model between phases. If most rows
+want a model the session isn't on, that's an argument for changing the *session* model once
+before starting — not for switching partway.
+
+**The downshift gate — the cold-brief test:**
+
+> **If I can't write the brief cold, the task can't be downshifted.** A subagent receives the
+> system prompt, CLAUDE.md, and the prompt I write — and *nothing* from our conversation. A
+> cheap subagent's ceiling is its brief. So the ability to write a self-contained prescriptive
+> brief (exact paths, signature, pattern to mirror, verification command) is the test for
+> whether Haiku/Sonnet can take the task. If writing that brief costs as much reasoning as
+> doing the work, do it inline on the session model.
 
 ### 4. Execute — inline-first
 
-- **Default inline.** Follow TDD (`superpowers:test-driven-development`): RED → GREEN → REFACTOR.
+- **Default inline, on the session model.** Follow TDD (`superpowers:test-driven-development`):
+  RED → GREEN → REFACTOR. Inline is the default *because* it needs no brief — I already have the
+  context. Only propose a downshift when the cold-brief test above passes.
+- **Scout inline, delegate mechanically** — the hybrid, and the most common shape for anything
+  non-trivial. Do discovery on the session model (read the code, find the pattern to mirror,
+  choose the approach); that's the part where context accumulates and is expensive to transfer.
+  What's left is prescriptive — paths, signature, pattern snippet, verify command — and *that*
+  residual delegates to a cheap model safely, because nothing is left to infer. Splitting this
+  way is what makes downshifting real rather than hopeful.
 - **Subagents** only for parallel fan-out (`superpowers:dispatching-parallel-agents` for
   independent problems) or isolation. When using `subagent-driven-development` as the engine,
   **strip the mandatory 3-agents-per-task review loop** — implementer does TDD + self-review;
@@ -115,11 +154,17 @@ lever on top of model choice. **Default effort: `high`.** Propose both per the M
 | Balanced | **Sonnet** | Integration, debugging, multi-file coordination |
 | Cheap/fast | **Haiku** | Mechanical, well-specified work; parallel fan-out workers |
 
-- **Subagents do NOT default to cheap.** A generic subagent inherits the session model (Opus);
-  named agents are pinned in their frontmatter. Downshift deliberately in the Model Plan.
-- **Don't flip-flop models/effort mid-session.** Switching resets the prompt cache — the new
-  model re-ingests the whole conversation once (a real cost/latency tax, not data loss). Decide
-  in the Model Plan and switch once.
+- **Subagents do NOT default to cheap.** A generic subagent inherits the session model (Opus).
+  Downshift deliberately in the Model Plan, gated on the cold-brief test.
+- **Named agents already route themselves.** Every agent in `~/.claude/agents/` pins a model in
+  frontmatter — `architect` and `planner` on Opus, the rest (`code-reviewer`, `tdd-guide`,
+  `python-reviewer`, `security-reviewer`, `refactor-cleaner`, `typescript-reviewer`, …) on
+  Sonnet. Invoking one is already a downshift and costs the session model nothing. Don't
+  propose routing for work a named agent covers — just name the agent.
+- **The session model is set once, at the top.** Switching mid-session resets the prompt cache —
+  the new model re-ingests the whole conversation (a real cost/latency tax, not data loss). If
+  the Model Plan reveals the session is on the wrong tier, switch once *before* executing, then
+  hold. Per-task variation is expressed by delegating, never by switching the main thread.
 
 ## Superpowers Skills I Keep (as building blocks)
 
