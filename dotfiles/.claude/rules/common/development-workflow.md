@@ -186,20 +186,45 @@ lever on top of model choice. **Default effort: `high`.** Propose both per the M
   the plugin's `hooks.json`. **It is NOT update-safe — re-run it after any `/plugin update`**
   (the update restores the hook).
 
-## Workspace Isolation — Local Branches by Default, NOT Worktrees
+## Where Work Happens — Primary Clone, and Which Branch
 
-**Default: work on a local branch in the main checkout.** I like working out of branches. Do NOT
-reach for a worktree as a matter of course, and do NOT let a skill pull one in automatically —
-that includes `superpowers:using-git-worktrees`, `subagent-driven-development`, plan execution,
-and `isolation: 'worktree'` on subagents. Branch, commit, switch. That's the normal mode.
+Two separate decisions, often conflated. **(A)** *which directory* — always my existing clone,
+never a worktree unless I approve one. **(B)** *which branch inside it* — depends on whether the
+repo is personal or work.
 
-**A worktree requires my explicit OK, asked for BEFORE you create it.** If you think a worktree
-is genuinely the best option — parallel agents mutating the same files, or I need the current
+### A. Directory: always my primary clone. NOT a worktree.
+
+Work in the repo directory I already have checked out — the primary working directory, the one I
+have open. Do NOT reach for a git worktree as a matter of course, and do NOT let a skill pull one
+in automatically — that includes `superpowers:using-git-worktrees`, `subagent-driven-development`,
+plan execution, and `isolation: 'worktree'` on subagents.
+
+**A worktree requires my explicit OK, asked for BEFORE you create it.** If you think one is
+genuinely the best option — parallel agents mutating the same files, or I need my current
 checkout to stay runnable with my uncommitted work intact — state in one or two lines why a
 branch won't do, then wait for me to say yes. Never create one silently, never as a "safety"
 default, and never mid-task without stopping to ask.
 
-### If I approve one, use this fixed convention
+### B. Branch: personal → default branch directly; work → feature branch
+
+| Repo | Where I commit | Notes |
+|---|---|---|
+| **Personal** (e.g. `tseitz/t-configs`) | **directly on the default branch** (`main`) | Don't branch, don't ask, don't offer. Commit and push to `main`. |
+| **Work** (`NinthDecimal/*`, `ThinkNear/*`) | **a feature branch** | Never commit to the base branch. Branch off that repo's base — which is NOT always `main`. |
+
+**How to tell:** the origin remote's GitHub org. `NinthDecimal` or `ThinkNear` → work. Anything
+else → personal. Check it (`git remote get-url origin`) rather than guessing from the directory
+name.
+
+**On work repos, the base branch varies by repo** — several are `develop`-based and MCM uses
+`development`, not `main`. Confirm the repo's actual base before branching or opening a PR;
+don't assume `main`.
+
+**This overrides the `commit` skill's Step 1 branch guard** (and any similar "if on main, branch
+first" reflex): on a personal repo, being on `main` is correct and needs no prompt. The guard
+still applies on work repos.
+
+### If I approve a worktree, use this fixed convention
 
 Do NOT improvise a location from `git worktree list`, external tooling paths (e.g. `~/.superset/worktrees/`), or the skill's `~/.config/superpowers/...` fallback, and do NOT ask which directory to use.
 
