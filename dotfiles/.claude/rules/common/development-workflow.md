@@ -139,8 +139,10 @@ architecture, don't keep patching.
   through `/prp:stage-commit`.
 - **`superpowers:finishing-a-development-branch`** — the "what next" menu (merge / PR / keep /
   discard) after tests pass.
-- **PR creation** — use `/prp:pr` mechanics (template discovery, heredoc-safe bodies); best
-  PR-body logic of the tools available.
+- **PR creation** — use `/prp:pr` mechanics (template discovery, heredoc-safe bodies). **The body
+  itself follows [pr-descriptions.md](pr-descriptions.md) — high level, no change-by-change
+  enumeration — which overrides `/prp:pr`'s own verbosity and any repo template's prompting for
+  exhaustive detail.**
 
 ## Model & Effort Reference
 
@@ -170,7 +172,7 @@ lever on top of model choice. **Default effort: `high`.** Propose both per the M
 
 `brainstorming` · `test-driven-development` · `systematic-debugging` ·
 `verification-before-completion` · `receiving-code-review` · `dispatching-parallel-agents` ·
-`using-git-worktrees` (overridden by the convention below) · `finishing-a-development-branch` ·
+`using-git-worktrees` (**demoted — ask first**, see below) · `finishing-a-development-branch` ·
 `blueprint` (multi-session).
 
 ## Demoted / Cut
@@ -184,9 +186,22 @@ lever on top of model choice. **Default effort: `high`.** Propose both per the M
   the plugin's `hooks.json`. **It is NOT update-safe — re-run it after any `/plugin update`**
   (the update restores the hook).
 
-## Workspace Isolation (Git Worktrees)
+## Workspace Isolation — Local Branches by Default, NOT Worktrees
 
-When creating a git worktree — including via the `using-git-worktrees` skill — use this fixed convention. Do NOT improvise a location from `git worktree list`, external tooling paths (e.g. `~/.superset/worktrees/`), or the skill's `~/.config/superpowers/...` fallback, and do NOT ask which directory to use.
+**Default: work on a local branch in the main checkout.** I like working out of branches. Do NOT
+reach for a worktree as a matter of course, and do NOT let a skill pull one in automatically —
+that includes `superpowers:using-git-worktrees`, `subagent-driven-development`, plan execution,
+and `isolation: 'worktree'` on subagents. Branch, commit, switch. That's the normal mode.
+
+**A worktree requires my explicit OK, asked for BEFORE you create it.** If you think a worktree
+is genuinely the best option — parallel agents mutating the same files, or I need the current
+checkout to stay runnable with my uncommitted work intact — state in one or two lines why a
+branch won't do, then wait for me to say yes. Never create one silently, never as a "safety"
+default, and never mid-task without stopping to ask.
+
+### If I approve one, use this fixed convention
+
+Do NOT improvise a location from `git worktree list`, external tooling paths (e.g. `~/.superset/worktrees/`), or the skill's `~/.config/superpowers/...` fallback, and do NOT ask which directory to use.
 
 - **Location:** `<repo-root>/.claude/worktrees/<branch-name>` — always project-local, inside the repo's own `.claude/` directory.
 - **Before creating:** ensure `.claude/worktrees/` is gitignored (add the line and commit if missing). `.claude/` itself is often tracked; the `worktrees/` subdirectory must not be.
