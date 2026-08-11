@@ -143,6 +143,12 @@ architecture, don't keep patching.
   itself follows [pr-descriptions.md](pr-descriptions.md) — high level, no change-by-change
   enumeration — which overrides `/prp:pr`'s own verbosity and any repo template's prompting for
   exhaustive detail.**
+- **Comment triage — a required beat before the PR is opened.** Sweep the branch diff, the commit
+  bodies, and the session, and route each piece of rationale by the test in
+  [pr-descriptions.md](pr-descriptions.md#code-comments-vs-diff-commentary): would deleting it let
+  a future change be silently wrong? If not, it comes out of the code and goes up as an inline
+  review comment. Do this in the session that did the work — triaged cold it degrades into diff
+  narration. Commit and push the cuts *before* posting, or the anchors land outdated.
 
 ## Model & Effort Reference
 
