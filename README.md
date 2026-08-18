@@ -21,6 +21,23 @@ The install script is idempotent — safe to run multiple times. It will:
 7. Install Cursor extensions from `dotfiles/.config/Cursor/extensions.txt` (if Cursor CLI is in PATH)
 8. Create `.zshrc-env-vars` (private secrets) and `.zshrc-local` (machine-specific overrides) from example templates
 
+### On a machine that's already set up
+
+Use `--check` and `--sync` instead of a bare `./install.sh`:
+
+```bash
+./install.sh --check   # report drift, change nothing
+./install.sh --sync    # non-interactive, add-only: create what's missing
+```
+
+`--check` audits every symlink, lists dangling links and stale `.bak` files, diffs the installed Claude plugins against `dotfiles/.claude/plugins/installed_plugins.json`, and runs `brew bundle check`.
+
+`--sync` runs every step non-interactively but refuses the single destructive branch in `create_symlink`: where a real file — or a link to somewhere else — already occupies a destination, it reports the drift and leaves it alone rather than moving it to `.bak`. So `--sync` can only ever add. Run a bare `./install.sh` when you actually want the repo copy to take over a destination that has local content; that path backs the original up first, to a `.bak` name that doesn't already exist.
+
+Other flags: `--yes` (non-interactive, destructive branch enabled), `--dry-run` (list steps only), `--verbose` (also print already-correct symlinks, which are otherwise summarised as a count).
+
+`create_symlink` skips any source that isn't present in the repo, so link lines for files you haven't added yet are inert rather than producing dangling symlinks — add the file and the link starts working with no script edit.
+
 ## Private Environment Variables
 
 Secrets and API keys live in `dotfiles/.zshrc-env-vars`, which is **gitignored**.

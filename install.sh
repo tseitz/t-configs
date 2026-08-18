@@ -5,9 +5,20 @@ set -euo pipefail
 # t-configs bootstrap script
 # ============================================
 # Idempotent — safe to run multiple times.
+#
 # Usage: ./install.sh           # interactive (prompts per step)
 #        ./install.sh --yes     # non-interactive (run everything)
-#        ./install.sh --dry-run # show what would run, no changes
+#        ./install.sh --sync    # non-interactive, ADD-ONLY (see below)
+#        ./install.sh --check   # report drift, change nothing
+#        ./install.sh --dry-run # list the steps, change nothing
+#        ./install.sh --verbose # also print already-correct symlinks
+#
+# --sync is the "get this machine back in line with my other one" mode. It runs
+# every step non-interactively, but refuses the one destructive branch: if a real
+# file or a link to somewhere else already occupies a symlink destination, it
+# reports the drift and moves on instead of backing the file up and replacing it.
+# So it only ever ADDS what's missing. Use a full ./install.sh to take over a
+# destination that already has local content.
 # ============================================
 
 REPO_DIR="$(cd "$(dirname "$0")" && pwd)"
@@ -31,9 +42,15 @@ error()   { echo -e "${RED}[err]${NC}  $1"; }
 # ------------------------------------------
 YES_ALL=false
 DRY_RUN=false
+SYNC_ONLY=false
+CHECK_ONLY=false
+VERBOSE=false
 for arg in "$@"; do
   [[ "$arg" == "--yes"     || "$arg" == "-y" ]] && YES_ALL=true
   [[ "$arg" == "--dry-run" || "$arg" == "-n" ]] && DRY_RUN=true
+  [[ "$arg" == "--verbose" || "$arg" == "-v" ]] && VERBOSE=true
+  [[ "$arg" == "--sync"    || "$arg" == "-s" ]] && { SYNC_ONLY=true; YES_ALL=true; }
+  [[ "$arg" == "--check"   || "$arg" == "-c" ]] && CHECK_ONLY=true
 done
 
 # ------------------------------------------
@@ -184,35 +201,107 @@ step_mise() {
 # ------------------------------------------
 # 7. Create symlinks
 # ------------------------------------------
+LINKS_OK=0; LINKS_ADDED=0; LINKS_DRIFT=0; LINKS_ABSENT=0
+
+# --check must not touch the disk, and creating an empty parent dir counts.
+ensure_dir() { $CHECK_ONLY || mkdir -p "$@"; }
+
+link_summary() {
+  local msg="links: ${LINKS_OK} ok, ${LINKS_ADDED} created, ${LINKS_DRIFT} drifted, ${LINKS_ABSENT} skipped (not in repo)"
+  if (( LINKS_DRIFT > 0 )); then warn "$msg"; else success "$msg"; fi
+  $VERBOSE || (( LINKS_OK == 0 )) || info "re-run with --verbose to list the ${LINKS_OK} already-correct links"
+}
+
+# Pick a .bak name that isn't taken. The old code always used "$dest.bak", so a
+# second run would silently destroy the backup the first run had just made.
+backup_path() {
+  local dest="$1" n=1 candidate="${1}.bak"
+  while [ -e "$candidate" ]; do candidate="${dest}.bak.${n}"; n=$((n + 1)); done
+  printf '%s' "$candidate"
+}
+
 create_symlink() {
   local src="$1"
   local dest="$2"
 
-  if [ -L "$dest" ]; then
-    local current_target
-    current_target="$(readlink "$dest")"
-    if [ "$current_target" = "$src" ]; then
-      success "Symlink already correct: $dest -> $src"
-      return
-    else
-      warn "Symlink exists but points elsewhere: $dest -> $current_target"
-      warn "Updating to: $dest -> $src"
-      ln -sf "$src" "$dest"
-      success "Symlink updated: $dest -> $src"
-    fi
-  elif [ -f "$dest" ] || [ -d "$dest" ]; then
-    warn "Existing file/directory at $dest — backing up to ${dest}.bak"
-    mv "$dest" "${dest}.bak"
-    ln -s "$src" "$dest"
-    success "Symlink created (original backed up): $dest -> $src"
-  else
-    ln -s "$src" "$dest"
-    success "Symlink created: $dest -> $src"
+  # Never link to a path that isn't in the repo. Without this guard the script
+  # happily creates dangling links (this is how ~/.claude/AGENTS.md, plugin.json,
+  # hooks/ et al. came to point at nothing). Skipping rather than deleting the
+  # call site means re-adding the file to the repo revives the link with no edit.
+  if [ ! -e "$src" ]; then
+    warn "not in repo, skipped: ${src#"$DOTFILES_DIR"/}"
+    LINKS_ABSENT=$((LINKS_ABSENT + 1))
+    return
   fi
+
+  local link_target=""
+  [ -L "$dest" ] && link_target="$(readlink "$dest")"
+
+  # Already correct — the overwhelmingly common case on a set-up machine.
+  if [ "$link_target" = "$src" ]; then
+    LINKS_OK=$((LINKS_OK + 1))
+    $VERBOSE && success "ok: $dest"
+    return 0
+  fi
+
+  # Nothing there, or a dangling link. Safe in every mode — there is no content
+  # to lose, so even --sync and --check-less runs can create it outright.
+  if [ ! -e "$dest" ]; then
+    LINKS_DRIFT=$((LINKS_DRIFT + 1))
+    if $CHECK_ONLY; then
+      warn "missing: $dest -> $src"
+      return 0
+    fi
+    [ -n "$link_target" ] && rm "$dest"   # dangling link
+    ln -s "$src" "$dest"
+    success "linked: $dest -> $src"
+    LINKS_ADDED=$((LINKS_ADDED + 1))
+    LINKS_DRIFT=$((LINKS_DRIFT - 1))
+    return 0
+  fi
+
+  # Something real occupies the destination: a live file/dir, or a link pointing
+  # elsewhere. This is the only branch that can destroy local state, so --check
+  # and --sync report it and stop. Only a full install takes the destination over.
+  LINKS_DRIFT=$((LINKS_DRIFT + 1))
+  if $CHECK_ONLY || $SYNC_ONLY; then
+    if [ -n "$link_target" ]; then
+      warn "drift: $dest -> $link_target (repo wants $src)"
+    else
+      warn "drift: $dest is a real file/dir, not a link to $src"
+    fi
+    warn "       left alone — run ./install.sh to replace it (backs up first)"
+    return 0
+  fi
+
+  if [ -n "$link_target" ]; then
+    # A link has no content of its own, so there is nothing to back up.
+    warn "repointing: $dest -> $link_target  =>  $src"
+    ln -sfn "$src" "$dest"   # -n so a link to a DIR is replaced, not written into
+  elif diff -rq "$src" "$dest" >/dev/null 2>&1; then
+    # Byte-identical to the repo copy — a .bak here is pure noise.
+    info "identical to repo, replacing without backup: $dest"
+    rm -rf "$dest"
+    ln -s "$src" "$dest"
+  else
+    local bak; bak="$(backup_path "$dest")"
+    warn "existing $dest differs from repo — backing up to $bak"
+    mv "$dest" "$bak"
+    ln -s "$src" "$dest"
+  fi
+  success "linked: $dest -> $src"
+  LINKS_ADDED=$((LINKS_ADDED + 1))
+  LINKS_DRIFT=$((LINKS_DRIFT - 1))
 }
 
 step_symlinks() {
-  info "Creating symlinks..."
+  if $CHECK_ONLY; then
+    info "Auditing symlinks (no changes)..."
+  elif $SYNC_ONLY; then
+    info "Syncing symlinks (add-only)..."
+  else
+    info "Creating symlinks..."
+  fi
   create_symlink "$DOTFILES_DIR/.zshrc"      "$HOME/.zshrc"
   create_symlink "$DOTFILES_DIR/.zshenv"     "$HOME/.zshenv"
   create_symlink "$DOTFILES_DIR/.gitconfig"  "$HOME/.gitconfig"
@@ -224,7 +313,7 @@ step_symlinks() {
   # missing include is silently ignored by git, so an unseeded machine would quietly
   # sign work commits with the personal email. Seed it here and warn until it's real.
   if [ ! -f "$DOTFILES_DIR/.gitconfig-work" ]; then
-    cp "$DOTFILES_DIR/.gitconfig-work.example" "$DOTFILES_DIR/.gitconfig-work"
+    $CHECK_ONLY || cp "$DOTFILES_DIR/.gitconfig-work.example" "$DOTFILES_DIR/.gitconfig-work"
     warn "Created .gitconfig-work from example — set your work email in it"
   elif grep -q "you@example.com" "$DOTFILES_DIR/.gitconfig-work"; then
     warn ".gitconfig-work still has the placeholder email — work commits will be wrong"
@@ -233,10 +322,10 @@ step_symlinks() {
   fi
 
   # Neovim config
-  mkdir -p "$HOME/.config"
+  ensure_dir "$HOME/.config"
   create_symlink "$DOTFILES_DIR/.config/nvim" "$HOME/.config/nvim"
 
-  mkdir -p "$HOME/.cursor"
+  ensure_dir "$HOME/.cursor"
 
   # Editor User settings — one shared file for both VS Code and Cursor
   if [[ "$OSTYPE" == darwin* ]]; then
@@ -246,12 +335,12 @@ step_symlinks() {
     CURSOR_USER_DIR="$HOME/.config/Cursor/User"
     VSCODE_USER_DIR="$HOME/.config/Code/User"
   fi
-  mkdir -p "$CURSOR_USER_DIR" "$VSCODE_USER_DIR"
+  ensure_dir "$CURSOR_USER_DIR" "$VSCODE_USER_DIR"
   create_symlink "$DOTFILES_DIR/.config/editors/settings.json" "$CURSOR_USER_DIR/settings.json"
   create_symlink "$DOTFILES_DIR/.config/editors/settings.json" "$VSCODE_USER_DIR/settings.json"
 
   # ── Claude Code (.claude is the first-class citizen) ──────────────────
-  mkdir -p "$HOME/.claude"
+  ensure_dir "$HOME/.claude"
 
   # Directories (symlink entire dirs)
   create_symlink "$DOTFILES_DIR/.claude/skills"   "$HOME/.claude/skills"
@@ -270,6 +359,8 @@ step_symlinks() {
   # the shared baseline, edit settings.base.json deliberately.
   if [ -f "$HOME/.claude/settings.json" ] && [ ! -L "$HOME/.claude/settings.json" ]; then
     info "settings.json already exists (machine-owned, left untouched)"
+  elif $CHECK_ONLY; then
+    warn "missing: $HOME/.claude/settings.json (would seed from settings.base.json)"
   else
     [ -L "$HOME/.claude/settings.json" ] && warn "Replacing settings.json symlink with a copy (symlinks break Claude Code atomic writes)" && rm "$HOME/.claude/settings.json"
     cp "$DOTFILES_DIR/.claude/settings.base.json" "$HOME/.claude/settings.json"
@@ -287,14 +378,25 @@ step_symlinks() {
   create_symlink "$DOTFILES_DIR/.claude/the-security-guide.md"  "$HOME/.claude/the-security-guide.md"
   create_symlink "$DOTFILES_DIR/.claude/PLUGIN_SCHEMA_NOTES.md" "$HOME/.claude/PLUGIN_SCHEMA_NOTES.md"
 
-  # Plugins: only the manifest, not cache/state
-  mkdir -p "$HOME/.claude/plugins"
-  create_symlink "$DOTFILES_DIR/.claude/plugins/installed_plugins.json" "$HOME/.claude/plugins/installed_plugins.json"
+  # Plugins: the repo manifest is the WANTED list; step 9 installs from it.
+  # installed_plugins.json is deliberately NOT symlinked. Claude Code rewrites it
+  # in place as a real file (same reason settings.json isn't linked), so linking it
+  # produced a churn loop: every install backed up the file and re-linked, Claude
+  # replaced the link with a file again, and the next run made another .bak.
+  ensure_dir "$HOME/.claude/plugins"
+  if [ -L "$HOME/.claude/plugins/installed_plugins.json" ]; then
+    warn "installed_plugins.json is a symlink (legacy) — replacing with a real copy"
+    $CHECK_ONLY || { rm "$HOME/.claude/plugins/installed_plugins.json"; \
+      cp "$DOTFILES_DIR/.claude/plugins/installed_plugins.json" "$HOME/.claude/plugins/installed_plugins.json"; }
+  elif [ ! -f "$HOME/.claude/plugins/installed_plugins.json" ]; then
+    $CHECK_ONLY || cp "$DOTFILES_DIR/.claude/plugins/installed_plugins.json" "$HOME/.claude/plugins/installed_plugins.json"
+    success "installed_plugins.json seeded from repo manifest"
+  fi
 
   # settings.local.json: create from example if it doesn't exist (account-specific overrides)
   if [ ! -f "$HOME/.claude/settings.local.json" ]; then
     if [ -f "$DOTFILES_DIR/.claude/settings.local.json.example" ]; then
-      cp "$DOTFILES_DIR/.claude/settings.local.json.example" "$HOME/.claude/settings.local.json"
+      $CHECK_ONLY || cp "$DOTFILES_DIR/.claude/settings.local.json.example" "$HOME/.claude/settings.local.json"
       success "Created settings.local.json from example (edit for your account preferences)"
     fi
   else
@@ -305,7 +407,7 @@ step_symlinks() {
   create_symlink "$DOTFILES_DIR/.claude/skills" "$HOME/.cursor/skills"
 
   # ── Gemini CLI ────────────────────
-  mkdir -p "$HOME/.gemini/antigravity"
+  ensure_dir "$HOME/.gemini/antigravity"
 
   # Support both legacy/antigravity and modern paths
   create_symlink "$DOTFILES_DIR/.claude/skills"   "$HOME/.gemini/antigravity/skills"
@@ -316,6 +418,78 @@ step_symlinks() {
   create_symlink "$DOTFILES_DIR/.claude/scripts"  "$HOME/.gemini/scripts"
   create_symlink "$DOTFILES_DIR/.claude/AGENTS.md"              "$HOME/.gemini/AGENTS.md"
   create_symlink "$DOTFILES_DIR/.claude/the-security-guide.md"  "$HOME/.gemini/the-security-guide.md"
+
+  # Printed here, not at the end of the script: run_step executes each step in a
+  # subshell, so the counters never make it back to the parent.
+  link_summary
+}
+
+# ------------------------------------------
+# Read-only drift checks (--check only)
+# ------------------------------------------
+step_check_brew() {
+  if ! command -v brew &>/dev/null; then warn "brew not installed on this machine"; return 0; fi
+  local brewfile="$REPO_DIR/Brewfile"
+  if [[ "$OSTYPE" == linux* ]] && [ -f "$REPO_DIR/Brewfile.wsl" ]; then brewfile="$REPO_DIR/Brewfile.wsl"; fi
+  [ -f "$brewfile" ] || { warn "no Brewfile found"; return 0; }
+  info "Checking $(basename "$brewfile")..."
+  if brew bundle check --file="$brewfile" >/dev/null 2>&1; then
+    success "Brewfile satisfied — nothing missing"
+  else
+    warn "Homebrew packages missing (install with: brew bundle --file=$brewfile):"
+    brew bundle check --file="$brewfile" --verbose 2>&1 | grep -v '^Homebrew bundle' || true
+  fi
+}
+
+# The repo manifest is the wanted list; ~/.claude is what Claude Code actually has.
+# Drift goes both ways: plugins added on the other machine, and plugins installed
+# here that were never written back to the repo.
+step_check_claude_plugins() {
+  local repo_manifest="$DOTFILES_DIR/.claude/plugins/installed_plugins.json"
+  local local_manifest="$HOME/.claude/plugins/installed_plugins.json"
+  [ -f "$repo_manifest" ] || { warn "no repo plugin manifest"; return 0; }
+  [ -f "$local_manifest" ] || { warn "no local plugin manifest yet"; return 0; }
+  command -v python3 &>/dev/null || { warn "python3 not found — skipping plugin diff"; return 0; }
+  info "Checking Claude plugins against the repo manifest..."
+  python3 - "$repo_manifest" "$local_manifest" <<'PY'
+import json, sys
+
+def names(path):
+    try:
+        with open(path) as fh:
+            return set(json.load(fh).get("plugins", {}))
+    except Exception as exc:
+        print(f"[warn] could not read {path}: {exc}")
+        return set()
+
+repo, local = names(sys.argv[1]), names(sys.argv[2])
+missing, extra = sorted(repo - local), sorted(local - repo)
+if not missing and not extra:
+    print("[ok]   Claude plugins match the repo manifest")
+for p in missing:
+    print(f"[warn] in repo manifest but NOT installed here: {p}")
+for p in extra:
+    print(f"[warn] installed here but NOT in repo manifest: {p}")
+PY
+}
+
+# Dangling links this script used to create, plus any .bak it left behind.
+step_check_leftovers() {
+  info "Scanning for dangling links and stale backups..."
+  local found=0 p
+  for dir in "$HOME" "$HOME/.claude" "$HOME/.claude/plugins" "$HOME/.cursor" "$HOME/.gemini" "$HOME/.config"; do
+    [ -d "$dir" ] || continue
+    while IFS= read -r p; do
+      warn "dangling link: $p -> $(readlink "$p")"
+      found=$((found + 1))
+    done < <(find "$dir" -maxdepth 1 -type l ! -exec test -e {} \; -print 2>/dev/null)
+    while IFS= read -r p; do
+      warn "stale backup:  $p"
+      found=$((found + 1))
+    done < <(find "$dir" -maxdepth 1 -name '*.bak*' -print 2>/dev/null)
+  done
+  (( found == 0 )) && success "no dangling links or stale backups" || warn "$found leftover(s) — safe to delete once you've checked them"
+  return 0
 }
 
 # ------------------------------------------
@@ -407,6 +581,24 @@ step_local_overrides() {
 # ------------------------------------------
 # Run steps
 # ------------------------------------------
+if $CHECK_ONLY; then
+  info "Checking this machine against $REPO_DIR — nothing will be changed."
+  echo ""
+  step_symlinks
+  echo ""
+  step_check_leftovers
+  echo ""
+  step_check_claude_plugins
+  echo ""
+  step_check_brew
+  echo ""
+  if (( LINKS_DRIFT > 0 )); then
+    info "Fix what's only missing:  ./install.sh --sync"
+    info "Take over drifted paths:  ./install.sh   (backs up first)"
+  fi
+  exit 0
+fi
+
 run_step "1. Install Homebrew"             step_homebrew
 run_step "2. Install Homebrew packages"    step_brew_packages
 run_step "3. Install oh-my-zsh"            step_ohmyzsh
