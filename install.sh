@@ -224,14 +224,17 @@ step_symlinks() {
 
   mkdir -p "$HOME/.cursor"
 
-  # Cursor User settings (macOS vs Linux paths)
+  # Editor User settings — one shared file for both VS Code and Cursor
   if [[ "$OSTYPE" == darwin* ]]; then
     CURSOR_USER_DIR="$HOME/Library/Application Support/Cursor/User"
+    VSCODE_USER_DIR="$HOME/Library/Application Support/Code/User"
   else
     CURSOR_USER_DIR="$HOME/.config/Cursor/User"
+    VSCODE_USER_DIR="$HOME/.config/Code/User"
   fi
-  mkdir -p "$CURSOR_USER_DIR"
-  create_symlink "$DOTFILES_DIR/.config/Cursor/User/settings.json" "$CURSOR_USER_DIR/settings.json"
+  mkdir -p "$CURSOR_USER_DIR" "$VSCODE_USER_DIR"
+  create_symlink "$DOTFILES_DIR/.config/editors/settings.json" "$CURSOR_USER_DIR/settings.json"
+  create_symlink "$DOTFILES_DIR/.config/editors/settings.json" "$VSCODE_USER_DIR/settings.json"
 
   # ── Claude Code (.claude is the first-class citizen) ──────────────────
   mkdir -p "$HOME/.claude"
@@ -243,6 +246,7 @@ step_symlinks() {
   create_symlink "$DOTFILES_DIR/.claude/commands" "$HOME/.claude/commands"
   create_symlink "$DOTFILES_DIR/.claude/hooks"    "$HOME/.claude/hooks"
   create_symlink "$DOTFILES_DIR/.claude/scripts"  "$HOME/.claude/scripts"
+  create_symlink "$DOTFILES_DIR/.claude/output-styles" "$HOME/.claude/output-styles"
 
   # settings.json is SEEDED from settings.base.json once, then OWNED by this
   # machine — it is never symlinked and never synced back to the repo. The base

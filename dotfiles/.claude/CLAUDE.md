@@ -20,8 +20,8 @@ work and personal machines. Understand how it syncs before editing anything unde
 `~/.claude/`:
 
 - **Symlinked → editing = editing the repo.** This file, plus `~/.claude/{skills,
-  rules,agents,commands,scripts}` (and `AGENTS.md`, `README.md`, `statusline-command.sh`),
-  are symlinks into `~/t-configs/dotfiles/.claude/`. When I say "update my personal
+  rules,agents,commands,scripts,output-styles}` (and `AGENTS.md`, `README.md`,
+  `statusline-command.sh`), are symlinks into `~/t-configs/dotfiles/.claude/`. When I say "update my personal
   claude", "update my global rules/instructions", "add a command/agent/skill", etc.,
   just edit the file in place — the change lands in the repo automatically. Then commit
   and push so my other machine picks it up on `git pull`.
