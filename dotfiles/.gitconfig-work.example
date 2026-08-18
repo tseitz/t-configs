@@ -1,0 +1,5 @@
+# Work commit identity. Loaded by .gitconfig via includeIf for repos under
+# ~/Code/presentation/. Gitignored — this repo is public, so the real email
+# lives only on the machine. install.sh seeds .gitconfig-work from this file.
+[user]
+	email = you@example.com

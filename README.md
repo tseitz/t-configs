@@ -90,11 +90,13 @@ The script uses a sparse checkout to fetch only that directory. Run it again wit
 | `dotfiles/.zshenv` | Zsh environment — Homebrew PATH, Cargo/Rust |
 | `dotfiles/.zshrc-env-vars.example` | Template for private environment variables |
 | `dotfiles/.zshrc-local.example` | Template for machine-specific overrides |
-| `dotfiles/.gitconfig` | Git configuration — user, LFS, default branch, pull strategy |
+| `dotfiles/.gitconfig` | Git configuration — user, LFS, default branch, pull strategy, SSH URL rewrites |
+| `dotfiles/.gitconfig-work.example` | Template for the work commit identity. `install.sh` copies it to `dotfiles/.gitconfig-work`, which is **gitignored** (this repo is public) and pulled in by `.gitconfig`'s `includeIf` for repos under `~/Code/presentation/`. Not symlinked — referenced by repo path. Fill in the real email after install: git ignores a missing include silently, so a placeholder means work commits get the personal email. |
+| `dotfiles/.zprofile` | Login-shell PATH (Docker Desktop CLI) |
 | `dotfiles/.hushlogin` | Suppresses macOS "Last login" terminal banner |
 | `dotfiles/.config/nvim/` | Neovim configuration (LazyVim) |
 | `dotfiles/.cursor/mcp.json.template` | Cursor MCP server config template (API keys substituted at install) |
-| `dotfiles/.config/Cursor/User/settings.json` | Cursor editor settings |
+| `dotfiles/.config/editors/settings.json` | Shared editor settings — symlinked into both VS Code and Cursor |
 | `dotfiles/.config/Cursor/extensions.txt` | List of Cursor extension IDs (one per line) |
 | `dotfiles/.agent/skills/` | Agent skills (symlinked to Cursor and Antigravity) |
 | `mise.toml` | Default runtimes managed by mise (e.g. Node) |

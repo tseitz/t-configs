@@ -2,6 +2,9 @@ dotfiles/.zshrc-env-vars
 dotfiles/.zshrc-local
 .claude.json
 
+# Work commit identity — this repo is public. Seeded from .gitconfig-work.example.
+dotfiles/.gitconfig-work
+
 # dotfiles/.claude — track everything EXCEPT runtime state and secrets
 # settings.json is machine-owned (seeded from settings.base.json); never commit it.
 # settings.base.json is the shared, hand-curated baseline — that one IS tracked.

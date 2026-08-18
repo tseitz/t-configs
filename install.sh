@@ -216,7 +216,21 @@ step_symlinks() {
   create_symlink "$DOTFILES_DIR/.zshrc"      "$HOME/.zshrc"
   create_symlink "$DOTFILES_DIR/.zshenv"     "$HOME/.zshenv"
   create_symlink "$DOTFILES_DIR/.gitconfig"  "$HOME/.gitconfig"
+  create_symlink "$DOTFILES_DIR/.zprofile"   "$HOME/.zprofile"
   create_symlink "$DOTFILES_DIR/.hushlogin"  "$HOME/.hushlogin"
+
+  # .gitconfig-work: work commit identity, pulled in by .gitconfig's includeIf for
+  # repos under ~/Code/presentation/. Gitignored because this repo is public — and a
+  # missing include is silently ignored by git, so an unseeded machine would quietly
+  # sign work commits with the personal email. Seed it here and warn until it's real.
+  if [ ! -f "$DOTFILES_DIR/.gitconfig-work" ]; then
+    cp "$DOTFILES_DIR/.gitconfig-work.example" "$DOTFILES_DIR/.gitconfig-work"
+    warn "Created .gitconfig-work from example — set your work email in it"
+  elif grep -q "you@example.com" "$DOTFILES_DIR/.gitconfig-work"; then
+    warn ".gitconfig-work still has the placeholder email — work commits will be wrong"
+  else
+    success ".gitconfig-work already set (work identity preserved)"
+  fi
 
   # Neovim config
   mkdir -p "$HOME/.config"

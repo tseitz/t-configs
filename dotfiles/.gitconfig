@@ -10,3 +10,9 @@
 	smudge = git-lfs smudge -- %f
 [pull]
 	rebase = false
+[url "git@github.com:NinthDecimal/"]
+	insteadOf = https://github.com/NinthDecimal/
+[url "git@github.com:ThinkNear/"]
+	insteadOf = https://github.com/ThinkNear/
+[includeIf "gitdir/i:~/Code/presentation/"]
+	path = ~/t-configs/dotfiles/.gitconfig-work

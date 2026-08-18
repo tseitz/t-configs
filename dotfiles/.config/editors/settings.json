@@ -129,6 +129,9 @@
   "git.autofetch": true,
   "git.autoStash": true,
   "git.ignoreRebaseWarning": true,
+  // All GitHub remotes are SSH; VS Code's GIT_ASKPASS injection only ever
+  // served stale OAuth tokens to terminal git.
+  "git.terminalAuthentication": false,
 
   // ── GitLens ─────────────────────────────────────────────────────
   "gitlens.codeLens.enabled": false,
@@ -157,9 +160,6 @@
       "remote": true,
     },
   },
-  // GitLens AI (VS Code: uses Copilot model; ignored in Cursor)
-  "gitlens.ai.model": "vscode",
-  "gitlens.ai.vscode.model": "copilot:gpt-4.1",
 
   // ── GitHub Copilot (VS Code-specific; ignored in Cursor) ─────────
   "github.copilot.enable": {
@@ -378,4 +378,15 @@
   },
   "mise.binPath": "/opt/homebrew/bin/mise",
   "githubPullRequests.pullBranch": "never",
+  "yaml.disableSchemaDetection": [
+    "**/.github/workflows/*.yml",
+    "**/.github/workflows/*.yaml",
+    "**/.gitea/workflows/*.yml",
+    "**/.gitea/workflows/*.yaml",
+    "**/.forgejo/workflows/*.yml",
+    "**/.forgejo/workflows/*.yaml"
+  ],
+  // Written as true by the Java extension on install; off to match the rest of this
+  // config (no editor or agent telemetry).
+  "jdk.telemetry.enabled": false,
 }
