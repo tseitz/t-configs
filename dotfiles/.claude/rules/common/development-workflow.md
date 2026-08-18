@@ -117,6 +117,21 @@ before starting — not for switching partway.
 - **Validation standard (ported from `/prp:implement`):** verify in levels as appropriate —
   static/lint → unit → build → integration → edge. Don't claim done before the relevant levels pass.
 
+### 4b. Findings found mid-task — ASK. Never file one unprompted.
+
+When you hit a real gap, defect, or better approach while building something else, **bring it to
+me and default to proposing a fix now.** Do NOT silently write it into a backlog —
+`docs/IMPROVEMENTS.md`, a TODO file, a tracker, an issue — unless I say to defer it.
+
+**Why:** filing is not free. An entry *is* a decision to defer, and making that decision on my
+behalf is how a tracker grows past the point anyone reads it. Most findings surfaced mid-task
+are cheaper to fix in the moment than to describe well enough for someone to action cold later.
+A repo rule that says "write it down and keep going" is about not *derailing* and not *dropping*
+— it is not permission to choose deferral silently.
+
+Where a project's own CLAUDE.md defines the tracker's format, that still governs what an entry
+looks like **once I've agreed to add one**. This rule governs whether it gets added at all.
+
 ### 5. Review — single pass by default
 
 - **`/code-review`** on the diff (it has real teeth — gates commits via the pre-commit hook).
