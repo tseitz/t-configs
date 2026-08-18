@@ -43,6 +43,27 @@ reviewer reads in under a minute before opening the diff.
 Ticket links, breaking changes, and anything a deploy depends on always stay in. Brevity is not
 an excuse to drop information a reviewer needs — it's an instruction to stop repeating the diff.
 
+## Do NOT hard-wrap the body — one line per paragraph
+
+**GitHub comment fields are not repo `.md` files.** In PR descriptions, review comments, and issue comments, GitHub applies GFM hard-line-breaks: every single `\n` inside a paragraph renders as a literal `<br>`. So a body hard-wrapped at 90–100 columns — correct and conventional in a committed markdown file, where CommonMark folds that newline into a space — arrives as a ragged stack of forced short lines. Nothing is visibly wrong in the source file, which is why this recurs.
+
+So when authoring a body or comment:
+
+- **Write each paragraph as one long unwrapped line.** Let the browser wrap it. Do not reflow to a column limit; the editor's soft-wrap is fine to look at while writing.
+- **Separate paragraphs with a blank line.** That's the only break that behaves the same in both contexts.
+- **Keep real newlines only where a break is intended** — list items, table rows, fenced code.
+- This applies to the text passed via `--body-file`/`--body` too. A clean file (LF endings, no trailing spaces) still renders wrong if the paragraphs are wrapped; whitespace hygiene is not the fix.
+- **It's GitHub-specific — don't over-apply it.** Jira descriptions written through the Atlassian MCP fold soft wraps into spaces the normal way (they convert to ADF paragraphs), as do committed `.md` files. Wrapping is only wrong in GitHub comment fields.
+
+Verify rather than eyeball, since the source looks fine either way:
+
+```bash
+gh api repos/{owner}/{repo}/pulls/{n} \
+  -H "Accept: application/vnd.github.html+json" --jq .body_html | grep -c '<br>'
+```
+
+A count higher than the breaks you deliberately wrote means it hard-wrapped. Fix by joining each paragraph onto one line and re-editing with `gh pr edit --body-file`.
+
 ## Code comments vs. diff commentary
 
 Code comments document **code**. Everything that only makes sense while the old behaviour is
