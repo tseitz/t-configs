@@ -42,6 +42,7 @@
       }
     }
   },
+  "outputStyle" : "ELI5",
   "hooks" : {
     "PostToolUse" : [
       {
@@ -214,7 +215,10 @@
     "network" : {
       "allowedDomains" : [
         "github.com",
-        "api.github.com"
+        "api.github.com",
+        "rubygems.org",
+        "index.rubygems.org",
+        "thinknear.jfrog.io"
       ],
       "allowLocalBinding" : true,
       "allowUnixSockets" : [
