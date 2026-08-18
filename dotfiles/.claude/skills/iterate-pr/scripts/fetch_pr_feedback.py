@@ -18,6 +18,15 @@ Categories (using LOGAF scale - see https://develop.sentry.dev/engineering-pract
 - low: Optional suggestions (l:, nit, style)
 - bot: Informational automated comments (Codecov, Dependabot, etc.)
 - resolved: Already resolved threads
+- author_notes: Inline threads the PR author opened that no one has replied to
+  (diff commentary, not feedback) — kept for context, not for triage.
+
+Inline items carry the WHOLE thread, not just its opening comment:
+- ``thread``: every comment in order, each flagged ``is_pr_author``
+- ``full_body``/``author``: the first comment NOT by the PR author, so a thread the
+  author opened is presented by the reviewer's reply rather than by the author's note
+- ``awaiting_author_reply``: true when a reviewer had the last word
+- ``diff_hunk``: the diff context GitHub anchored the thread to
 
 Bot classification:
 - Review bots (Sentry, Warden, Cursor, Bugbot, etc.) provide actionable code
@@ -135,26 +144,38 @@ def get_issue_comments(owner: str, repo: str, pr_number: int) -> list[dict[str, 
 
 
 def get_review_threads(owner: str, repo: str, pr_number: int) -> list[dict[str, Any]]:
-    """Get review threads with resolution status via GraphQL."""
+    """Get review threads with every comment in each thread, via GraphQL.
+
+    Fetches the WHOLE comment chain per thread, not just the opening comment —
+    replies are where a discussion is actually resolved (a reviewer conceding, an
+    author answering, a follow-up question). Dropping them makes an answered
+    thread look unaddressed and hides feedback that only exists as a reply.
+
+    Threads are paginated; ``comments(first: 100)`` covers any realistic thread.
+    """
     query = """
-    query($owner: String!, $repo: String!, $pr: Int!) {
+    query($owner: String!, $repo: String!, $pr: Int!, $cursor: String) {
       repository(owner: $owner, name: $repo) {
         pullRequest(number: $pr) {
-          reviewThreads(first: 100) {
+          reviewThreads(first: 100, after: $cursor) {
+            pageInfo { hasNextPage endCursor }
             nodes {
               id
               isResolved
               isOutdated
               path
               line
-              comments(first: 10) {
+              originalLine
+              diffSide
+              comments(first: 100) {
+                totalCount
                 nodes {
                   id
                   body
-                  author {
-                    login
-                  }
+                  url
+                  diffHunk
                   createdAt
+                  author { login }
                 }
               }
             }
@@ -163,24 +184,54 @@ def get_review_threads(owner: str, repo: str, pr_number: int) -> list[dict[str, 
       }
     }
     """
+    threads: list[dict[str, Any]] = []
+    cursor: str | None = None
+    while True:
+        page = _run_thread_query(query, owner, repo, pr_number, cursor)
+        if page is None:
+            break
+        threads.extend(page.get("nodes") or [])
+        page_info = page.get("pageInfo") or {}
+        if not page_info.get("hasNextPage"):
+            break
+        cursor = page_info.get("endCursor")
+        if not cursor:
+            break
+    return threads
+
+
+def _run_thread_query(
+    query: str,
+    owner: str,
+    repo: str,
+    pr_number: int,
+    cursor: str | None,
+) -> dict[str, Any] | None:
+    """Run one page of the review-thread query, returning the connection object."""
+    args = [
+        "gh", "api", "graphql",
+        "-f", f"query={query}",
+        "-F", f"owner={owner}",
+        "-F", f"repo={repo}",
+        "-F", f"pr={pr_number}",
+    ]
+    # GraphQL needs an explicit null for the first page; gh has no null literal,
+    # so omit the variable entirely and let the query default it.
+    if cursor:
+        args += ["-f", f"cursor={cursor}"]
     try:
-        result = subprocess.run(
-            [
-                "gh", "api", "graphql",
-                "-f", f"query={query}",
-                "-F", f"owner={owner}",
-                "-F", f"repo={repo}",
-                "-F", f"pr={pr_number}",
-            ],
-            capture_output=True,
-            text=True,
-            check=True,
-        )
+        result = subprocess.run(args, capture_output=True, text=True, check=True)
         data = json.loads(result.stdout)
-        threads = data.get("data", {}).get("repository", {}).get("pullRequest", {}).get("reviewThreads", {}).get("nodes", [])
-        return threads
-    except (subprocess.CalledProcessError, json.JSONDecodeError):
-        return []
+        return (
+            data.get("data", {})
+            .get("repository", {})
+            .get("pullRequest", {})
+            .get("reviewThreads", {})
+        ) or None
+    except (subprocess.CalledProcessError, json.JSONDecodeError) as e:
+        stderr = getattr(e, "stderr", "") or ""
+        print(f"Error fetching review threads: {stderr}", file=sys.stderr)
+        return None
 
 
 def detect_logaf(body: str) -> str | None:
@@ -304,6 +355,59 @@ def extract_feedback_item(
     return item
 
 
+def build_thread_item(thread: dict[str, Any], pr_author: str) -> dict[str, Any] | None:
+    """Turn a review thread into a feedback item carrying its whole comment chain.
+
+    ``full_body`` is the comment being *responded to* — the first one not written by
+    the PR author, so a thread the author opened as diff commentary is presented by
+    the reviewer's reply rather than by the author's own note. ``thread`` holds every
+    comment in order, including the author's, so the reply reads in context.
+    """
+    comments = (thread.get("comments") or {}).get("nodes") or []
+    comments = [c for c in comments if (c.get("body") or "").strip()]
+    if not comments:
+        return None
+
+    chain = [
+        {
+            "author": (c.get("author") or {}).get("login", "") or "unknown",
+            "body": c.get("body", ""),
+            "created_at": c.get("createdAt"),
+            "url": c.get("url"),
+        }
+        for c in comments
+    ]
+    for entry in chain:
+        entry["is_pr_author"] = entry["author"] == pr_author
+
+    # The actionable comment is the first one from someone other than the author.
+    actionable = next((e for e in chain if not e["is_pr_author"]), None)
+    opener = chain[0]
+
+    item = extract_feedback_item(
+        body=(actionable or opener)["body"],
+        author=(actionable or opener)["author"],
+        path=thread.get("path"),
+        line=thread.get("line") or thread.get("originalLine"),
+        url=(actionable or opener).get("url"),
+        is_resolved=bool(thread.get("isResolved")),
+        is_outdated=bool(thread.get("isOutdated")),
+    )
+    item["thread_id"] = thread.get("id")
+    item["thread"] = chain
+    item["comment_count"] = len(chain)
+    item["started_by_pr_author"] = opener["is_pr_author"]
+    item["has_reviewer_comment"] = actionable is not None
+    item["last_comment_by"] = chain[-1]["author"]
+    item["awaiting_author_reply"] = not chain[-1]["is_pr_author"]
+
+    diff_hunk = comments[0].get("diffHunk")
+    if diff_hunk:
+        item["diff_hunk"] = diff_hunk
+
+    return item
+
+
 def main():
     parser = argparse.ArgumentParser(description="Fetch and categorize PR feedback")
     parser.add_argument("--pr", type=int, help="PR number (defaults to current branch PR)")
@@ -330,11 +434,12 @@ def main():
 
     # Categorized feedback using LOGAF scale
     feedback = {
-        "high": [],      # Must address before merge
-        "medium": [],    # Should address
-        "low": [],       # Optional suggestions
+        "high": [],           # Must address before merge
+        "medium": [],         # Should address
+        "low": [],            # Optional suggestions
         "bot": [],
         "resolved": [],
+        "author_notes": [],   # PR author's own inline threads, no reviewer reply yet
     }
 
     # Process reviews for overall status
@@ -353,47 +458,39 @@ def main():
     seen_thread_ids = set()
 
     for thread in threads:
-        if not thread.get("comments", {}).get("nodes"):
+        item = build_thread_item(thread, pr_author)
+        if item is None:
             continue
 
-        first_comment = thread["comments"]["nodes"][0]
-        author = first_comment.get("author", {}).get("login", "")
-        body = first_comment.get("body", "")
-
-        # Skip if author is PR author (self-comments)
-        if author == pr_author:
-            continue
+        author = item["author"]
+        body = item["full_body"]
 
         # Skip empty or very short comments
-        if not body or len(body.strip()) < 3:
+        if len(body.strip()) < 3:
             continue
 
-        is_resolved = thread.get("isResolved", False)
-        is_outdated = thread.get("isOutdated", False)
-
-        item = extract_feedback_item(
-            body=body,
-            author=author,
-            path=thread.get("path"),
-            line=thread.get("line"),
-            is_resolved=is_resolved,
-            is_outdated=is_outdated,
-        )
-
-        thread_id = thread.get("id")
+        thread_id = item.get("thread_id")
         if thread_id:
             seen_thread_ids.add(thread_id)
 
-        if is_resolved:
+        # A thread with no comment from anyone but the PR author is the author's own
+        # inline diff commentary, not feedback. It is kept in its own bucket rather
+        # than dropped: the walkthrough needs it as context, and once a reviewer
+        # replies the thread moves into the priority buckets on the reply.
+        if not item["has_reviewer_comment"]:
+            feedback["author_notes"].append(item)
+            continue
+
+        if item.get("resolved"):
             feedback["resolved"].append(item)
         elif is_review_bot(author):
-            category = categorize_comment(first_comment, body)
+            category = categorize_comment({"author": {"login": author}}, body)
             item["review_bot"] = True
             feedback[category].append(item)
         elif is_info_bot(author):
             feedback["bot"].append(item)
         else:
-            category = categorize_comment(first_comment, body)
+            category = categorize_comment({"author": {"login": author}}, body)
             feedback[category].append(item)
 
     # Get issue comments (general PR conversation)
@@ -448,8 +545,14 @@ def main():
             "low": len(feedback["low"]),
             "bot_comments": len(feedback["bot"]),
             "resolved": len(feedback["resolved"]),
+            "author_notes": len(feedback["author_notes"]),
             "review_bot_feedback": review_bot_count,
             "needs_attention": len(feedback["high"]) + len(feedback["medium"]),
+            "with_replies": sum(
+                1 for bucket in ("high", "medium", "low", "resolved")
+                for item in feedback[bucket]
+                if item.get("comment_count", 1) > 1
+            ),
         },
         "feedback": feedback,
     }
