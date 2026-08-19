@@ -106,9 +106,9 @@ The script uses a sparse checkout to fetch only that directory. Run it again wit
 | `mise.toml` | Default runtimes managed by mise (e.g. Node) |
 | `Brewfile` | Homebrew packages, casks, and dependencies (macOS) |
 | `Brewfile.wsl` | Homebrew formulae for WSL/Linux (no casks) |
-| `winget-packages.json` | Windows app list for `winget import` (Cursor, Docker, Chrome, etc.) |
+| `winget-packages.json` | Windows app list for `winget import` (Docker, Chrome, mise, etc.) |
 | `install.sh` | Bootstrap script for new machines (macOS / WSL) |
-| `install-windows.ps1` | Sync Cursor settings, MCP, extensions, skills to Windows (run from repo root in PowerShell) |
+| `install-windows.ps1` | Sync Claude config, VS Code settings, `.gitconfig` to native Windows (run from repo root in PowerShell) |
 | `dotfiles/.zshrc-local.example.wsl` | Example WSL overrides for `brew_prefix` and PATH |
 
 ## Windows (WSL)
@@ -126,7 +126,7 @@ If mise/Node fails with `libatomic.so.1`, install the system library then re-run
 
 Use **zsh** to load the config (not bash): run `zsh` then `source ~/.zshrc`. To set zsh as default on WSL, add Homebrew's zsh to allowed shells then run chsh: `echo '/home/linuxbrew/.linuxbrew/bin/zsh' | sudo tee -a /etc/shells` then `chsh -s $(which zsh)` (log out and back in). Override Mac paths in `dotfiles/.zshrc-local` (e.g. set `brew_prefix` for Linux Homebrew). Copy the WSL example: `cp dotfiles/.zshrc-local.example.wsl dotfiles/.zshrc-local` then edit.
 
-**Cursor on Windows:** From PowerShell in the repo root, run `.\install-windows.ps1` to sync Cursor settings, MCP config, extensions, and agent skills to Windows. Set `$env:REF_API_KEY` before running if you use the Ref MCP server. Settings in the repo use Mac paths; set Python interpreter and workspace paths in Cursor once if needed.
+**Native Windows (outside WSL):** From PowerShell in the repo root, run `.\install-windows.ps1` to sync the Claude Code config, VS Code settings, and `.gitconfig`. Directories are junctioned, so the repo stays the source of truth. Single files need a real symlink, which Windows only permits with Developer Mode on or an elevated shell — otherwise the script copies them and warns that edits won't flow back. `settings.json` is seeded once and then owned by that machine, same as on macOS.
 
 **Windows apps (winget):** From PowerShell in the repo root:
 
@@ -136,7 +136,7 @@ winget import -i winget-packages.json --accept-package-agreements
 .\scripts\install-winget.ps1
 ```
 
-Includes Cursor, Docker Desktop, Google Chrome, PowerToys, Windows Terminal. Fira Code is not in winget — install manually from [Fira Code releases](https://github.com/tonsky/FiraCode/releases) if you use it.
+Includes Docker Desktop, Google Chrome, Google Drive, mise, PowerToys, Windows Terminal, Ollama. Fira Code is not in winget — install manually from [Fira Code releases](https://github.com/tonsky/FiraCode/releases) if you use it.
 
 ## Updating
 

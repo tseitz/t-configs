@@ -22,7 +22,7 @@ brew "openblas"
 # ===== Casks =====
 cask "font-fira-code"
 cask "bluesnooze"
-cask "cursor"
+# cask "cursor"
 cask "docker-desktop"
 # cask "firefox"
 cask "google-chrome"

@@ -9,7 +9,6 @@
         "Type": "Microsoft.PreIndexed.Package"
       },
       "Packages": [
-        { "PackageIdentifier": "Anysphere.Cursor" },
         { "PackageIdentifier": "Docker.DockerDesktop" },
         { "PackageIdentifier": "Google.Chrome" },
         { "PackageIdentifier": "Google.GoogleDrive" },
