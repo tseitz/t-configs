@@ -16,7 +16,7 @@
 set -euo pipefail
 
 REPO_DIR="$(cd "$(dirname "$0")/.." && pwd)"
-SKILLS_DIR="$REPO_DIR/dotfiles/.agent/skills"
+SKILLS_DIR="$REPO_DIR/dotfiles/.claude/skills"
 FETCH_DIR="$REPO_DIR/.tmp/skills-fetch-$$"
 
 cleanup() { rm -rf "$FETCH_DIR"; }
@@ -62,7 +62,7 @@ REPO="$OWNER/$REPO"
 SKILL_NAME="${SKILL_NAME_OVERRIDE:-$(basename "$PATH_IN_REPO")}"
 TARGET="$SKILLS_DIR/$SKILL_NAME"
 
-echo "Fetching $PATH_IN_REPO from https://github.com/$REPO (branch: $BRANCH) into .agent/skills/$SKILL_NAME ..."
+echo "Fetching $PATH_IN_REPO from https://github.com/$REPO (branch: $BRANCH) into .claude/skills/$SKILL_NAME ..."
 mkdir -p "$FETCH_DIR"
 cd "$FETCH_DIR"
 
@@ -78,4 +78,4 @@ fi
 mkdir -p "$SKILLS_DIR"
 rm -rf "$TARGET"
 cp -R "$PATH_IN_REPO" "$TARGET"
-echo "Done. Added/updated: dotfiles/.agent/skills/$SKILL_NAME"
+echo "Done. Added/updated: dotfiles/.claude/skills/$SKILL_NAME"

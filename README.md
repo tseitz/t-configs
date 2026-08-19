@@ -17,9 +17,8 @@ The install script is idempotent — safe to run multiple times. It will:
 3. Install [oh-my-zsh](https://ohmyz.sh) with custom plugins and spaceship theme
 4. Install default runtimes via [mise](https://mise.jdx.dev) (Node, etc. from `mise.toml`)
 5. Symlink dotfiles to their expected locations
-6. Generate Cursor MCP config from template (substituting API keys from env vars)
-7. Install Cursor extensions from `dotfiles/.config/Cursor/extensions.txt` (if Cursor CLI is in PATH)
-8. Create `.zshrc-env-vars` (private secrets) and `.zshrc-local` (machine-specific overrides) from example templates
+6. Install Claude Code plugins from `dotfiles/.claude/plugins/installed_plugins.json`
+7. Create `.zshrc-env-vars` (private secrets) and `.zshrc-local` (machine-specific overrides) from example templates
 
 ### On a machine that's already set up
 
@@ -62,39 +61,29 @@ nvim ~/t-configs/dotfiles/.zshrc-local
 
 See `dotfiles/.zshrc-local.example` for examples.
 
-## Cursor Settings and Extensions
+## Editor Settings
 
-**Settings** — Your Cursor `settings.json` is symlinked from this repo. To pull your current settings into the repo (e.g. from this machine):
+`dotfiles/.config/editors/settings.json` holds the VS Code User settings and is symlinked into place. To pull your current settings into the repo:
 
 - **macOS:**
-  `cp ~/Library/Application\ Support/Cursor/User/settings.json ~/t-configs/dotfiles/.config/Cursor/User/settings.json`
+  `cp ~/Library/Application\ Support/Code/User/settings.json ~/t-configs/dotfiles/.config/editors/settings.json`
 - **Linux:**
-  `cp ~/.config/Cursor/User/settings.json ~/t-configs/dotfiles/.config/Cursor/User/settings.json`
+  `cp ~/.config/Code/User/settings.json ~/t-configs/dotfiles/.config/editors/settings.json`
 
-Then commit and push. On a new machine, `install.sh` will symlink this file into the right place for your OS.
-
-**MCP Servers** — `dotfiles/.cursor/mcp.json.template` contains MCP server config with `REF_API_KEY_PLACEHOLDER`. The install script copies it to `~/.cursor/mcp.json` and substitutes `REF_API_KEY` from your env vars. To add a new MCP server, edit the template and re-run `install.sh`.
-
-**Extensions** — Extensions are not synced as files; they're installed from a list of IDs. To export your current extensions into the repo:
-
-```bash
-cursor --list-extensions > ~/t-configs/dotfiles/.config/Cursor/extensions.txt
-```
-
-Edit the file to remove any you don't want. On a new machine, `install.sh` will run `cursor --install-extension <id>` for each line (when the Cursor CLI is in PATH). On macOS, enable "Shell Command: Install 'cursor' command in PATH" in Cursor (Command Palette → "Shell Command") so `cursor` is available in the terminal.
+The file sits under `.config/editors/` rather than `.config/Code/` so a second editor can share the same source without moving it — add one `create_symlink` line in `install.sh` pointing at it.
 
 ## Agent Skills
 
-Agent skills (Cursor, Antigravity, etc.) live in **`dotfiles/.agent/skills/`**. The install script symlinks this directory to `~/.cursor/skills` and `~/.gemini/antigravity/skills`, so the same skills are available in both tools. Add skills as subdirectories with a `SKILL.md` in each (see Cursor’s create-skill format). Skills may be grouped in category folders (e.g. `react/`, `frontend/`, `workflow/`). To support another tool later, add a `create_symlink` in `install.sh` pointing to the same `dotfiles/.agent/skills` source.
+Agent skills live in **`dotfiles/.claude/skills/`**, symlinked to `~/.claude/skills`. Add skills as subdirectories with a `SKILL.md` in each. Skills may be grouped in category folders (e.g. `react/`, `frontend/`, `workflow/`). To share them with another tool later, add a `create_symlink` in `install.sh` pointing to the same source.
 
 **Adding a skill from GitHub:** From the repo root, pass the GitHub "tree" URL for the skill directory. The skill name defaults to the last path segment; you can override it with a second argument:
 
 ```bash
 ./scripts/add-skill-from-github.sh "https://github.com/vercel-labs/agent-skills/tree/main/skills/react-best-practices"
-# → adds dotfiles/.agent/skills/react-best-practices
+# → adds dotfiles/.claude/skills/react-best-practices
 
 ./scripts/add-skill-from-github.sh "https://github.com/anthropics/skills/tree/main/skills/webapp-testing" my-name
-# → adds dotfiles/.agent/skills/my-name
+# → adds dotfiles/.claude/skills/my-name
 ```
 
 The script uses a sparse checkout to fetch only that directory. Run it again with the same URL to update from upstream.
@@ -112,10 +101,8 @@ The script uses a sparse checkout to fetch only that directory. Run it again wit
 | `dotfiles/.zprofile` | Login-shell PATH (Docker Desktop CLI) |
 | `dotfiles/.hushlogin` | Suppresses macOS "Last login" terminal banner |
 | `dotfiles/.config/nvim/` | Neovim configuration (LazyVim) |
-| `dotfiles/.cursor/mcp.json.template` | Cursor MCP server config template (API keys substituted at install) |
-| `dotfiles/.config/editors/settings.json` | Shared editor settings — symlinked into both VS Code and Cursor |
-| `dotfiles/.config/Cursor/extensions.txt` | List of Cursor extension IDs (one per line) |
-| `dotfiles/.agent/skills/` | Agent skills (symlinked to Cursor and Antigravity) |
+| `dotfiles/.config/editors/settings.json` | VS Code User settings |
+| `dotfiles/.claude/` | Claude Code config — skills, rules, agents, commands, scripts, output styles, `CLAUDE.md` |
 | `mise.toml` | Default runtimes managed by mise (e.g. Node) |
 | `Brewfile` | Homebrew packages, casks, and dependencies (macOS) |
 | `Brewfile.wsl` | Homebrew formulae for WSL/Linux (no casks) |

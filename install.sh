@@ -325,18 +325,14 @@ step_symlinks() {
   ensure_dir "$HOME/.config"
   create_symlink "$DOTFILES_DIR/.config/nvim" "$HOME/.config/nvim"
 
-  ensure_dir "$HOME/.cursor"
-
-  # Editor User settings — one shared file for both VS Code and Cursor
+  # VS Code User settings. The file lives under .config/editors/ rather than
+  # .config/Code/ so a second editor can share it without moving the source.
   if [[ "$OSTYPE" == darwin* ]]; then
-    CURSOR_USER_DIR="$HOME/Library/Application Support/Cursor/User"
     VSCODE_USER_DIR="$HOME/Library/Application Support/Code/User"
   else
-    CURSOR_USER_DIR="$HOME/.config/Cursor/User"
     VSCODE_USER_DIR="$HOME/.config/Code/User"
   fi
-  ensure_dir "$CURSOR_USER_DIR" "$VSCODE_USER_DIR"
-  create_symlink "$DOTFILES_DIR/.config/editors/settings.json" "$CURSOR_USER_DIR/settings.json"
+  ensure_dir "$VSCODE_USER_DIR"
   create_symlink "$DOTFILES_DIR/.config/editors/settings.json" "$VSCODE_USER_DIR/settings.json"
 
   # ── Claude Code (.claude is the first-class citizen) ──────────────────
@@ -403,22 +399,6 @@ step_symlinks() {
     success "settings.local.json already exists (account-specific overrides preserved)"
   fi
 
-  # ── Other tools (symlink from .claude, not .agent) ────────────────────
-  create_symlink "$DOTFILES_DIR/.claude/skills" "$HOME/.cursor/skills"
-
-  # ── Gemini CLI ────────────────────
-  ensure_dir "$HOME/.gemini/antigravity"
-
-  # Support both legacy/antigravity and modern paths
-  create_symlink "$DOTFILES_DIR/.claude/skills"   "$HOME/.gemini/antigravity/skills"
-  create_symlink "$DOTFILES_DIR/.claude/skills"   "$HOME/.gemini/skills"
-  create_symlink "$DOTFILES_DIR/.claude/agents"   "$HOME/.gemini/agents"
-  create_symlink "$DOTFILES_DIR/.claude/rules"    "$HOME/.gemini/rules"
-  create_symlink "$DOTFILES_DIR/.claude/hooks"    "$HOME/.gemini/hooks"
-  create_symlink "$DOTFILES_DIR/.claude/scripts"  "$HOME/.gemini/scripts"
-  create_symlink "$DOTFILES_DIR/.claude/AGENTS.md"              "$HOME/.gemini/AGENTS.md"
-  create_symlink "$DOTFILES_DIR/.claude/the-security-guide.md"  "$HOME/.gemini/the-security-guide.md"
-
   # Printed here, not at the end of the script: run_step executes each step in a
   # subshell, so the counters never make it back to the parent.
   link_summary
@@ -477,7 +457,7 @@ PY
 step_check_leftovers() {
   info "Scanning for dangling links and stale backups..."
   local found=0 p
-  for dir in "$HOME" "$HOME/.claude" "$HOME/.claude/plugins" "$HOME/.cursor" "$HOME/.gemini" "$HOME/.config"; do
+  for dir in "$HOME" "$HOME/.claude" "$HOME/.claude/plugins" "$HOME/.config"; do
     [ -d "$dir" ] || continue
     while IFS= read -r p; do
       warn "dangling link: $p -> $(readlink "$p")"
@@ -538,26 +518,7 @@ step_claude_plugins() {
 }
 
 # ------------------------------------------
-# 10. Install Cursor extensions
-# ------------------------------------------
-step_cursor_extensions() {
-  CURSOR_EXTENSIONS_FILE="$DOTFILES_DIR/.config/Cursor/extensions.txt"
-  if [ -f "$CURSOR_EXTENSIONS_FILE" ] && command -v cursor &>/dev/null; then
-    info "Installing Cursor extensions from list..."
-    while IFS= read -r line || [ -n "$line" ]; do
-      line="${line%%#*}"
-      line="${line#"${line%%[![:space:]]*}"}"
-      [ -z "$line" ] && continue
-      cursor --install-extension "$line" &>/dev/null || true
-    done < "$CURSOR_EXTENSIONS_FILE"
-    success "Cursor extensions processed (already-installed extensions are skipped)"
-  elif [ -f "$CURSOR_EXTENSIONS_FILE" ] && ! command -v cursor &>/dev/null; then
-    warn "Cursor CLI not in PATH — skip extension install or add Cursor to PATH and re-run"
-  fi
-}
-
-# ------------------------------------------
-# 11. Set up machine-specific local overrides
+# 10. Set up machine-specific local overrides
 # ------------------------------------------
 step_local_overrides() {
   LOCAL_FILE="$DOTFILES_DIR/.zshrc-local"
@@ -608,8 +569,7 @@ run_step "6. Install mise runtimes"        step_mise
 run_step "7. Create symlinks"              step_symlinks
 run_step "8. Set up private env vars"      step_env_vars
 run_step "9. Install Claude Code plugins"  step_claude_plugins
-run_step "10. Install Cursor extensions"   step_cursor_extensions
-run_step "11. Machine-local overrides"     step_local_overrides
+run_step "10. Machine-local overrides"     step_local_overrides
 
 # ------------------------------------------
 # Done!
