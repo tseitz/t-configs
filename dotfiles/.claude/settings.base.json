@@ -203,13 +203,22 @@
     "enableWeakerNetworkIsolation" : true,
     "excludedCommands" : [
       "chrome-headless-shell",
-      "mkdir"
+      "mkdir",
+      "git *",
+      "gcloud",
+      "kubectl"
     ],
     "filesystem" : {
       "allowWrite" : [
         "~\/.cache",
         "~\/.matplotlib",
-        "~\/Library\/Caches\/mise"
+        "~\/Library\/Caches\/mise",
+        "~\/.docker\/buildx",
+        "~\/.local\/share\/mise",
+        "~\/.local\/state\/mise",
+        "~\/Library\/pnpm",
+        "~\/.bundle",
+        "~\/t-configs"
       ]
     },
     "network" : {
