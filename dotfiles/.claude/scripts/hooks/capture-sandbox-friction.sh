@@ -8,9 +8,14 @@
 # structured line to a per-project log. It NEVER blocks the tool call and NEVER edits
 # config — the sandbox-friction skill reads the log later and proposes a fix.
 #
-# Conservative by design: false positives cost one log line; false negatives lose signal.
 # Wired into settings.base.json hooks.PostToolUse under the "Bash" matcher:
 #   { "type": "command", "command": "~/.claude/scripts/hooks/capture-sandbox-friction.sh" }
+#
+# Reads stderr only, NOT stdout. Scanning both made the log ~87% false positives: any command
+# that *printed* a denial — `cat` on a log file, `tail` on captured build output — looked exactly
+# like a command that *hit* one. A real denial always goes to stderr, so precision costs almost
+# no recall. The exception is a command that merges with `2>&1`, which this cannot see; that is
+# the deliberate trade, because a log nobody trusts is read by nobody.
 
 set -euo pipefail
 
@@ -20,8 +25,13 @@ input=$(cat)
 tool=$(printf '%s' "$input" | jq -r '.tool_name // empty' 2>/dev/null || true)
 [ "$tool" = "Bash" ] || exit 0
 
-# Flatten every string in the tool response (object or string) so we can scan stderr/stdout.
-resp=$(printf '%s' "$input" | jq -r '[.tool_response] | .. | strings' 2>/dev/null | tr '\n' ' ' || true)
+# stderr only — see the header. Falls back to the whole response when the shape has no stderr
+# key, so a future tool-response change degrades to the old behaviour instead of going silent.
+resp=$(printf '%s' "$input" | jq -r '
+  if (.tool_response | type) == "object" and (.tool_response | has("stderr"))
+  then (.tool_response.stderr // empty)
+  else ([.tool_response] | .. | strings)
+  end' 2>/dev/null | tr '\n' ' ' || true)
 
 # Conservative sandbox-denial signatures. Keep narrow to avoid noise from ordinary failures.
 sig=$(printf '%s' "$resp" | grep -ioE \
