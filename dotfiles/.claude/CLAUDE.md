@@ -33,5 +33,18 @@ work and personal machines. Understand how it syncs before editing anything unde
   - **This-machine-only** tweak → edit `~/.claude/settings.json` (or
     `~/.claude/settings.local.json` for account-specific overrides).
   - Never assume editing `~/.claude/settings.json` syncs — it does not.
+- **Editing `settings.base.json` does NOT reach a machine that is already set up.**
+  `install.sh` seeds it once and then leaves it alone forever, by design. A `SessionStart`
+  hook (`scripts/settings-drift.js`) closes that gap: it warns when the base has entries
+  this machine lacks in the **additive allow-lists** — `sandbox.excludedCommands`,
+  `sandbox.network.allowedDomains`, `sandbox.network.allowUnixSockets`,
+  `sandbox.filesystem.allowWrite`, `permissions.allow`. Run `./install.sh --sync-lists`
+  to append them, or `./install.sh --check` to see the report on demand.
+  - Only those lists are compared. Everything else (plugins, hooks, output style) differs
+    between machines on purpose, so diffing whole files is pure noise.
+  - The check is **one-directional**: base → machine. Something you add locally still has
+    to be copied into `settings.base.json` by hand to reach your other machine.
+  - `dotfiles/.claude/settings.json` is a gitignored local snapshot written by two hooks.
+    It is a backup, **not** a sync path — it never leaves the machine.
 - When in doubt about whether something syncs, check if the target is a symlink
   (`ls -l`) before editing.
