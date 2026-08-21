@@ -218,6 +218,7 @@
         "~\/.local\/state\/mise",
         "~\/Library\/pnpm",
         "~\/.bundle",
+        "~\/.npm\/_cacache",
         "~\/t-configs"
       ]
     },
