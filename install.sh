@@ -44,6 +44,7 @@ YES_ALL=false
 DRY_RUN=false
 SYNC_ONLY=false
 CHECK_ONLY=false
+SYNC_LISTS=false
 VERBOSE=false
 for arg in "$@"; do
   [[ "$arg" == "--yes"     || "$arg" == "-y" ]] && YES_ALL=true
@@ -51,7 +52,17 @@ for arg in "$@"; do
   [[ "$arg" == "--verbose" || "$arg" == "-v" ]] && VERBOSE=true
   [[ "$arg" == "--sync"    || "$arg" == "-s" ]] && { SYNC_ONLY=true; YES_ALL=true; }
   [[ "$arg" == "--check"   || "$arg" == "-c" ]] && CHECK_ONLY=true
+  [[ "$arg" == "--sync-lists"                ]] && SYNC_LISTS=true
 done
+
+# --sync-lists: append base entries this machine is missing from the additive
+# allow-lists in settings.json. Runs alone and exits — it must not drag the
+# whole installer along, and it is the only path allowed to edit a
+# machine-owned settings.json.
+if ${SYNC_LISTS:-false}; then
+  node "$DOTFILES_DIR/.claude/scripts/settings-drift.js" --apply
+  exit $?
+fi
 
 # ------------------------------------------
 # Brew PATH — run unconditionally so step 2
@@ -552,6 +563,9 @@ if $CHECK_ONLY; then
   step_check_claude_plugins
   echo ""
   step_check_brew
+  echo ""
+  # settings.json is machine-owned, so --check only reports; --sync-lists applies.
+  node "$DOTFILES_DIR/.claude/scripts/settings-drift.js" --check || true
   echo ""
   if (( LINKS_DRIFT > 0 )); then
     info "Fix what's only missing:  ./install.sh --sync"

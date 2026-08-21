@@ -119,6 +119,15 @@
           }
         ],
         "matcher" : ".*"
+      },
+      {
+        "hooks" : [
+          {
+            "command" : "node \"$HOME\/.claude\/scripts\/settings-drift.js\" --hook 2>\/dev\/null || true",
+            "timeout" : 10,
+            "type" : "command"
+          }
+        ]
       }
     ],
     "Stop" : [
