@@ -270,5 +270,7 @@
   "statusLine" : {
     "command" : "bash $HOME\/.claude\/statusline-command.sh",
     "type" : "command"
-  }
+  },
+  "tui" : "fullscreen",
+  "wheelScrollAccelerationEnabled" : false
 }
