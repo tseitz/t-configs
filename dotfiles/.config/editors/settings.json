@@ -169,7 +169,6 @@
   "autoDocstring.startOnNewLine": true,
   "python.languageServer": "Pylance",
   "python.envFile": "",
-  "python.defaultInterpreterPath": "/Users/tseitz/.local/share/mise/installs/python/3.13/bin/python",
   // No "python.defaultInterpreterPath" on purpose. A global path pins every project to one
   // interpreter, and it breaks as soon as that version is uninstalled. Left unset, the Python
   // extension finds each project's own venv. "Mise: Configure extension" re-adds this line —
