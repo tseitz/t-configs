@@ -92,7 +92,7 @@
       {
         "hooks" : [
           {
-            "command" : "jq -c '.tool_input as $orig | {hookSpecificOutput: {hookEventName: \"PreToolUse\", updatedInput: ($orig | .command = (\"eval \\\"$(direnv export bash 2>\/dev\/null)\\\" && \" + .command))}}'",
+            "command" : "jq -c 'if (.tool_input.command | test(\"^\\\\s*uv\\\\s\")) then {} else (.tool_input as $orig | {hookSpecificOutput: {hookEventName: \"PreToolUse\", updatedInput: ($orig | .command = (\"eval \\\"$(direnv export bash 2>\/dev\/null)\\\" && \" + .command))}}) end'",
             "type" : "command"
           }
         ],
