@@ -39,26 +39,36 @@ reviewer reads in under a minute before opening the diff.
 
 ## Shape
 
-The body answers the three questions a reviewer actually opens a PR with: *what is this and did
-it do what the ticket asked* · *where do I look hard* · *what can I trust without reading*.
+The body answers the four questions a reviewer actually opens a PR with: *what is this and did it
+do what the ticket asked* · *what does merging it ship* · *where do I look hard* · *what can I
+trust without reading*.
 
 ```
 <lead paragraph — NO heading. What changes and why. 2-4 sentences.>
 
+## On merge
 ## Where to look
 ## Key decisions
 ## How it's verified
 
-<one-line footer: stack position, deploy note, ticket link. No heading.>
+<one-line footer: stack position, ticket link. No heading.>
 ```
 
 - **Lead paragraph** — always present, never gets a heading.
+- **On merge** — blast radius, and it goes first because it tells the reviewer how expensive a
+  read this needs to be. Include it ONLY when the answer isn't the boring default (goes live on
+  the next deploy, self-contained, nothing to coordinate). Earned by: ships dark behind a flag ·
+  needs a flag flip or config change to activate · deploy order matters (contract tests, a stack,
+  a migration) · a caller-visible contract or schema changes · a migration that blocks the deploy.
+  **Never write "None" here** — if there's nothing to say, delete the heading. An empty section is
+  worse than no section, because a heading that's usually empty teaches people to skip it.
 - **Where to look** — the attention map. Riskiest thing first, named by file or path. Say what's
   mechanical and safe to skim; telling a reviewer where *not* to spend time is half the value.
 - **Key decisions** — the non-obvious calls, plus anything you skipped from the ticket and why.
 - **How it's verified** — what proves it, and the honest gap. Not a suite dump.
 - **Small PRs stay bare.** If the whole thing fits in one paragraph, use no headings at all.
-- Drop any section with nothing real in it. Three headings is the ceiling, not a template.
+- Drop any section with nothing real in it. Four headings is the ceiling, not a template — most
+  PRs won't earn all four.
 
 Ticket links, breaking changes, and anything a deploy depends on always stay in. Brevity is not
 an excuse to drop information a reviewer needs — it's an instruction to stop repeating the diff.
