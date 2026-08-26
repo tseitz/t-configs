@@ -26,19 +26,39 @@ reviewer reads in under a minute before opening the diff.
 - **Don't editorialize the process.** No "updated after review" changelogs, no narrating that you
   implemented and then reverted something, no evidence dumps of suite output / lint counts /
   measured baselines. If verification matters, one line is enough.
-- **Sections only if they earn it.** A couple of short paragraphs is usually the whole PR. Reach
-  for headings only when there's real structure (e.g. a genuinely surprising behaviour change a
-  reviewer must not miss). Never add an empty section for form's sake.
+- **Front-load the risk.** A reviewer's attention budget runs out before the body does. The one
+  thing that can go wrong goes near the top, not in the fourth paragraph. A body that is correct
+  but flat gets skimmed, and skimming means the risky part is the part they miss.
+- **Say what you did NOT do, and why.** A skipped ticket requirement, a module you declined to
+  build, a test strategy you substituted — that's the highest-value content in the whole body,
+  because it's the one thing the diff can never show. Give it a home so brevity never eats it.
+- **Sections only if they earn it, and only from the fixed set below.** A couple of short
+  paragraphs is usually the whole PR — leave it bare. Once there's more, use the standard
+  headings so every PR reads the same way. Never add an empty section for form's sake, and never
+  invent a heading outside the set.
 
-## Rough shape
+## Shape
+
+The body answers the three questions a reviewer actually opens a PR with: *what is this and did
+it do what the ticket asked* · *where do I look hard* · *what can I trust without reading*.
 
 ```
-<one or two paragraphs: what this changes and why>
+<lead paragraph — NO heading. What changes and why. 2-4 sentences.>
 
-<key decisions + why, if there are any worth calling out>
+## Where to look
+## Key decisions
+## How it's verified
 
-<caller-visible / breaking behaviour change, if any>
+<one-line footer: stack position, deploy note, ticket link. No heading.>
 ```
+
+- **Lead paragraph** — always present, never gets a heading.
+- **Where to look** — the attention map. Riskiest thing first, named by file or path. Say what's
+  mechanical and safe to skim; telling a reviewer where *not* to spend time is half the value.
+- **Key decisions** — the non-obvious calls, plus anything you skipped from the ticket and why.
+- **How it's verified** — what proves it, and the honest gap. Not a suite dump.
+- **Small PRs stay bare.** If the whole thing fits in one paragraph, use no headings at all.
+- Drop any section with nothing real in it. Three headings is the ceiling, not a template.
 
 Ticket links, breaking changes, and anything a deploy depends on always stay in. Brevity is not
 an excuse to drop information a reviewer needs — it's an instruction to stop repeating the diff.
