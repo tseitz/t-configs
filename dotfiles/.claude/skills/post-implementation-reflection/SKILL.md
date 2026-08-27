@@ -1,6 +1,6 @@
 ---
 name: post-implementation-reflection
-description: After a plan or large task is implemented, reflects on changes made, pain points, and improvements; then identifies and implements cleanup or refactors. Use when the user asks to reflect on implementation, do a post-plan retrospective, clean up after a large task, or when a plan or multi-step implementation has just been completed.
+description: After work is implemented, reflects on the changes and then polishes them — comment triage, simplification, cleanup. Scales from a quick pass on a small diff to a full retrospective on a plan. Works on uncommitted changes, the last N commits, or a whole PR branch. Use when the user asks to reflect, do a retrospective, clean up or polish what was just built, or take a lap on a branch or PR before review.
 memory: user
 ---
 
@@ -25,10 +25,33 @@ Do **not** use mid-implementation or before the main work is finished.
 
 ### 0. Ground Yourself
 
-Before reflecting, get accurate context — don't rely on working memory alone:
+Before reflecting, get accurate context — don't rely on working memory alone.
+
+**First resolve what "the changes" means.** Three cases; pick by what the user said, and say
+which one you picked:
+
+| Case | Diff |
+|---|---|
+| Not committed yet | `git diff HEAD` |
+| Last N commits, N known | `git diff HEAD~N` |
+| A branch or PR | branch-vs-base, below |
+
+For a branch or PR, resolve the base — **never assume `main`.** Base branches genuinely vary
+(`develop`, `development`, `master`), and guessing wrong silently degrades this into "uncommitted
+changes only". On a stacked PR the base is the parent branch, so `gh pr view` is authoritative.
+
+```bash
+base="$(gh pr view --json baseRefName -q .baseRefName 2>/dev/null || true)"
+[ -z "$base" ] && base="$(git symbolic-ref --short refs/remotes/origin/HEAD 2>/dev/null | sed 's|^origin/||')"
+[ -z "$base" ] && base="$(gh repo view --json defaultBranchRef -q .defaultBranchRef.name 2>/dev/null || true)"
+[ -z "$base" ] && echo "could not resolve the base branch — ask" >&2
+git fetch -q origin "$base" 2>/dev/null || true
+git diff "$(git merge-base "origin/$base" HEAD)"...HEAD
+```
+
+Then:
 
 - Run `git log --oneline -10` to confirm what commits landed
-- Run `git diff HEAD~N` (where N = number of commits in the feature) to see the actual diff
 - Check for a session state doc (HANDOFF.md, CONTEXT.md, or equivalent) and read it
 - Read `.claude/sandbox-friction.jsonl` if present — the capture hook logs sandbox blocks that hit
   during the work but are gone from working memory. These feed the Agent QoL lens.
@@ -38,6 +61,16 @@ Before reflecting, get accurate context — don't rely on working memory alone:
 
 One short paragraph or bullet list: what was implemented, where it lives, any deviations from the
 original plan and why.
+
+### 1b. Pick the Depth — ceremony scales to the diff
+
+State which depth you picked and why, in one line. When torn, go SHORT: an over-long lap on a
+small change gets skimmed, and a skimmed lap catches nothing.
+
+- **SHORT** — roughly under ten files, no new subsystem, no architectural decision. Run
+  **Comments · Simplicity · Technical debt**. Skip the rest.
+- **FULL** — a plan, a multi-session feature, a new subsystem, or anything architectural. Run
+  every lens, then route learnings in Close the Loop.
 
 ### 2. Reflect Through These Lenses
 
@@ -51,6 +84,34 @@ self-reviewing — give it the diff and these lenses, and have it return finding
 small, self-contained changes, inline self-review is fine.
 
 For each lens, be concrete. Skip any lens that doesn't apply.
+
+**Comments** ← run this one first, and on every depth
+
+The lens most likely to find something, because writing-mode is systematically biased toward
+more comments: a rationale is freshest at the moment it stops being needed. Judge only the
+comments **this diff added**; leave pre-existing ones alone.
+
+1. **Measure the budget before judging anything.** Count comments in each changed file and in
+   its siblings, and put the numbers in the finding. Do not estimate this.
+
+   ```bash
+   for f in <dir>/*.<ext>; do echo "$(grep -cE '^\s*(//|#)' "$f") $f"; done | sort -rn
+   ```
+
+   A new file's budget is the directory's median, which is frequently zero. If the diff's files
+   sit far above their neighbours, that is the finding — say so with the counts.
+
+2. **Apply the routing test to every added comment**: *would deleting this let a future change
+   be silently wrong?* Only "yes" stays in the repo. The tell for "no" is that it describes code
+   that will not exist after merge — it narrates the change, not the code.
+
+3. **Cuts are relocated, not deleted.** Rationale that fails the test is still worth having; it
+   belongs on the PR. Draft the cut material as inline comments anchored to their lines, and
+   push the code cuts *before* posting so the anchors don't land outdated. Never post without
+   explicit approval.
+
+Both directions count: also flag a non-obvious decision that genuinely lacks a *why*. But state
+the density numbers first, so "add a comment here" is a decision against a budget.
 
 **Simplicity**
 - Does each function do one thing? Are there any that do two or three?
@@ -66,8 +127,8 @@ For each lens, be concrete. Skip any lens that doesn't apply.
 **Agent navigability** ← most important for this project
 - Can the next agent session find every relevant piece of this feature in one read of the relevant
   file(s)?
-- Are there non-obvious decisions that lack a comment explaining *why* (not *what*)?
 - Does the code reference the right project primitives and utilize project conventions?
+- (Comments are the Comments lens's job — don't re-raise them here.)
 
 **Agent Quality of Life**
 - Did any tool call fail unexpectedly? What did you do instead, and what would the right path have looked like?
@@ -136,20 +197,28 @@ If you're unsure where these live, check CLAUDE.md first, then your memory files
 ## Output Format
 
 ```
+### Scope
+[which diff, and SHORT or FULL with the one-line reason]
+
 ### What changed
 [1–5 bullets]
 
 ### Reflection
+**Comments:** [density counts vs siblings, then keep/cut/relocate — or "nothing to flag"]
 **Simplicity:** [finding or "nothing to flag"]
+**Technical debt:** [finding or "nothing to flag"]
+--- FULL only ---
 **Elegance:** [finding or "nothing to flag"]
 **Agent navigability:** [finding or "nothing to flag"]
 **Agent QoL:** [friction points, missing scripts, env issues, or "nothing to flag"]
-**Technical debt:** [finding or "nothing to flag"]
 
 ### Follow-up
 Must: ...
 Should: ...
 Nice to have: ...
+
+### For the PR (if any)
+[comment cuts to post as inline comments — drafted, NOT posted]
 ```
 
 Then **stop for approval** (step 4). Once approved, implement in separate commits, then close the
