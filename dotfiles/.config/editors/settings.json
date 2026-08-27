@@ -213,6 +213,15 @@
   // Covers both redhat.java and redhat.vscode-yaml. The old "jdk.telemetry.enabled"
   // here belonged to Oracle's Java extension, which is not installed, so it did nothing.
   "redhat.telemetry.enabled": false,
+
+  // ── Java (redhat.java) ──────────────────────────────────────────
+  //  Both keys are "window" scope, so VS Code IGNORES them in a folder's
+  //  .vscode/settings.json. User settings or a .code-workspace are the only
+  //  places they take effect — which is why they live here and not in the repo.
+  //  "automatic" on both means the feature runs without the confirm prompt;
+  //  "disabled" would silence the prompt by turning the feature off instead.
+  "java.configuration.updateBuildConfiguration": "automatic",
+  "java.compile.nullAnalysis.mode": "automatic",
   "gitlens.telemetry.enabled": false,
 
   // ── Cursor-specific (ignored in VS Code) ────────────────────────
