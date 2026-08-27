@@ -39,9 +39,20 @@ not shared · a non-obvious unit, bound, or ordering requirement.
 a header over a self-evident block · a docstring that repeats the signature · anything longer
 than the code it describes.
 
-**Match the file's density, and round down.** Adding the first comment to a sparse file is a
-decision — make it on purpose, not by reflex. Never add comments to code you're touching for
-an unrelated reason; a comment lands with the code it guards, not as a drive-by improvement.
+**Match the file's density, and round down — and read that number, don't estimate it.** Count
+the comments in the file you're editing *and* in its sibling files in the same directory; that
+count is your budget. **A new file has no density of its own, so its budget is the directory's
+median — which is frequently zero.** This is the step that gets skipped: writing-mode never
+looks at the neighbours, so a felt sense of "about right" substitutes for the real number, and
+that felt sense runs far denser than most codebases.
+
+```bash
+for f in <dir>/*.<ext>; do echo "$(grep -cE '^\s*(//|#)' "$f") $f"; done | sort -rn
+```
+
+Adding the first comment to a sparse file is a decision — make it on purpose, not by reflex.
+Never add comments to code you're touching for an unrelated reason; a comment lands with the
+code it guards, not as a drive-by improvement.
 
 ### If a comment earns its place, write it plain
 
