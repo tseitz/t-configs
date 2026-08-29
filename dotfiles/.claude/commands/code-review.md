@@ -21,39 +21,25 @@ If no changed files, stop: "Nothing to review."
 
 ## Phase 2 — REVIEW
 
-Read each changed file in full. Check for:
+Read each changed file in full. The standards live in `rules/common/coding-style.md` and
+`development-workflow.md` §5 — apply them, don't restate them here.
 
-**Security (CRITICAL):**
-- Hardcoded credentials, API keys, tokens
-- SQL injection vulnerabilities
-- XSS vulnerabilities
-- Missing input validation
-- Path traversal risks
-- Insecure dependencies
-
-**Code Quality (HIGH):**
-- Functions > 50 lines
-- Files > 800 lines
-- Nesting depth > 4 levels
-- Missing error handling
-- console.log / debug statements left in
-- TODO/FIXME comments
-
-**Best Practices (MEDIUM):**
-- Mutation patterns (prefer immutable)
-- Missing tests for new code
-- Accessibility issues (a11y) in UI code
+If the diff touches auth, user input, database queries, the file system, external API calls,
+crypto, or payments, hand it to the **security-reviewer** agent as well.
 
 ---
 
 ## Phase 3 — REPORT
 
-For each issue:
-- Severity: CRITICAL / HIGH / MEDIUM / LOW
-- File path and line number
-- Description
-- Suggested fix
+For each finding: **file:line** (absolute path), what's wrong, and the suggested fix. Use the one
+severity scale:
 
-**Block commit if any CRITICAL or HIGH issues found.**
+| Severity | Meaning | Action |
+|---|---|---|
+| **blocking** | a secret in the diff, an injection or auth bypass, data loss, an error swallowed so a real failure goes silent | **stop the commit** |
+| **should-fix** | a bug or a real maintainability cost, but nothing dangerous ships | warn, author decides |
+| **nit** | style or preference | note it once, don't push |
+
+Name the concrete consequence for each finding. If you can't, it's a nit or it's nothing.
 
 > For reviewing a GitHub PR, use `/pr-review-toolkit:review-pr` instead.

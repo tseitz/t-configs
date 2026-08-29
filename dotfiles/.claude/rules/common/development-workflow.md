@@ -137,11 +137,24 @@ looks like **once I've agreed to add one**. This rule governs whether it gets ad
 - **`/code-review`** on the diff (it has real teeth — gates commits via the pre-commit hook).
   One pass for most work. Escalate to the full two-stage / specialized-agent sweep only for
   security, auth, payments, or architectural changes.
+- **`team-pr-review`** before pushing anything that will become a PR — the deep read against the
+  team's recurring topics, plus the behaviour-change ledger. Local only; it never posts.
+- **`security-reviewer` is not optional** for auth/authz, user input handling, database queries,
+  file system operations, external API calls, crypto, or anything touching payments. Any one of
+  those in the diff means run it, regardless of how small the change looks.
 - **`superpowers:verification-before-completion`** — always. No "done"/"passing" claims without
   fresh command output as evidence.
 - **`/test-coverage`** to confirm 80%+ when coverage matters.
 - Responding to review feedback → `superpowers:receiving-code-review` (verify before
-  implementing; no performative agreement; push back when warranted).
+  implementing; no performative agreement; push back when warranted). Incoming PR comments →
+  `receiving-pr-review`.
+
+**One severity scale, `team-pr-review`'s: blocking / should-fix / nit.** Don't introduce a second
+vocabulary — a finding that can't be placed on this scale is usually one that didn't clear the bar.
+
+**Secrets.** Never hardcode one; environment variables or a secret manager, always, and validate
+that the required ones exist at startup so a missing one fails loudly. **If a secret may have been
+exposed, say so immediately and rotate it** — patching the code that leaked it is not enough.
 
 ### 6. Debug — `superpowers:systematic-debugging`
 
