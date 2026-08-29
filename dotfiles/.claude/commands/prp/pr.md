@@ -71,14 +71,12 @@ git diff origin/<base>..HEAD --name-only
 
 Categorize changed files: source, tests, docs, config, migrations.
 
-### PRP Artifacts
+### Plan Artifacts
 
-Check for related PRP artifacts:
-- `.claude/PRPs/reports/` — Implementation reports
-- `.claude/PRPs/plans/` — Plans that were executed
-- `.claude/PRPs/prds/` — Related PRDs
-
-Reference these in the PR body if they exist.
+Check `<repo>/.claude/plans/` for the executed plan and its report. Read them for context on
+what was intended and what deviated — but **do not link or attach them.** That directory is
+gitignored and ephemeral, so a link would rot; the PR body carries the reasoning itself, per
+[pr-descriptions.md](../../rules/common/pr-descriptions.md).
 
 ---
 
