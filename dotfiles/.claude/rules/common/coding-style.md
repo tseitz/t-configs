@@ -1,16 +1,9 @@
 # Coding Style
 
-## Immutability (CRITICAL)
+## Immutability
 
-ALWAYS create new objects, NEVER mutate existing ones:
-
-```
-// Pseudocode
-WRONG:  modify(original, field, value) → changes original in-place
-CORRECT: update(original, field, value) → returns new copy with change
-```
-
-Rationale: Immutable data prevents hidden side effects, makes debugging easier, and enables safe concurrency.
+Default to returning new objects rather than mutating in place — except where the language's own
+idiom says otherwise (Go pointer receivers, for one). Match the surrounding code.
 
 ## File Organization
 
@@ -77,30 +70,5 @@ editing that code for another reason.
 
 ## Error Handling
 
-ALWAYS handle errors comprehensively:
-- Handle errors explicitly at every level
-- Provide user-friendly error messages in UI-facing code
-- Log detailed error context on the server side
-- Never silently swallow errors
-
-## Input Validation
-
-ALWAYS validate at system boundaries:
-- Validate all user input before processing
-- Use schema-based validation where available
-- Fail fast with clear error messages
-- Never trust external data (API responses, user input, file content)
-
-## Code Quality Checklist
-
-Before marking work complete:
-- [ ] Code is readable and well-named
-- [ ] Every new comment passes the routing test (deleting it would let a change be silently wrong)
-- [ ] Comment count fits the file's existing density
-- [ ] Surviving comments are in plain language (short sentences, jargon defined, WHY not WHAT)
-- [ ] Functions are small (<50 lines)
-- [ ] Files are focused (<800 lines)
-- [ ] No deep nesting (>4 levels)
-- [ ] Proper error handling
-- [ ] No hardcoded values (use constants or config)
-- [ ] No mutation (immutable patterns used)
+Never silently swallow an error. A `catch` that logs and continues, or a fallback that hides a
+real failure, is the shape to avoid — surface it instead.

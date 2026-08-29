@@ -26,15 +26,10 @@ Before requesting review, ensure:
 
 Before marking code complete:
 
-- [ ] Code is readable and well-named
-- [ ] Functions are focused (<50 lines)
-- [ ] Files are cohesive (<800 lines)
-- [ ] No deep nesting (>4 levels)
-- [ ] Errors are handled explicitly
+- [ ] Meets [coding-style.md](coding-style.md) — size limits, nesting, comment density
 - [ ] No hardcoded secrets or credentials
-- [ ] No console.log or debug statements
-- [ ] Tests exist for new functionality
-- [ ] Test coverage meets 80% minimum
+- [ ] No leftover `console.log` or debug statements
+- [ ] Tests exist for new functionality, at the bar in [testing.md](testing.md)
 
 ## Security Review Triggers
 
@@ -98,42 +93,15 @@ Specialized agents invoked:
 | **typescript-reviewer** | TypeScript/JavaScript specific issues |
 | **python-reviewer** | Python specific issues |
 
-## Common Issues to Catch
+## Secrets
 
-### Security
-
-- Hardcoded credentials (API keys, passwords, tokens)
-- SQL injection (string concatenation in queries)
-- XSS vulnerabilities (unescaped user input)
-- Path traversal (unsanitized file paths)
-- CSRF protection missing
-- Authentication bypasses
-
-### Code Quality
-
-- Large functions (>50 lines) - split into smaller
-- Large files (>800 lines) - extract modules
-- Deep nesting (>4 levels) - use early returns
-- Missing error handling - handle explicitly
-- Mutation patterns - prefer immutable operations
-- Missing tests - add test coverage
-
-### Performance
-
-- N+1 queries - use JOINs or batching
-- Missing pagination - add LIMIT to queries
-- Unbounded queries - add constraints
-- Missing caching - cache expensive operations
+- Never hardcode a secret. Environment variables or a secret manager, always.
+- Validate that required secrets are present at startup, so a missing one fails loudly.
+- **If a secret may have been exposed, say so immediately and rotate it.** Fixing the code that
+  leaked it is not enough on its own.
 
 ## Approval Criteria
 
 - **Approve**: No CRITICAL or HIGH issues
 - **Warning**: Only HIGH issues (merge with caution)
 - **Block**: CRITICAL issues found
-
-## Integration with Other Rules
-
-This rule works with:
-
-- [testing.md](testing.md) - Test coverage requirements
-- [security.md](security.md) - Security checklist

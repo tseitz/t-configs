@@ -188,6 +188,8 @@ lever on top of model choice. **Default effort: `high`.** Propose both per the M
   the new model re-ingests the whole conversation (a real cost/latency tax, not data loss). If
   the Model Plan reveals the session is on the wrong tier, switch once *before* executing, then
   hold. Per-task variation is expressed by delegating, never by switching the main thread.
+- **Don't start a large refactor or a multi-file feature in the last 20% of the context window.**
+  Single-file edits, docs, and simple fixes are fine anywhere.
 
 ## Superpowers Skills I Keep (as building blocks)
 
