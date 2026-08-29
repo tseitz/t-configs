@@ -7,11 +7,24 @@
 #   1. Copies gitignored env/config files from the MAIN worktree into this one.
 #   2. Installs dependencies with the repo's package manager (via mise if present).
 #
-# Idempotent: only copies files that are missing here, safe to re-run.
+# Idempotent: only copies files that are missing here, safe to re-run. It replaces
+# the generic `npm install` step in superpowers:using-git-worktrees.
 #
 # Usage:
-#   local/scripts/worktree-bootstrap.sh            # run from inside a new worktree
-#   local/scripts/worktree-bootstrap.sh --skip-install   # copy env files only
+#   ~/.claude/scripts/worktree-bootstrap.sh                 # from inside a new worktree
+#   ~/.claude/scripts/worktree-bootstrap.sh --skip-install  # copy env files only
+#
+# CREATING the worktree (worktrees need explicit approval first — see
+# rules/common/development-workflow.md):
+#
+#   Location is always <repo-root>/.claude/worktrees/<branch-name>. Do not improvise
+#   one from `git worktree list`, from external tooling paths, or from the skill's
+#   ~/.config/superpowers fallback. Before creating, make sure .claude/worktrees/ is
+#   gitignored and commit that — .claude/ itself is usually tracked, the subdirectory
+#   must not be.
+#
+# AFTER bootstrapping, to run an rspack dev server from the worktree, prefix it with
+# CHOKIDAR_USEPOLLING=true WATCHPACK_POLLING=true, or chokidar crashes with EMFILE.
 #
 set -euo pipefail
 shopt -s nullglob

@@ -1,11 +1,9 @@
 # Development Workflow
 
-> **This is my authoritative workflow. It supersedes the Superpowers default orchestration.**
-> Superpowers is a *toolbox* I invoke where this doc calls for it — NOT an auto-pilot. Do not
-> run the `brainstorming → writing-plans → subagent-driven-development → finishing` hard-chain
-> automatically, and do not treat `using-superpowers`'s "invoke a skill on every turn" as
-> binding here. When this doc conflicts with a skill, **this doc wins** (per Superpowers' own
-> priority: user instructions > skills > system).
+> **This doc is the orchestrator, and it wins over any skill that disagrees with it.**
+> Superpowers is a toolbox I invoke where this doc calls for it — never an auto-pilot. Don't run
+> its `brainstorming → writing-plans → subagent-driven-development → finishing` chain
+> automatically, and don't treat `using-superpowers`'s "invoke a skill every turn" as binding.
 
 ## Core Principle: Tier Everything to the Task
 
@@ -31,13 +29,23 @@ Skip for local changes to existing code. For net-new work or unfamiliar librarie
 `gh search` + official docs to find an existing pattern to adopt before writing from scratch.
 Prefer porting a proven approach over hand-rolling. (This is a lightweight check, not a phase.)
 
-### 1. Design — `superpowers:brainstorming`
+### 1. Design — `superpowers:brainstorming`, when intent is unclear
 
-Keep as-is; it works well. Collaborative dialogue → short design, scaled to complexity, with an
-approval gate before implementation. **No separate PRD step** (`/prp:prd` is cut). For truly
-trivial changes, the "design" can be one sentence — but still confirm intent before coding.
+Collaborative dialogue → short design, scaled to complexity, with an approval gate before
+implementation. **Optional**: run it when I don't yet know what I want, skip it when I do. For
+trivial changes the "design" is one sentence — but still confirm intent before coding.
 
-### 2. Plan — ONE combined doc, intent-level
+Skipping it does NOT skip rigor. The gate lives in step 2, not here.
+
+### 2. Plan — `pre-implementation-review`, then ONE combined doc
+
+**Run the `pre-implementation-review` skill.** It is the required beat, and it owns the scout,
+the tiering, and the plan critique: bounded scout of the real code first, tier from what the
+scout found (surprises, not guessed size), plan at that tier, then critique it — with a
+fresh-context subagent on anything that scouted FULL, because a plan self-graded by its author
+comes back "looks fine."
+
+The plan's own shape, once that skill calls for one:
 
 - **One document, not two.** A single file with a short `## Design` section (the approved
   intent) + `## Tasks`. No separate spec-then-plan artifacts. Reserve two docs only for genuine
@@ -67,12 +75,10 @@ my OK.** This is a required, visible beat — not buried advice. Use the `/model
 See the reference table below.
 
 **The unit of routing is the subagent, not the phase.** The session model is ONE decision, made
-once at the top and held for the whole session — switching it mid-session busts the prompt cache
-and re-ingests the entire conversation. Per-task model assignment applies *only to delegated
-work*, because a subagent carries its own context and its own model: dispatching a Haiku subagent
-from an Opus session costs the main thread nothing.
-
-This collapses the two axes into one decision:
+at the top and held — switching mid-session busts the prompt cache and re-ingests the whole
+conversation. Per-task assignment applies *only to delegated work*, because a subagent carries
+its own context and model: a Haiku subagent dispatched from an Opus session costs the main
+thread nothing. Which collapses the two axes into one decision:
 
 > **If a task's right model differs from the session model, that IS the signal to delegate it.
 > If it stays inline, it inherits the session model and there is nothing to route.**
@@ -103,11 +109,10 @@ before starting — not for switching partway.
 - **Default inline, on the session model.** Follow TDD (`superpowers:test-driven-development`):
   RED → GREEN → REFACTOR. Inline is the default *because* it needs no brief — I already have the
   context. Only propose a downshift when the cold-brief test above passes.
-- **Scout inline, delegate mechanically** — the hybrid, and the most common shape for anything
-  non-trivial. Do discovery on the session model (read the code, find the pattern to mirror,
-  choose the approach); that's the part where context accumulates and is expensive to transfer.
-  What's left is prescriptive — paths, signature, pattern snippet, verify command — and *that*
-  residual delegates to a cheap model safely, because nothing is left to infer. Splitting this
+- **Delegate the residual, not the discovery** — the most common shape for anything non-trivial.
+  Step 2's scout already did the expensive part on the session model, and its context is costly
+  to transfer. What remains is prescriptive — paths, signature, pattern snippet, verify command —
+  and *that* delegates to a cheap model safely, because nothing is left to infer. Splitting this
   way is what makes downshifting real rather than hopeful.
 - **Subagents** only for parallel fan-out (`superpowers:dispatching-parallel-agents` for
   independent problems) or isolation. When using `subagent-driven-development` as the engine,
@@ -188,37 +193,23 @@ lever on top of model choice. **Default effort: `high`.** Propose both per the M
 | Balanced | **Sonnet** | Integration, debugging, multi-file coordination |
 | Cheap/fast | **Haiku** | Mechanical, well-specified work; parallel fan-out workers |
 
-- **Subagents do NOT default to cheap.** A generic subagent inherits the session model (Opus).
-  Downshift deliberately in the Model Plan, gated on the cold-brief test.
+- **Subagents do NOT default to cheap.** A generic subagent inherits the session model. Downshift
+  deliberately in the Model Plan, gated on the cold-brief test.
 - **Named agents already route themselves.** Every agent in `~/.claude/agents/` pins a model in
-  frontmatter — `architect` and `planner` on Opus, the rest (`code-reviewer`, `tdd-guide`,
-  `python-reviewer`, `security-reviewer`, `refactor-cleaner`, `typescript-reviewer`, …) on
-  Sonnet. Invoking one is already a downshift and costs the session model nothing. Don't
-  propose routing for work a named agent covers — just name the agent.
-- **The session model is set once, at the top.** Switching mid-session resets the prompt cache —
-  the new model re-ingests the whole conversation (a real cost/latency tax, not data loss). If
-  the Model Plan reveals the session is on the wrong tier, switch once *before* executing, then
-  hold. Per-task variation is expressed by delegating, never by switching the main thread.
+  frontmatter — `architect` and `planner` on Opus, the other ten on Sonnet. Invoking one is
+  already a downshift and costs the session model nothing, so don't propose routing for work an
+  agent covers. Just name the agent.
+- If the Model Plan reveals the session is on the wrong tier, switch once *before* executing,
+  then hold.
 - **Don't start a large refactor or a multi-file feature in the last 20% of the context window.**
   Single-file edits, docs, and simple fixes are fine anywhere.
 
-## Superpowers Skills I Keep (as building blocks)
+## Superpowers hook — re-run after every plugin update
 
-`brainstorming` · `test-driven-development` · `systematic-debugging` ·
-`verification-before-completion` · `receiving-code-review` · `dispatching-parallel-agents` ·
-`using-git-worktrees` (**demoted — ask first**, see below) · `finishing-a-development-branch` ·
-`blueprint` (multi-session).
-
-## Demoted / Cut
-
-- **Cut:** `/prp:prd` (brainstorming is the only design front door).
-- **Demoted:** `using-superpowers` auto-pilot (this doc is the orchestrator); the mandatory
-  per-task two-stage review in `subagent-driven-development`; `/plan` and `/prp-plan` as
-  entry points (their one durable asset — the pattern table — is ported into step 2).
-- **Superpowers `SessionStart` injection is quieted** via `scripts/quiet-superpowers-hook.sh`.
-  Claude Code has no per-plugin hook toggle, so that script surgically removes the hook from
-  the plugin's `hooks.json`. **It is NOT update-safe — re-run it after any `/plugin update`**
-  (the update restores the hook).
+Superpowers' `SessionStart` injection is quieted by `scripts/quiet-superpowers-hook.sh`, which
+surgically removes the hook from the plugin's own `hooks.json` because Claude Code has no
+per-plugin hook toggle. **It is not update-safe — `/plugin update` restores the hook, so re-run
+the script after any update.**
 
 ## Where Work Happens — Primary Clone, and Which Branch
 
@@ -228,16 +219,15 @@ repo is personal or work.
 
 ### A. Directory: always my primary clone. NOT a worktree.
 
-Work in the repo directory I already have checked out — the primary working directory, the one I
-have open. Do NOT reach for a git worktree as a matter of course, and do NOT let a skill pull one
-in automatically — that includes `superpowers:using-git-worktrees`, `subagent-driven-development`,
-plan execution, and `isolation: 'worktree'` on subagents.
+Work in the repo directory I already have checked out. I prefer branches — worktrees need extra
+setup and repointing that isn't worth it for most work, and I rarely work out of one.
 
-**A worktree requires my explicit OK, asked for BEFORE you create it.** If you think one is
-genuinely the best option — parallel agents mutating the same files, or I need my current
-checkout to stay runnable with my uncommitted work intact — state in one or two lines why a
-branch won't do, then wait for me to say yes. Never create one silently, never as a "safety"
-default, and never mid-task without stopping to ask.
+**A worktree requires my explicit OK, asked for BEFORE you create it.** Never create one
+silently, never as a "safety" default, never mid-task without stopping. Don't let a skill pull
+one in automatically either — that includes `superpowers:using-git-worktrees`,
+`subagent-driven-development`, plan execution, and `isolation: 'worktree'` on subagents. If you
+think one is genuinely right (parallel agents mutating the same files, or my checkout must stay
+runnable with uncommitted work intact), say why a branch won't do in a line or two, and wait.
 
 ### B. Branch: personal → default branch directly; work → feature branch
 
@@ -258,18 +248,10 @@ don't assume `main`.
 first" reflex): on a personal repo, being on `main` is correct and needs no prompt. The guard
 still applies on work repos.
 
-### If I approve a worktree, use this fixed convention
+### If I approve a worktree
 
-Do NOT improvise a location from `git worktree list`, external tooling paths (e.g. `~/.superset/worktrees/`), or the skill's `~/.config/superpowers/...` fallback, and do NOT ask which directory to use.
-
-- **Location:** `<repo-root>/.claude/worktrees/<branch-name>` — always project-local, inside the repo's own `.claude/` directory.
-- **Before creating:** ensure `.claude/worktrees/` is gitignored (add the line and commit if missing). `.claude/` itself is often tracked; the `worktrees/` subdirectory must not be.
-- **After creating:** run `~/.claude/scripts/worktree-bootstrap.sh` from inside the new
-  worktree. Git worktrees carry only TRACKED files, so gitignored local config (`.env*`,
-  `mise.local.toml`) and `node_modules` don't come across. The script copies those
-  gitignored env files from the main worktree and installs deps with the repo's package
-  manager (mise-aware); it's idempotent and refuses to run in the main worktree. This
-  replaces the skill's generic `npm install` step. To then *run* an rspack dev server
-  from a worktree, prefix with `CHOKIDAR_USEPOLLING=true WATCHPACK_POLLING=true` to avoid
-  a chokidar `EMFILE` crash.
-- This preference overrides the skill's default directory-selection priority.
+Location is always `<repo-root>/.claude/worktrees/<branch-name>` — never improvised, never asked
+about. Then run `~/.claude/scripts/worktree-bootstrap.sh` from inside it. **Read that script's
+header first**: it carries the gitignore requirement, why tracked-files-only breaks local config,
+and the polling flags an rspack dev server needs. Both of these override the skill's own
+directory-selection and `npm install` steps.
