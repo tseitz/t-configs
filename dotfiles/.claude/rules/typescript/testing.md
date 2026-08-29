@@ -21,5 +21,5 @@ paths:
 
 ## Reference
 
-See skill: `tdd-workflow` for detailed vitest patterns, mocking with `vi.mock`, and git checkpoints.
+See skill: `superpowers:test-driven-development` for the RED → GREEN → REFACTOR cycle.
 See skill: `e2e-testing` for Playwright POM patterns, flaky test strategies, and CI/CD integration.

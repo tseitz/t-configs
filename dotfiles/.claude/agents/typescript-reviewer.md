@@ -102,10 +102,6 @@ jest --ci                           # Tests (Jest)
 - **Warning**: MEDIUM issues only (can merge with caution)
 - **Block**: CRITICAL or HIGH issues found
 
-## Reference
-
-This repo does not yet ship a dedicated `typescript-patterns` skill. For detailed TypeScript and JavaScript patterns, use `coding-standards` plus `frontend-patterns` or `backend-patterns` based on the code being reviewed.
-
 ---
 
 Review with the mindset: "Would this code pass review at a top TypeScript shop or well-maintained open-source project?"

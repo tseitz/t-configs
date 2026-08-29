@@ -24,16 +24,12 @@ MANDATORY workflow:
 | **tdd-guide** | Use PROACTIVELY on new features and bug fixes — enforces write-tests-first |
 | **e2e-runner** | Use PROACTIVELY for E2E test creation and maintenance |
 
-## Skills (detailed patterns by stack)
+## Skills
 
 | Skill | When to Use |
 |-------|-------------|
-| `tdd-workflow` | TypeScript/Vitest TDD cycle, `vi.mock`, vitest config, git checkpoints |
+| `superpowers:test-driven-development` | The RED → GREEN → REFACTOR cycle, any language |
 | `e2e-testing` | Playwright patterns, POM, flaky test handling, CI/CD integration |
-| `python-testing` | pytest fixtures, parametrize, mocking, async, conftest patterns |
-| `golang-testing` | Table-driven tests, subtests, benchmarks, fuzzing, httptest |
-| `rust-testing` | `#[cfg(test)]`, rstest, proptest, mockall, cargo-llvm-cov |
-| `ai-regression-testing` | AI-assisted dev: regression-first strategy, mock/prod parity tests |
 
 ## Coverage Command Reference
 

@@ -88,10 +88,6 @@ Fix: What to change
 - **FastAPI**: CORS config, Pydantic validation, response models, no blocking in async
 - **Flask**: Proper error handlers, CSRF protection
 
-## Reference
-
-For detailed Python patterns, security examples, and code samples, see skill: `python-patterns`.
-
 ---
 
 Review with the mindset: "Would this code pass review at a top Python shop or open-source project?"

@@ -104,4 +104,4 @@ cargo llvm-cov
 - [ ] Assertions are specific and meaningful
 - [ ] Coverage is 80%+
 
-For detailed mocking patterns and framework-specific examples, see `skill: tdd-workflow`.
+For the RED → GREEN → REFACTOR cycle, see `skill: superpowers:test-driven-development`.

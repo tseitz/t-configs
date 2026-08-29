@@ -39,4 +39,4 @@ class Point(NamedTuple):
 
 ## Reference
 
-See skill: `python-patterns` for comprehensive Python idioms and patterns.
+See skills: `astral:ruff`, `astral:ty`, `astral:uv` for the modern Python toolchain.

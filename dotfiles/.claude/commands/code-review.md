@@ -56,4 +56,4 @@ For each issue:
 
 **Block commit if any CRITICAL or HIGH issues found.**
 
-> For reviewing a GitHub PR, use the `pr-review` skill instead.
+> For reviewing a GitHub PR, use `/pr-review-toolkit:review-pr` instead.
