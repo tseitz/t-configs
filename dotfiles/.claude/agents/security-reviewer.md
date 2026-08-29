@@ -1,6 +1,6 @@
 ---
 name: security-reviewer
-description: Security vulnerability detection and remediation specialist. Use PROACTIVELY after writing code that handles user input, authentication, API endpoints, or sensitive data. Flags secrets, SSRF, injection, unsafe crypto, and OWASP Top 10 vulnerabilities.
+description: Security vulnerability detection and remediation. **Not optional** on auth/authz, user input handling, database queries, file system operations, external API calls, crypto, or payments — development-workflow.md §5 requires it whenever the diff touches one. Flags secrets, SSRF, injection, unsafe crypto, and OWASP Top 10.
 model: opus
 ---
 

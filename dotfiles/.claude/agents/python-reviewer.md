@@ -1,6 +1,6 @@
 ---
 name: python-reviewer
-description: Expert Python code reviewer specializing in PEP 8 compliance, Pythonic idioms, type hints, security, and performance. Use for all Python code changes. MUST BE USED for Python projects.
+description: Python code reviewer for idiom, type hints, security, and performance. Invoke on Python changes worth a second read.
 model: sonnet
 ---
 

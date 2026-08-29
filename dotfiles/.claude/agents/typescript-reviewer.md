@@ -1,6 +1,6 @@
 ---
 name: typescript-reviewer
-description: Expert TypeScript/JavaScript code reviewer specializing in type safety, async correctness, Node/web security, and idiomatic patterns. Use for all TypeScript and JavaScript code changes. MUST BE USED for TypeScript/JavaScript projects.
+description: TypeScript/JavaScript reviewer for type safety, async correctness, Node and web security, and idiomatic patterns. Invoke on TS/JS changes worth a second read.
 model: sonnet
 ---
 

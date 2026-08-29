@@ -1,6 +1,6 @@
 ---
 name: architect
-description: Software architecture specialist for system design, scalability, and technical decision-making. Use PROACTIVELY when planning new features, refactoring large systems, or making architectural decisions.
+description: Software architecture specialist for system design, scalability, and technical decision-making. Invoke for the questions that outlive one change: service boundaries, data modelling, scaling limits, build-vs-buy. Not for planning a single change — pre-implementation-review owns that.
 model: opus
 ---
 

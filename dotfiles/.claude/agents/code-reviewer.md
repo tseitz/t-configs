@@ -1,6 +1,6 @@
 ---
 name: code-reviewer
-description: Expert code review specialist. Proactively reviews code for quality, security, and maintainability. Use immediately after writing or modifying code. MUST BE USED for all code changes.
+description: General code review pass for quality, correctness, and maintainability. The quick delegated read on a diff; team-pr-review is the deep one and runs inline.
 model: sonnet
 ---
 
