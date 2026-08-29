@@ -32,7 +32,7 @@ Blueprint runs a 5-phase pipeline:
 
 1. **Research** — Pre-flight checks (git, gh auth, remote, default branch), then reads project structure, existing plans, and memory files to gather context.
 2. **Design** — Breaks the objective into one-PR-sized steps (3–12 typical). Assigns dependency edges, parallel/serial ordering, model tier (strongest vs default), and rollback strategy per step.
-3. **Draft** — Writes a self-contained Markdown plan file to `plans/`. Every step includes a context brief, task list, verification commands, and exit criteria — so a fresh agent can execute any step without reading prior steps.
+3. **Draft** — Writes a self-contained Markdown plan file to `<repo>/.claude/plans/` (gitignored — see `rules/common/development-workflow.md`). Every step includes a context brief, task list, verification commands, and exit criteria — so a fresh agent can execute any step without reading prior steps.
 4. **Review** — Delegates adversarial review to a strongest-model sub-agent (e.g., Opus) against a checklist and anti-pattern catalog. Fixes all critical findings before finalizing.
 5. **Register** — Saves the plan, updates memory index, and presents the step count and parallelism summary to the user.
 
@@ -46,7 +46,7 @@ Blueprint detects git/gh availability automatically. With git + GitHub CLI, it g
 /blueprint myapp "migrate database to PostgreSQL"
 ```
 
-Produces `plans/myapp-migrate-database-to-postgresql.md` with steps like:
+Produces `.claude/plans/myapp-migrate-database-to-postgresql.md` with steps like:
 - Step 1: Add PostgreSQL driver and connection config
 - Step 2: Create migration scripts for each table
 - Step 3: Update repository layer to use new driver
@@ -68,38 +68,4 @@ Produces a plan with parallel steps where possible (e.g., "implement Anthropic p
 - **Branch/PR/CI workflow** — Built into every step. Degrades gracefully to direct mode when git/gh is absent.
 - **Parallel step detection** — Dependency graph identifies steps with no shared files or output dependencies.
 - **Plan mutation protocol** — Steps can be split, inserted, skipped, reordered, or abandoned with formal protocols and audit trail.
-- **Zero runtime risk** — Pure Markdown skill. The entire repository contains only `.md` files — no hooks, no shell scripts, no executable code, no `package.json`, no build step. Nothing runs on install or invocation beyond Claude Code's native Markdown skill loader.
-
-## Installation
-
-This skill ships with Everything Claude Code. No separate installation is needed when ECC is installed.
-
-### Full ECC install
-
-If you are working from the ECC repository checkout, verify the skill is present with:
-
-```bash
-test -f skills/blueprint/SKILL.md
-```
-
-To update later, review the ECC diff before updating:
-
-```bash
-cd /path/to/everything-claude-code
-git fetch origin main
-git log --oneline HEAD..origin/main       # review new commits before updating
-git checkout <reviewed-full-sha>          # pin to a specific reviewed commit
-```
-
-### Vendored standalone install
-
-If you are vendoring only this skill outside the full ECC install, copy the reviewed file from the ECC repository into `~/.claude/skills/blueprint/SKILL.md`. Vendored copies do not have a git remote, so update them by re-copying the file from a reviewed ECC commit rather than running `git pull`.
-
-## Requirements
-
-- Claude Code (for `/blueprint` slash command)
-- Git + GitHub CLI (optional — enables full branch/PR/CI workflow; Blueprint detects absence and auto-switches to direct mode)
-
-## Source
-
-Inspired by antbotlab/blueprint — upstream project and reference design.
+Git + GitHub CLI are optional — Blueprint detects their absence and switches to direct mode.

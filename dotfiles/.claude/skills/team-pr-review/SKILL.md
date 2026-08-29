@@ -1,6 +1,6 @@
 ---
 name: team-pr-review
-description: Use when you've finished a chunk of work and want a review "as if the presentation team reviewed it." First orients the reviewer (what the change does, its trade-offs, whether it satisfies the ticket, where to start reading), then challenges the premise — does the diff match the description, and is the stated approach actually the best way to solve the problem — then checks the diff against the topics the team habitually raises (from references/team-review-topics.md), notes every behaviour change a merge today would ship, and steps back for architecture/simplification/adaptability, a would-I-build-it-this-way-again read, and a product-owner lens. Treats the PR description and ticket as claims to verify, never as facts. Triggers on "review my PR like the team", "team review", "review before I push". Local findings only; never posts to GitHub. Complements pr-review-toolkit's generic agents.
+description: Reviews the current diff the way the presentation team would — orientation, premise check, the team's recurring review topics, a behaviour-change ledger, then architecture and product-owner lenses. Treats the PR description and ticket as claims to verify, never as facts. Use on "review my PR like the team", "team review", or "review before I push". Local findings only; never posts to GitHub.
 ---
 
 # Team PR Review

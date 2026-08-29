@@ -22,4 +22,3 @@ paths:
 ## Reference
 
 See skill: `superpowers:test-driven-development` for the RED → GREEN → REFACTOR cycle.
-See skill: `e2e-testing` for Playwright POM patterns, flaky test strategies, and CI/CD integration.

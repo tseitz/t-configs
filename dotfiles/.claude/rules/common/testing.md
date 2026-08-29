@@ -29,7 +29,6 @@ MANDATORY workflow:
 | Skill | When to Use |
 |-------|-------------|
 | `superpowers:test-driven-development` | The RED → GREEN → REFACTOR cycle, any language |
-| `e2e-testing` | Playwright patterns, POM, flaky test handling, CI/CD integration |
 
 ## Coverage Command Reference
 

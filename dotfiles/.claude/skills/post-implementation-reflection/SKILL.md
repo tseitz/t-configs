@@ -185,9 +185,10 @@ and your **memory / lessons system** for the right commands and documents. Typic
 - **Update session state** — if the project uses a HANDOFF.md, CONTEXT.md, or similar doc, overwrite
   it to reflect the current state of the codebase. The next agent session starts cold.
 - **Capture learnings via existing tooling, don't hand-roll it.** The Agent QoL findings above are
-  the raw material. Route them: durable cross-project patterns → `/learn` or `lessons-to-skills`;
-  wrong/misleading CLAUDE.md lines → `claude-md-improver`; project facts not derivable from code →
-  memory. Only write a freeform `.claude/lessons/` note if the project has no such system.
+  the raw material. Route them: a durable cross-project pattern worth a new skill →
+  `superpowers:writing-skills`; wrong/misleading CLAUDE.md lines → `claude-md-improver`; project
+  facts not derivable from code → memory. Only write a freeform `.claude/lessons/` note if the
+  project has no such system.
 - **Flag if docs need updating** — README, architecture docs, or API docs that are now stale.
 
 If you're unsure where these live, check CLAUDE.md first, then your memory files.

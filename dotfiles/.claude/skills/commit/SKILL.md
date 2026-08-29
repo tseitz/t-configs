@@ -45,7 +45,7 @@ Examples of targeted requests:
 - "commit only the new files"
 - "commit the migration"
 
-If **yes** → use the Skill tool to invoke `/prp/stage-commit <description>` to handle staging, then continue to Step 4.
+If **yes** → run the `/prp:stage-commit <description>` command to handle staging, then continue to Step 4.
 
 If **no** (e.g., "commit my changes", "commit everything", no description) → stage directly:
 
@@ -58,82 +58,20 @@ If nothing staged, stop: "Nothing to commit."
 
 ## Step 4 — Commit Message
 
-Format:
-```
-<type>(<scope>): <subject>
+Conventional Commits, with these house rules:
 
-<body>
-```
+- Subject under 72 characters, body lines under 100.
+- Body explains **what** and **why**, never how. Omit it when the subject says everything.
+- Match the scope vocabulary already in `git log` for this repo rather than inventing one.
 
-Header required. Scope optional. All lines under 100 characters.
-
-### Types
-
-| Type | Purpose |
-|------|---------|
-| `feat` | New feature |
-| `fix` | Bug fix |
-| `refactor` | Code restructuring, no behavior change |
-| `perf` | Performance improvement |
-| `docs` | Documentation only |
-| `test` | Test additions or corrections |
-| `build` | Build system or dependencies |
-| `ci` | CI configuration |
-| `chore` | Maintenance tasks |
-| `style` | Code formatting, no logic change |
-
-### Subject Line Rules
-
-- Imperative, present tense: "Add feature" not "Added feature"
-- No period at the end
-- Under 72 characters
-
-### Body Guidelines
-
-- Explain **what** and **why**, not how
-- Only include if the subject line isn't self-explanatory
+Write the message with a heredoc so the body keeps its line breaks:
 
 ```bash
-git commit -m "<type>(<scope>): <subject>"
-# or with body:
-git commit -m "$(cat <<'EOF'
+git commit -F - <<'EOF'
 <type>(<scope>): <subject>
 
 <body>
 EOF
-)"
-```
-
-## Examples
-
-```
-fix(api): handle null response in user endpoint
-```
-
-```
-feat: add real-time market resolution notifications
-```
-
-```
-refactor: extract validation logic to shared module
-
-Move duplicate validation from three endpoints into a shared
-validator. No behavior change.
-```
-
-```
-feat(api)!: remove deprecated v1 endpoints
-
-BREAKING CHANGE: v1 endpoints no longer available
-```
-
-### Revert
-
-```
-revert: feat(api): add new endpoint
-
-This reverts commit abc123def456.
-Reason: caused performance regression in production.
 ```
 
 ## Principles
