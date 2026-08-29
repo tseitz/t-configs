@@ -68,41 +68,26 @@ The plan's own shape, once that skill calls for one:
   steps, per-step model tiering, cold-start briefs). Don't force big projects through a single
   plan doc.
 
-### 3. Model & Effort Plan — ALWAYS propose, wait for confirmation
+### 3. Routing — one question, not a ceremony
 
-Before executing anything non-trivial, **propose a model + effort plan as a table and wait for
-my OK.** This is a required, visible beat — not buried advice. Use the `/model-route` heuristic.
-See the reference table below.
+**The session is Opus, set once and held.** Switching mid-session busts the prompt cache and
+re-ingests the whole conversation, so per-task variation is expressed by *delegating*, never by
+switching the main thread.
 
-**The unit of routing is the subagent, not the phase.** The session model is ONE decision, made
-at the top and held — switching mid-session busts the prompt cache and re-ingests the whole
-conversation. Per-task assignment applies *only to delegated work*, because a subagent carries
-its own context and model: a Haiku subagent dispatched from an Opus session costs the main
-thread nothing. Which collapses the two axes into one decision:
+Design, planning and review all run inline, which means they are already on Opus. **Nothing to
+route.** The only real routing decision is whether **implementation** gets delegated:
 
-> **If a task's right model differs from the session model, that IS the signal to delegate it.
-> If it stays inline, it inherits the session model and there is nothing to route.**
+> **The critiqued plan from step 2 is the brief, and therefore the test.** A subagent gets the
+> system prompt, CLAUDE.md, and that plan — nothing from our conversation. If the plan names
+> exact paths, signatures, and the pattern to mirror, hand it to **Sonnet**. If judgment is left
+> that the plan couldn't pre-resolve, keep it inline.
 
-So the table has two kinds of rows, and they must be labeled as such:
+Haiku only for genuinely mechanical fan-out — porting N call sites to a known signature. Say
+which you picked in a sentence and carry on; don't build a table or wait for approval. I already
+approved the plan at step 2's checkpoint, and that's the same moment.
 
-| Task | Mode | Model / effort |
-|------|------|----------------|
-| Design the schema change | inline | *session model* |
-| Port 6 call sites to the new signature | delegated | Haiku / low |
-| Security review of the auth path | delegated (`security-reviewer`) | pinned Sonnet |
-
-Never propose a table that implies the main thread changes model between phases. If most rows
-want a model the session isn't on, that's an argument for changing the *session* model once
-before starting — not for switching partway.
-
-**The downshift gate — the cold-brief test:**
-
-> **If I can't write the brief cold, the task can't be downshifted.** A subagent receives the
-> system prompt, CLAUDE.md, and the prompt I write — and *nothing* from our conversation. A
-> cheap subagent's ceiling is its brief. So the ability to write a self-contained prescriptive
-> brief (exact paths, signature, pattern to mirror, verification command) is the test for
-> whether Haiku/Sonnet can take the task. If writing that brief costs as much reasoning as
-> doing the work, do it inline on the session model.
+Escalate to **Fable** only when reasoning depth is the actual bottleneck — a novel architectural
+problem, not merely a hard one.
 
 ### 4. Execute — inline-first
 
@@ -154,8 +139,10 @@ looks like **once I've agreed to add one**. This rule governs whether it gets ad
   implementing; no performative agreement; push back when warranted). Incoming PR comments →
   `receiving-pr-review`.
 
-**One severity scale, `team-pr-review`'s: blocking / should-fix / nit.** Don't introduce a second
-vocabulary — a finding that can't be placed on this scale is usually one that didn't clear the bar.
+**Findings reach me in one vocabulary: blocking / should-fix / nit.** Several agents grade
+internally on CRITICAL/HIGH/MEDIUM/LOW — that's their detection logic, leave it alone, but
+translate on the way out (CRITICAL and HIGH → blocking, MEDIUM → should-fix, LOW → nit). A
+finding that won't sit on this scale usually didn't clear the bar.
 
 **Secrets.** Never hardcode one; environment variables or a secret manager, always, and validate
 that the required ones exist at startup so a missing one fails loudly. **If a secret may have been
@@ -183,24 +170,23 @@ architecture, don't keep patching.
 
 ## Model & Effort Reference
 
-Model and effort are **two independent knobs.** Effort (`low`→`max`) is a large cost/latency
-lever on top of model choice. **Default effort: `high`.** Propose both per the Model Plan step.
-
 | Tier | Model | For |
 |------|-------|-----|
-| Hardest | **Fable** | Super-complicated / deepest-reasoning tasks |
-| High judgment | **Opus** | Default session; design, architecture, security review |
-| Balanced | **Sonnet** | Integration, debugging, multi-file coordination |
-| Cheap/fast | **Haiku** | Mechanical, well-specified work; parallel fan-out workers |
+| Hardest | **Fable** | Deliberate escalation when reasoning depth is the bottleneck |
+| High judgment | **Opus** | The session. Design, architecture, review |
+| Balanced | **Sonnet** | Implementation from a prescriptive plan; debugging |
+| Cheap/fast | **Haiku** | Mechanical, fully-specified work; parallel fan-out |
 
-- **Subagents do NOT default to cheap.** A generic subagent inherits the session model. Downshift
-  deliberately in the Model Plan, gated on the cold-brief test.
-- **Named agents already route themselves.** Every agent in `~/.claude/agents/` pins a model in
-  frontmatter — `architect` and `planner` on Opus, the other ten on Sonnet. Invoking one is
-  already a downshift and costs the session model nothing, so don't propose routing for work an
-  agent covers. Just name the agent.
-- If the Model Plan reveals the session is on the wrong tier, switch once *before* executing,
-  then hold.
+- **Effort is a separate knob** (`low`→`max`) and a large cost/latency lever on its own.
+  **Default `high`**, set globally in `settings.base.json`. Move it per task, not per session.
+- **Subagents do NOT default to cheap** — a generic one inherits the session model. Downshifting
+  is deliberate, and gated on the plan being prescriptive enough to hand over.
+- **Named agents route themselves.** Every agent in `~/.claude/agents/` pins a model, so invoking
+  one is already a routing decision. Don't propose routing for work an agent covers — name the
+  agent.
+- **Review quality is bought with fresh context before it's bought with a bigger model.** An
+  author grading their own work returns "looks fine" on any tier. Delegate the review to get new
+  eyes; upgrade the model only where a miss is expensive and a false positive is cheap.
 - **Don't start a large refactor or a multi-file feature in the last 20% of the context window.**
   Single-file edits, docs, and simple fixes are fine anywhere.
 
