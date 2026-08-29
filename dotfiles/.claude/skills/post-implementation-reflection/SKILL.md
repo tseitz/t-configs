@@ -68,7 +68,7 @@ State which depth you picked and why, in one line. When torn, go SHORT: an over-
 small change gets skimmed, and a skimmed lap catches nothing.
 
 - **SHORT** — roughly under ten files, no new subsystem, no architectural decision. Run
-  **Comments · Simplicity · Technical debt**. Skip the rest.
+  **Comments · Simplicity & navigability · Technical debt**. Skip the rest.
 - **FULL** — a plan, a multi-session feature, a new subsystem, or anything architectural. Run
   every lens, then route learnings in Close the Loop.
 
@@ -87,47 +87,36 @@ For each lens, be concrete. Skip any lens that doesn't apply.
 
 **Comments** ← run this one first, and on every depth
 
-The lens most likely to find something, because writing-mode is systematically biased toward
-more comments: a rationale is freshest at the moment it stops being needed. Judge only the
-comments **this diff added**; leave pre-existing ones alone.
+The standard lives in `rules/common/coding-style.md`. Apply it; don't restate it. Judge only the
+comments **this diff added**, and leave pre-existing ones alone.
 
-1. **Measure the budget before judging anything.** Count comments in each changed file and in
-   its siblings, and put the numbers in the finding. Do not estimate this.
+**Measure before you judge.** Count the comments in each changed file and in its siblings, and put
+the numbers in the finding. Do not estimate them. The count is the entire point of this lens: the
+rule was already loaded while the code was being written and it did not fire, so only a number
+changes the outcome now.
 
-   ```bash
-   for f in <dir>/*.<ext>; do echo "$(grep -cE '^\s*(//|#)' "$f") $f"; done | sort -rn
-   ```
+```bash
+for f in <dir>/*.<ext>; do echo "$(grep -cE '^\s*(//|#)' "$f") $f"; done | sort -rn
+```
 
-   A new file's budget is the directory's median, which is frequently zero. If the diff's files
-   sit far above their neighbours, that is the finding — say so with the counts.
+Then route every added comment by the test in the rules file. Cuts are **relocated, not deleted** —
+rationale that fails the test still belongs on the PR as an inline comment. Push the code cuts
+*before* posting, or the anchors land outdated. Never post without explicit approval.
 
-2. **Apply the routing test to every added comment**: *would deleting this let a future change
-   be silently wrong?* Only "yes" stays in the repo. The tell for "no" is that it describes code
-   that will not exist after merge — it narrates the change, not the code.
+Both directions count: also flag a non-obvious decision that genuinely lacks a *why*. State the
+density numbers first, so "add a comment here" is a decision against a budget.
 
-3. **Cuts are relocated, not deleted.** Rationale that fails the test is still worth having; it
-   belongs on the PR. Draft the cut material as inline comments anchored to their lines, and
-   push the code cuts *before* posting so the anchors don't land outdated. Never post without
-   explicit approval.
+**Simplicity & navigability**
 
-Both directions count: also flag a non-obvious decision that genuinely lacks a *why*. But state
-the density numbers first, so "add a comment here" is a decision against a budget.
+One question: would the next agent session — or you, cold in a month — find this obvious?
 
-**Simplicity**
-- Does each function do one thing? Are there any that do two or three?
-- Is there logic that could be a well-named helper instead of an inline block?
+- Does each function do one thing? Any that do two or three?
+- Is there logic that would read better as a well-named helper than as an inline block?
 - Any unnecessary abstraction or over-engineering added during implementation?
-
-**Elegance**
-- Are there awkward workarounds, defensive checks for things that can't happen, or temporary
-  scaffolding that wasn't removed?
-- Would a fresh reader find this implementation surprising, or does it feel like the obvious way?
-- Any naming that obscures intent (variables, functions, files)?
-
-**Agent navigability** ← most important for this project
-- Can the next agent session find every relevant piece of this feature in one read of the relevant
-  file(s)?
-- Does the code reference the right project primitives and utilize project conventions?
+- Awkward workarounds, defensive checks for things that can't happen, or scaffolding left behind?
+- Naming that obscures intent (variables, functions, files)?
+- Can every relevant piece of this feature be found in one read of the file(s) it lives in?
+- Does it use the project's existing primitives and conventions, or quietly reinvent them?
 - (Comments are the Comments lens's job — don't re-raise them here.)
 
 **Agent Quality of Life**
@@ -206,11 +195,9 @@ If you're unsure where these live, check CLAUDE.md first, then your memory files
 
 ### Reflection
 **Comments:** [density counts vs siblings, then keep/cut/relocate — or "nothing to flag"]
-**Simplicity:** [finding or "nothing to flag"]
+**Simplicity & navigability:** [finding or "nothing to flag"]
 **Technical debt:** [finding or "nothing to flag"]
 --- FULL only ---
-**Elegance:** [finding or "nothing to flag"]
-**Agent navigability:** [finding or "nothing to flag"]
 **Agent QoL:** [friction points, missing scripts, env issues, or "nothing to flag"]
 
 ### Follow-up
