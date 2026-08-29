@@ -99,12 +99,32 @@ changes the outcome now.
 for f in <dir>/*.<ext>; do echo "$(grep -cE '^\s*(//|#)' "$f") $f"; done | sort -rn
 ```
 
-Then route every added comment by the test in the rules file. Cuts are **relocated, not deleted** —
-rationale that fails the test still belongs on the PR as an inline comment. Push the code cuts
-*before* posting, or the anchors land outdated. Never post without explicit approval.
+Then route every added comment by the test in the rules file. Both directions count: also flag a
+non-obvious decision that genuinely lacks a *why*. State the density numbers first, so "add a
+comment here" is a decision against a budget.
 
-Both directions count: also flag a non-obvious decision that genuinely lacks a *why*. State the
-density numbers first, so "add a comment here" is a decision against a budget.
+**Cuts are relocated, not deleted.** Rationale that fails the test is still worth having — it just
+belongs on the PR instead of in the repo.
+
+- **Stays in the code:** an invariant a cleanup would break · a tooling or library workaround ·
+  why a redundant-looking check is load-bearing · why an annotation that looks removable isn't ·
+  why two similar things are deliberately not shared.
+- **Goes up as an inline PR comment:** the bug's history and impact · why this approach over the
+  alternative · why a file *wasn't* changed · what was left out of scope · test-strategy choices ·
+  measurements and cross-repo facts that justified a decision.
+
+**Never triage cold.** The most valuable PR comments explain *absences* — why an endpoint was left
+alone, why an obvious refactor was declined, why a file isn't in the diff — and a diff cannot show
+what isn't in it. Other load-bearing facts live outside the repo entirely: ticket impact tables,
+consumer behaviour in another repo, out-of-band product decisions, one-off measurements. Run this
+in the session that did the work, or feed it the tickets and cross-repo context first. Triaged
+cold, the comments degrade into fluent diff narration — the exact noise this is meant to prevent.
+
+If the cuts become PR comments, **draft them, never post unasked.** When approved: push the code
+cuts *first* (comments anchor to line numbers in the PR head, so posting before the trim lands
+every anchor outdated), post as **one review** rather than N comments, check the line for existing
+comments including your own from earlier rounds, and verify each anchor falls inside a changed
+hunk or it won't attach.
 
 **Simplicity & navigability**
 

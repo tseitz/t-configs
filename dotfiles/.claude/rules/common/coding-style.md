@@ -21,8 +21,9 @@ test at the moment you write it — not at review time, when the diff is already
 > **Would deleting this let a future change be silently wrong?**
 
 Only "yes" earns a comment in the repo. Everything else is either already obvious from the
-code, or it is diff commentary that belongs on the pull request instead — see
-[pr-descriptions.md](pr-descriptions.md#code-comments-vs-diff-commentary).
+code, or it is diff commentary that belongs on the pull request instead. The PR-time triage —
+what stays, what moves up, and how to post it — is the `post-implementation-reflection` skill's
+Comments lens.
 
 **"Yes" looks like:** an invariant a cleanup would break · a workaround for a tool or library
 bug · why a redundant-looking check is load-bearing · why two similar things are deliberately
