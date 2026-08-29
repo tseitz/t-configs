@@ -105,7 +105,16 @@ the plan turns out to be wrong later.
 
 ```
 ### Scout
-[file:line citations for the five questions — or what you couldn't determine]
+
+| What | file:line | Finding |
+|---|---|---|
+| Files touched | ... | ... |
+| Call sites | ... | ... |
+| Pattern to mirror | ... | consistent? |
+| Verify command | — | ... |
+| Existing assertions | ... | ... |
+
+[anything you could not determine, named as such]
 
 ### Tier
 SHORT or FULL — and the surprise that decided it

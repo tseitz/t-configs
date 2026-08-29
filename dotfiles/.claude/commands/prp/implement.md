@@ -61,7 +61,7 @@ Extract these sections from the plan:
 If the file doesn't exist or isn't a valid plan:
 ```
 Error: Plan file not found or invalid.
-Run /prp-plan <feature-description> to create a plan first.
+Run the pre-implementation-review skill to scout, plan, and critique first.
 ```
 
 **CHECKPOINT**: Plan loaded. All sections identified. Tasks extracted.
@@ -79,12 +79,15 @@ git status --porcelain
 
 ### Branch Decision
 
+Follow `rules/common/development-workflow.md` § "Where Work Happens" — on a personal repo,
+being on the default branch is correct and needs no prompt; only work repos branch.
+
 | Current State | Action |
 |---|---|
 | On feature branch | Use current branch |
-| On main, clean working tree | Create feature branch: `git checkout -b feat/{plan-name}` |
-| On main, dirty working tree | **STOP** — Ask user to stash or commit first |
-| In a git worktree for this feature | Use the worktree |
+| On the base branch, work repo, clean tree | Branch off that repo's base — confirm it, it isn't always `main` |
+| On the default branch, personal repo | Stay there. Don't branch, don't ask |
+| Dirty working tree | **STOP** — ask to stash or commit first |
 
 ### Sync Remote
 
@@ -211,10 +214,10 @@ Run through edge cases from the plan's Testing Strategy checklist.
 ### Create Implementation Report
 
 ```bash
-mkdir -p .claude/PRPs/reports
+mkdir -p .claude/plans/reports
 ```
 
-Write report to `.claude/PRPs/reports/{plan-name}-report.md`:
+Write report to `.claude/plans/reports/{plan-name}-report.md`:
 
 ```markdown
 # Implementation Report: [Feature Name]
@@ -268,23 +271,17 @@ Write report to `.claude/PRPs/reports/{plan-name}-report.md`:
 
 ## Next Steps
 - [ ] Code review via `/code-review`
-- [ ] Create PR via `/prp-pr`
+- [ ] Create PR via `/prp:pr`
 ```
-
-### Update PRD (if applicable)
-
-If this implementation was for a PRD phase:
-1. Update the phase status from `in-progress` to `complete`
-2. Add report path as reference
 
 ### Archive Plan
 
 ```bash
-mkdir -p .claude/PRPs/plans/completed
-mv "$ARGUMENTS" .claude/PRPs/plans/completed/
+mkdir -p .claude/plans/completed
+mv "$ARGUMENTS" .claude/plans/completed/
 ```
 
-**CHECKPOINT**: Report created. PRD updated. Plan archived.
+**CHECKPOINT**: Report created. Plan archived.
 
 ---
 
@@ -316,17 +313,11 @@ Report to user:
 [Summary or "None — implemented exactly as planned"]
 
 ### Artifacts
-- Report: `.claude/PRPs/reports/{name}-report.md`
-- Archived Plan: `.claude/PRPs/plans/completed/{name}.plan.md`
+- Report: `.claude/plans/reports/{name}-report.md`
+- Archived Plan: `.claude/plans/completed/{name}.plan.md`
 
-### PRD Progress (if applicable)
-| Phase | Status |
-|---|---|
-| Phase 1 | [done] Complete |
-| Phase 2 | [next] |
-| ... | ... |
 
-> Next step: Run `/prp-pr` to create a pull request, or `/code-review` to review changes first.
+> Next step: Run `/prp:pr` to create a pull request, or `/code-review` to review changes first.
 ```
 
 ---
@@ -380,6 +371,5 @@ Report to user:
 ## Next Steps
 
 - Run `/code-review` to review changes before committing
-- Run `/prp-commit` to commit with a descriptive message
-- Run `/prp-pr` to create a pull request
-- Run `/prp-plan <next-phase>` if the PRD has more phases
+- Run `post-implementation-reflection` to triage comments and polish before the PR
+- Use the `commit` skill to commit, then `/prp:pr` to open the pull request
