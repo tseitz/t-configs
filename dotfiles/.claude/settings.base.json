@@ -51,6 +51,10 @@
           {
             "command" : "~\/.claude\/scripts\/hooks\/post-edit-accumulator.js",
             "type" : "command"
+          },
+          {
+            "command" : "~\/.claude\/scripts\/hooks\/post-edit-comment-length.js",
+            "type" : "command"
           }
         ],
         "matcher" : "Edit|Write|MultiEdit"
@@ -137,6 +141,16 @@
           {
             "command" : "~\/.claude\/scripts\/hooks\/stop-format-typecheck.js",
             "timeout" : 300,
+            "type" : "command"
+          }
+        ],
+        "matcher" : "*"
+      },
+      {
+        "hooks" : [
+          {
+            "command" : "~\/.claude\/scripts\/hooks\/stop-comment-length-report.js",
+            "timeout" : 10,
             "type" : "command"
           }
         ],
