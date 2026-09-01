@@ -33,6 +33,48 @@ not shared · a non-obvious unit, bound, or ordering requirement.
 a header over a self-evident block · a docstring that repeats the signature · anything longer
 than the code it describes.
 
+### A comment that can go stale silently does not earn its place
+
+**Fastest test: is this a trap or a story?** A trap stops a future editor doing something — an
+invariant, a load-bearing check, a footgun in a library. A story explains how the code got here
+or what it affects elsewhere. Traps stay. Stories go on the PR, where they are read once by
+someone with the diff in front of them and then archived, instead of sitting in the file being
+re-read and slowly becoming false.
+
+The routing test above asks whether deleting the comment could make a future change wrong.
+Ask the mirror question too: **if the thing this comment describes changes, does anything
+fail?** If nothing does, the comment is a second copy of a fact — and copies drift while the
+original moves on. A wrong comment is worse than no comment, because it is read with the same
+trust as the code.
+
+**The riskiest kind names something no build in this repo can see.** A symbol from another
+repo or service, a constant on the other side of an API, a class or file in a different
+language, a ticket's stated behaviour, a line number, a version. Nobody renaming that symbol
+will ever grep this file, and no compiler, linter or test will notice. So don't reach across
+the boundary by name:
+
+- **Describe the observable behaviour, not the mechanism that produces it.** `a suppressed row
+  keeps totalProjectedSales` survives the provider renaming its blank-list constant;
+  `CPG::BlankedMetrics::RETAILER` does not.
+- **Name only what the reader can verify from here** — a symbol in this repo, a wire field, a
+  public endpoint or query param. Those the tooling *can* follow.
+- **Prefer an assertion to a sentence.** If the fact matters enough to write down, a test or a
+  type says it in a way that breaks when it stops being true. Reach for the comment for the
+  *why*, which nothing can assert.
+- **A duplicated fact is a design smell first.** Two identical definitions explained by a
+  comment saying "these must stay in sync" should usually be one definition. Fix the
+  duplication and the comment disappears with it.
+- **A list of things defined elsewhere is the worst offender**, and it needs no repo boundary
+  to rot. "The states already defined in `foo.rb` are a, b, c" goes stale the first time
+  someone adds `d`, and it reads as authoritative while doing it. If a reader needs the set,
+  tell them how to get it — "grep both files first" — rather than pasting a copy.
+
+**Name the thing that would catch it.** For any comment pointing outside its own file, say what
+actually fails if the referent changes — a test, a type, the compiler. "Nothing" means you are
+writing a second copy of a fact: drop the reference, or restate it as behaviour the file can
+see. Same discipline as counting comments instead of eyeballing density — an answer you can
+write down, not a feeling.
+
 **Match the file's density, and round down — and read that number, don't estimate it.** Count
 the comments in the file you're editing *and* in its sibling files in the same directory; that
 count is your budget. **A new file has no density of its own, so its budget is the directory's
