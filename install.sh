@@ -12,6 +12,7 @@ set -euo pipefail
 #        ./install.sh --check   # report drift, change nothing
 #        ./install.sh --dry-run # list the steps, change nothing
 #        ./install.sh --verbose # also print already-correct symlinks
+#        ./install.sh --sync-settings # add base settings keys this machine lacks
 #
 # --sync is the "get this machine back in line with my other one" mode. It runs
 # every step non-interactively, but refuses the one destructive branch: if a real
@@ -27,11 +28,9 @@ DOTFILES_DIR="$REPO_DIR/dotfiles"
 # ------------------------------------------
 # Platform detection
 # ------------------------------------------
-# Three platforms now, not two. macOS and WSL both use Homebrew; Arch does not —
-# every Brewfile.wsl package is in the official repos, so installing linuxbrew
-# there would put a second git/neovim/deno ahead of /usr/bin on PATH. IS_OMARCHY
-# is narrower than IS_ARCH: it gates the places where Omarchy ships its own
-# config (neovim, ~/.claude/skills) that this repo must not clobber.
+# Arch has every Brewfile.wsl package in its own repos, so brew would shadow
+# /usr/bin. IS_OMARCHY is deliberately narrower than IS_ARCH: it gates only the
+# paths Omarchy itself owns.
 IS_MACOS=false; IS_ARCH=false; IS_OMARCHY=false
 if [[ "$OSTYPE" == darwin* ]]; then
   IS_MACOS=true
@@ -63,6 +62,7 @@ DRY_RUN=false
 SYNC_ONLY=false
 CHECK_ONLY=false
 SYNC_LISTS=false
+SYNC_SETTINGS=false
 VERBOSE=false
 for arg in "$@"; do
   [[ "$arg" == "--yes"     || "$arg" == "-y" ]] && YES_ALL=true
@@ -71,6 +71,7 @@ for arg in "$@"; do
   [[ "$arg" == "--sync"    || "$arg" == "-s" ]] && { SYNC_ONLY=true; YES_ALL=true; }
   [[ "$arg" == "--check"   || "$arg" == "-c" ]] && CHECK_ONLY=true
   [[ "$arg" == "--sync-lists"                ]] && SYNC_LISTS=true
+  [[ "$arg" == "--sync-settings"             ]] && SYNC_SETTINGS=true
 done
 
 # --sync-lists: append base entries this machine is missing from the additive
@@ -79,6 +80,13 @@ done
 # machine-owned settings.json.
 if ${SYNC_LISTS:-false}; then
   node "$DOTFILES_DIR/.claude/scripts/settings-drift.js" --apply
+  exit $?
+fi
+
+# --sync-settings: add base top-level keys this machine has no entry for. Same
+# standalone shape as --sync-lists.
+if ${SYNC_SETTINGS:-false}; then
+  node "$DOTFILES_DIR/.claude/scripts/settings-drift.js" --seed
   exit $?
 fi
 
@@ -122,12 +130,9 @@ run_step() {
     esac
   fi
 
-  # The subshell must NOT be the condition of an `if`. Bash suspends `set -e` for
-  # the whole command being tested — including inside the subshell, even though it
-  # re-arms the flag itself — so `if ! ( set -euo pipefail; $fn )` let every step
-  # run past its own failures and then report success from its final statement.
-  # Running it standalone (with -e off in the parent so the script survives) is
-  # what actually makes the inner `set -e` bite.
+  # Do not make this subshell the condition of an `if`. Bash suspends `set -e`
+  # for a tested command, and the suspension reaches inside the subshell that
+  # re-arms it, so every step would run past its own failures.
   local status=0
   set +e
   ( set -euo pipefail; $fn )
@@ -199,10 +204,9 @@ step_packages() {
 # 3. Install oh-my-zsh
 # ------------------------------------------
 step_ohmyzsh() {
-  # Test for the loader, not the directory. Steps 4 and 5 clone into
-  # $ZSH_CUSTOM (~/.oh-my-zsh/custom) and create ~/.oh-my-zsh as a side effect,
-  # so a directory test reports "already installed" for an empty husk that has
-  # no oh-my-zsh.sh in it — and .zshrc then fails to source on every start.
+  # Test for the loader, not the directory: steps 4 and 5 create ~/.oh-my-zsh
+  # as a side effect of cloning into $ZSH_CUSTOM, so a directory test passes on
+  # an empty husk and .zshrc then fails to source on every start.
   if [ -f "$HOME/.oh-my-zsh/oh-my-zsh.sh" ]; then
     success "oh-my-zsh already installed"
     return 0
@@ -388,12 +392,9 @@ create_symlink() {
   LINKS_DRIFT=$((LINKS_DRIFT - 1))
 }
 
-# Link each entry of a repo directory into an existing destination directory,
-# instead of replacing the directory itself. Needed where something else owns
-# the destination and has put its own entries there: Omarchy symlinks its
-# diagnose-crash and omarchy skills into ~/.claude/skills, and a whole-directory
-# link would take both out. Costs one thing — a skill added to the repo only
-# appears after the next install run, rather than the instant it is committed.
+# Link each entry of a repo directory rather than the directory itself, for
+# destinations something else also writes into: a whole-directory link would
+# drop the entries Omarchy puts in ~/.claude/skills.
 link_dir_contents() {
   local src_dir="$1" dest_dir="$2" entry
 
@@ -443,13 +444,15 @@ step_symlinks() {
     success ".gitconfig-work already set (work identity preserved)"
   fi
 
-  # Neovim config. Omarchy ships its own LazyVim wired into the system theme
-  # (omarchy-theme-hotreload, transparency, all-themes). This repo's copy is
-  # near-stock LazyVim, so taking the destination over there would trade real
-  # desktop integration for nothing.
   ensure_dir "$HOME/.config"
   if $IS_OMARCHY; then
-    info "Omarchy provides its own neovim config — leaving ~/.config/nvim alone"
+    # omarchy-nvim-refresh replaces this whole directory, so do not link the
+    # repo over it. LazyVim imports every file in lua/plugins, which makes one
+    # file a safe overlay. A refresh drops the link; --sync puts it back.
+    info "Omarchy owns ~/.config/nvim — overlaying personal specs only"
+    ensure_dir "$HOME/.config/nvim/lua/plugins"
+    create_symlink "$DOTFILES_DIR/.config/nvim/lua/plugins/personal.lua" \
+                   "$HOME/.config/nvim/lua/plugins/personal.lua"
   else
     create_symlink "$DOTFILES_DIR/.config/nvim" "$HOME/.config/nvim"
   fi
@@ -482,7 +485,6 @@ step_symlinks() {
   create_symlink "$DOTFILES_DIR/.claude/rules"    "$HOME/.claude/rules"
   create_symlink "$DOTFILES_DIR/.claude/agents"   "$HOME/.claude/agents"
   create_symlink "$DOTFILES_DIR/.claude/commands" "$HOME/.claude/commands"
-  create_symlink "$DOTFILES_DIR/.claude/hooks"    "$HOME/.claude/hooks"
   create_symlink "$DOTFILES_DIR/.claude/scripts"  "$HOME/.claude/scripts"
   create_symlink "$DOTFILES_DIR/.claude/output-styles" "$HOME/.claude/output-styles"
 
@@ -493,7 +495,11 @@ step_symlinks() {
   # Account-specific overrides go in settings.local.json (see below). To evolve
   # the shared baseline, edit settings.base.json deliberately.
   if [ -f "$HOME/.claude/settings.json" ] && [ ! -L "$HOME/.claude/settings.json" ]; then
-    info "settings.json already exists (machine-owned, left untouched)"
+    # Backfill only keys this machine has no entry for. Claude Code writes this
+    # file on first launch, so the seed below never runs on a machine set up
+    # while using Claude Code, and the base would otherwise never arrive.
+    info "settings.json already exists (machine-owned, backfilling absent keys)"
+    $CHECK_ONLY || node "$DOTFILES_DIR/.claude/scripts/settings-drift.js" --seed || true
   elif $CHECK_ONLY; then
     warn "missing: $HOME/.claude/settings.json (would seed from settings.base.json)"
   else
@@ -634,6 +640,40 @@ step_check_leftovers() {
 }
 
 # ------------------------------------------
+# 7b. Make zsh the login shell
+# ------------------------------------------
+step_login_shell() {
+  local target; target="$(command -v zsh || true)"
+  [ -n "$target" ] || { warn "zsh not installed — skipping login shell"; return 0; }
+
+  local current; current="$(getent passwd "$USER" | cut -d: -f7)"
+  if [ "$current" = "$target" ]; then
+    success "login shell is already $target"
+    return 0
+  fi
+
+  # chsh refuses a shell that is not listed here.
+  if ! grep -qxF "$target" /etc/shells; then
+    info "adding $target to /etc/shells (needs sudo)"
+    echo "$target" | sudo tee -a /etc/shells >/dev/null
+  fi
+
+  info "changing login shell: $current -> $target"
+  # chsh authenticates the calling user through PAM, which fails with
+  # "Authentication token manipulation error" on accounts with no usable
+  # password. Running it as root skips that path.
+  if chsh -s "$target" 2>/dev/null; then
+    success "login shell set to $target"
+  elif sudo chsh -s "$target" "$USER"; then
+    success "login shell set to $target (via sudo)"
+  else
+    error "could not change the login shell; set it manually with: chsh -s $target"
+    return 1
+  fi
+  warn "log out and back in for the new shell to take effect"
+}
+
+# ------------------------------------------
 # 8. Set up private env vars
 # ------------------------------------------
 step_env_vars() {
@@ -735,6 +775,7 @@ run_step "4. Install oh-my-zsh plugins"    step_omz_plugins
 run_step "5. Install spaceship theme"      step_spaceship
 run_step "6. Install mise runtimes"        step_mise
 run_step "7. Create symlinks"              step_symlinks
+run_step "7b. Set zsh as the login shell"  step_login_shell
 run_step "8. Set up private env vars"      step_env_vars
 run_step "9. Install Claude Code plugins"  step_claude_plugins
 run_step "10. Machine-local overrides"     step_local_overrides

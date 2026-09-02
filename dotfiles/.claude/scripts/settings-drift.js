@@ -21,10 +21,22 @@
  * This never edits anything unless you pass --apply. Machine-owned means
  * machine-owned.
  *
+ * WHY KEYS TOO, NOT JUST LISTS
+ * The seed above happens only when settings.json does not exist. Claude Code
+ * writes that file itself on first launch, so on any machine where it ran
+ * before install.sh -- which is every machine set up while using Claude Code --
+ * the seed is skipped entirely and install.sh reports "machine-owned, left
+ * untouched". The base never lands at all. That is how a machine ends up with
+ * no hooks, no statusline and no editorMode while the installer says it is
+ * done. --seed backfills top-level keys the machine is MISSING. It never
+ * changes a key that is already there, so a different value stays a machine
+ * decision.
+ *
  * Usage:
  *   settings-drift.js --hook     JSON for a SessionStart hook; silent if clean
  *   settings-drift.js --check    Human-readable; exit 1 if drift found
  *   settings-drift.js --apply    Append the missing base entries to live
+ *   settings-drift.js --seed     Add base top-level keys absent from live
  */
 
 const fs = require("fs");
@@ -88,6 +100,26 @@ function findDrift(live, base) {
   return drift;
 }
 
+/** Base top-level keys this machine has no entry for at all. A key that exists
+ *  with a different value is a machine decision and is never reported. */
+function findMissingKeys(live, base) {
+  return Object.keys(base).filter((k) => !(k in live));
+}
+
+/** Write via a temp file and rename so a crash cannot leave a partial
+ *  settings.json behind -- Claude Code reads this file constantly. */
+function writeLive(live) {
+  const tmp = `${LIVE_PATH}.drift-tmp`;
+  fs.writeFileSync(tmp, `${JSON.stringify(live, null, 2)}\n`);
+  fs.renameSync(tmp, LIVE_PATH);
+}
+
+function describe(value) {
+  if (Array.isArray(value)) return `${value.length} items`;
+  if (value && typeof value === "object") return `${Object.keys(value).length} entries`;
+  return JSON.stringify(value);
+}
+
 function main() {
   const mode = process.argv[2] || "--check";
   let live, base;
@@ -101,10 +133,29 @@ function main() {
   }
 
   const drift = findDrift(live, base);
+  const missingKeys = findMissingKeys(live, base);
+
+  if (mode === "--seed") {
+    if (!missingKeys.length) {
+      console.log("settings: every base key is present.");
+      process.exit(0);
+    }
+    for (const k of missingKeys) {
+      live[k] = base[k];
+      console.log(`  + ${k} (${describe(base[k])})`);
+    }
+    writeLive(live);
+    console.log(`Seeded ${missingKeys.length} missing key(s) into ${LIVE_PATH}`);
+    process.exit(0);
+  }
 
   if (mode === "--hook") {
-    if (drift.length) {
+    if (drift.length || missingKeys.length) {
       const lines = drift.map((d) => `    ${d.path} missing: ${d.missing.join(", ")}`);
+      if (missingKeys.length) {
+        lines.push(`    absent keys: ${missingKeys.join(", ")}`);
+        lines.push("  Run ./install.sh --sync-settings to add them.");
+      }
       process.stdout.write(
         JSON.stringify({
           systemMessage:
@@ -129,21 +180,26 @@ function main() {
     }
     // Write via a temp file and rename so a crash cannot leave a partial
     // settings.json behind -- Claude Code reads this file constantly.
-    const tmp = `${LIVE_PATH}.drift-tmp`;
-    fs.writeFileSync(tmp, `${JSON.stringify(live, null, 2)}\n`);
-    fs.renameSync(tmp, LIVE_PATH);
+    writeLive(live);
     console.log(`Updated ${LIVE_PATH}`);
     process.exit(0);
   }
 
   // --check
-  if (!drift.length) {
-    console.log("settings: additive lists match the base.");
+  if (!drift.length && !missingKeys.length) {
+    console.log("settings: additive lists and base keys match.");
     process.exit(0);
   }
-  console.log("settings drift vs t-configs base:");
-  for (const d of drift) console.log(`  ${d.path} missing: ${d.missing.join(", ")}`);
-  console.log("Run ./install.sh --sync-lists to add them.");
+  if (drift.length) {
+    console.log("settings drift vs t-configs base:");
+    for (const d of drift) console.log(`  ${d.path} missing: ${d.missing.join(", ")}`);
+    console.log("Run ./install.sh --sync-lists to add them.");
+  }
+  if (missingKeys.length) {
+    console.log("settings keys absent on this machine (base never seeded here):");
+    for (const k of missingKeys) console.log(`  ${k} (${describe(base[k])})`);
+    console.log("Run ./install.sh --sync-settings to add them.");
+  }
   process.exit(1);
 }
 
