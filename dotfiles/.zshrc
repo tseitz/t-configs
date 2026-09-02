@@ -12,6 +12,10 @@ elif [[ "$OSTYPE" == linux* ]]; then
 else
   eval "$(/opt/homebrew/bin/brew shellenv 2>/dev/null)" || true
 fi
+# Omarchy PATH and env first: .zshrc activates mise below, and env-bootstrap is
+# what puts mise's shims on PATH.
+[ -f "$dotfiles_path/.zshrc-omarchy" ] && source "$dotfiles_path/.zshrc-omarchy" env
+
 [ -f "$dotfiles_path/.zshrc-env-vars" ] && source "$dotfiles_path/.zshrc-env-vars"
 
 # Path to your oh-my-zsh installation
@@ -24,10 +28,6 @@ ZSH_THEME="spaceship"
 plugins=(git deno colored-man-pages zsh-syntax-highlighting zsh-autosuggestions)
 
 source $ZSH/oh-my-zsh.sh
-
-# Omarchy's bash defaults (aliases, functions, env, keybindings), ported to zsh.
-# After oh-my-zsh so compinit exists; before the aliases below so these win.
-[ -f "$dotfiles_path/.zshrc-omarchy" ] && source "$dotfiles_path/.zshrc-omarchy"
 
 # ===== Aliases =====
 
@@ -107,6 +107,17 @@ command -v mise &>/dev/null && eval "$(mise activate zsh)"
 fpath=($HOME/.docker/completions $fpath)
 autoload -Uz compinit
 compinit
+
+# ===== Omarchy =====
+# Aliases, functions and keybindings, sourced AFTER the personal ones above so
+# Omarchy wins any name they share. Reclaim individual names below.
+[ -f "$dotfiles_path/.zshrc-omarchy" ] && source "$dotfiles_path/.zshrc-omarchy" shell
+
+# ===== Reclaimed from Omarchy =====
+# Names Omarchy also defines, kept as mine on every machine. Tracked, unlike
+# .zshrc-local, so the choice travels. Adding a line here is the whole override
+# mechanism: it runs after Omarchy, so it wins.
+alias lsa="ls -al"          # Omarchy: ls -a
 
 # ===== Machine-Specific Overrides =====
 # Source local overrides last so they can extend or override anything above
