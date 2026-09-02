@@ -1,6 +1,7 @@
 ---
 name: post-implementation-reflection
-description: After work is implemented, reflects on the changes and then polishes them — comment triage, simplification, cleanup. Scales from a quick pass on a small diff to a full retrospective on a plan. Works on uncommitted changes, the last N commits, or a whole PR branch. Use when the user asks to reflect, do a retrospective, clean up or polish what was just built, or take a lap on a branch or PR before review.
+description: After work is implemented, reflects on the changes and then polishes them — comment triage, simplification, cleanup. Scales from a quick pass on a small diff to a full retrospective on a plan. Works on uncommitted changes, the last N commits, or a whole PR branch. Run it yourself with /post-implementation-reflection when a change is built and you want a lap on it before review.
+disable-model-invocation: true
 memory: user
 ---
 

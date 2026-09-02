@@ -94,4 +94,4 @@ A count above the breaks you deliberately wrote means it wrapped. Join each para
 
 Anything anchored to specific code — a caveat, a "look at this", a why-not-X — goes as an **inline comment on that line**, not in the description. Only genuinely PR-wide context belongs in the body.
 
-Sweeping the branch for rationale that should move out of the code and up onto the PR is a separate, required beat before opening it. That triage — what stays in code, what goes up, and the posting mechanics — lives in the **`post-implementation-reflection`** skill's Comments lens. Run it in the session that did the work; the routing test itself is in [coding-style.md](coding-style.md).
+Sweeping the branch for rationale that should move out of the code and up onto the PR is a separate, required beat before opening it. That triage — what stays in code, what goes up, and the posting mechanics — lives in the **`/post-implementation-reflection`** skill's Comments lens — which only I can invoke, so ask for it rather than running it. It has to happen in the session that did the work; the routing test itself is in [coding-style.md](coding-style.md).

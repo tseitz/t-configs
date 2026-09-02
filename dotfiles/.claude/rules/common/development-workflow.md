@@ -127,8 +127,11 @@ looks like **once I've agreed to add one**. This rule governs whether it gets ad
 - **`/code-review`** on the diff (it has real teeth — gates commits via the pre-commit hook).
   One pass for most work. Escalate to the full two-stage / specialized-agent sweep only for
   security, auth, payments, or architectural changes.
-- **`team-pr-review`** before pushing anything that will become a PR — the deep read against the
-  team's recurring topics, plus the behaviour-change ledger. Local only; it never posts.
+- **`/team-pr-review`** before pushing anything that will become a PR — the deep read against the
+  team's recurring topics, plus the behaviour-change ledger. Local only; it never posts. **I invoke
+  this one, not you:** it carries `disable-model-invocation: true`, so say the transition has
+  arrived and stop. Don't paraphrase the review inline as a substitute — a hand-rolled imitation
+  looks like the real thing and silently skips the topics table.
 - **`security-reviewer` is not optional** for auth/authz, user input handling, database queries,
   file system operations, external API calls, crypto, or anything touching payments. Any one of
   those in the diff means run it, regardless of how small the change looks.
@@ -163,10 +166,12 @@ architecture, don't keep patching.
   itself follows [pr-descriptions.md](pr-descriptions.md) — high level, no change-by-change
   enumeration — which overrides `/prp:pr`'s own verbosity and any repo template's prompting for
   exhaustive detail.**
-- **Comment triage — a required beat before the PR is opened.** Run `post-implementation-reflection`
-  and let its Comments lens do it: sweep the branch diff, the commit bodies, and the session, and
-  route each piece of rationale out of the code and onto the PR. Do this in the session that did
-  the work — triaged cold it degrades into diff narration.
+- **Comment triage — a required beat before the PR is opened**, done by
+  `/post-implementation-reflection` and its Comments lens: sweep the branch diff, the commit
+  bodies, and the session, and route each piece of rationale out of the code and onto the PR.
+  **I invoke this one too** (`disable-model-invocation: true`), so prompt me and wait. It still
+  has to happen in the session that did the work — triaged cold it degrades into diff narration —
+  so raise it while that context is live rather than letting the PR go out without it.
 
 ## Model & Effort Reference
 
