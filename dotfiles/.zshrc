@@ -21,8 +21,11 @@ fi
 # Path to your oh-my-zsh installation
 export ZSH="$HOME/.oh-my-zsh"
 
-# Theme
-ZSH_THEME="spaceship"
+# Prompt comes from starship, initialised below, so oh-my-zsh loads no theme.
+# starship is one binary across bash/zsh and macOS/Linux, and its colours are
+# ANSI, so it follows an Omarchy theme switch. Set ZSH_THEME in .zshrc-local to
+# go back to an oh-my-zsh theme.
+ZSH_THEME=""
 
 # Plugins
 plugins=(git deno colored-man-pages zsh-syntax-highlighting zsh-autosuggestions)
@@ -100,6 +103,7 @@ export PATH="$BUN_INSTALL/bin:$PATH"
 
 # ===== Tool Initialization =====
 
+command -v starship &>/dev/null && eval "$(starship init zsh)"
 command -v direnv &>/dev/null && eval "$(direnv hook zsh)"
 command -v mise &>/dev/null && eval "$(mise activate zsh)"
 

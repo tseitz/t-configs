@@ -14,7 +14,7 @@ The install script is idempotent — safe to run multiple times. It will:
 
 1. Install [Homebrew](https://brew.sh) (if not already installed) — skipped on Arch
 2. Install all packages from the `Brewfile` (`Pacfile` via pacman on Arch)
-3. Install [oh-my-zsh](https://ohmyz.sh) with custom plugins and spaceship theme
+3. Install [oh-my-zsh](https://ohmyz.sh) with custom plugins (the prompt is starship, not an oh-my-zsh theme)
 4. Install default runtimes via [mise](https://mise.jdx.dev) (Node, etc. from `mise.toml`)
 5. Symlink dotfiles to their expected locations
 6. Install Claude Code plugins from `dotfiles/.claude/plugins/installed_plugins.json`
@@ -108,6 +108,7 @@ The script uses a sparse checkout to fetch only that directory. Run it again wit
 | `Brewfile.wsl` | Homebrew formulae for WSL/Linux (no casks) |
 | `Pacfile` | Arch/Omarchy packages, installed with `pacman -S --needed` |
 | `dotfiles/.zshrc-omarchy` | Omarchy's bash defaults (aliases, fns, env, keybindings) bridged to zsh |
+| `dotfiles/.config/starship.toml` | Prompt config, shared by every machine |
 | `winget-packages.json` | Windows app list for `winget import` (Docker, Chrome, mise, etc.) |
 | `install.sh` | Bootstrap script for new machines (macOS / WSL / Arch) |
 | `install-windows.ps1` | Sync Claude config, VS Code settings, `.gitconfig` to native Windows (run from repo root in PowerShell) |
@@ -159,7 +160,7 @@ update, and provides zsh equivalents for the four genuinely bash-only files:
 | Omarchy file | zsh replacement |
 |---|---|
 | `shell` | `setopt` history options; `unsetopt HASH_CMDS` for mise |
-| `init` | `zoxide init zsh`, fzf's `*.zsh` files, `try`. **starship is skipped** — `.zshrc` uses the spaceship theme |
+| `init` | `zoxide init zsh`, fzf's `*.zsh` files, `try`. mise and starship are not repeated — `.zshrc` initialises both on every platform |
 | `inputrc` | ZLE: `up-line-or-beginning-search` on the arrows, menu completion, case-insensitive matching |
 | `completions` | no port — `omarchy <tab>` won't complete subcommands |
 
@@ -172,8 +173,20 @@ coprocess" rather than "prompt". It fails closed — the confirmation reads empt
 function aborts before touching the disk — but it can't succeed under zsh either. Run
 that one from bash.
 
-To use starship instead of spaceship, set `ZSH_THEME=` and add
-`eval "$(starship init zsh)"` in `.zshrc-local`.
+### Prompt
+
+starship, on every platform. It is one binary across bash/zsh and macOS/Linux, it
+renders in about 5ms against spaceship's 32ms, and its colours are ANSI — so on
+Omarchy it follows a theme switch, which a fixed-colour oh-my-zsh theme cannot.
+
+`dotfiles/.config/starship.toml` is the canonical config and is symlinked on every
+machine, so the prompt is identical everywhere. Omarchy seeds its own copy from
+`/etc/skel` once and never rewrites it — its upgrade path is hash-gated, so a
+symlink is skipped — which is why the repo can own this file but not the nvim config.
+
+The config shows directory, git branch and git status only. To get language
+versions back, add `$nodejs$python` (etc.) to `format` in that file. To go back to
+an oh-my-zsh theme, set `ZSH_THEME` in `.zshrc-local`.
 
 ## Windows (WSL)
 

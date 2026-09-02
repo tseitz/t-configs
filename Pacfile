@@ -20,6 +20,7 @@ neovim
 git
 direnv
 mise
+starship
 
 # ===== Languages & Runtimes =====
 deno

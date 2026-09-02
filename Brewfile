@@ -4,6 +4,7 @@ brew "neovim"
 brew "git"
 brew "direnv"
 brew "mise"
+brew "starship"
 brew "gh"
 
 # ===== Languages & Runtimes =====

@@ -267,23 +267,7 @@ step_omz_plugins() {
 }
 
 # ------------------------------------------
-# 5. Install spaceship prompt theme
-# ------------------------------------------
-step_spaceship() {
-  ZSH_CUSTOM="${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}"
-  SPACESHIP_DIR="$ZSH_CUSTOM/themes/spaceship-prompt"
-  if [ -d "$SPACESHIP_DIR" ]; then
-    success "Spaceship theme already installed"
-  else
-    info "Installing spaceship prompt theme..."
-    git clone https://github.com/spaceship-prompt/spaceship-prompt.git "$SPACESHIP_DIR" --depth=1
-    ln -sf "$SPACESHIP_DIR/spaceship.zsh-theme" "$ZSH_CUSTOM/themes/spaceship.zsh-theme"
-    success "Spaceship theme installed"
-  fi
-}
-
-# ------------------------------------------
-# 6. Install mise runtimes
+# 5. Install mise runtimes
 # ------------------------------------------
 step_mise() {
   if command -v mise &>/dev/null; then
@@ -297,7 +281,7 @@ step_mise() {
 }
 
 # ------------------------------------------
-# 7. Create symlinks
+# 6. Create symlinks
 # ------------------------------------------
 LINKS_OK=0; LINKS_ADDED=0; LINKS_DRIFT=0; LINKS_ABSENT=0
 
@@ -445,6 +429,10 @@ step_symlinks() {
   fi
 
   ensure_dir "$HOME/.config"
+  # Omarchy seeds starship.toml from /etc/skel once and never rewrites it (its
+  # upgrade path is hash-gated, so a symlink is skipped), unlike the nvim config
+  # below. So the repo can own the prompt on every machine.
+  create_symlink "$DOTFILES_DIR/.config/starship.toml" "$HOME/.config/starship.toml"
   if $IS_OMARCHY; then
     # omarchy-nvim-refresh replaces this whole directory, so do not link the
     # repo over it. LazyVim imports every file in lua/plugins, which makes one
@@ -640,7 +628,7 @@ step_check_leftovers() {
 }
 
 # ------------------------------------------
-# 7b. Make zsh the login shell
+# 7. Make zsh the login shell
 # ------------------------------------------
 step_login_shell() {
   local target; target="$(command -v zsh || true)"
@@ -772,10 +760,9 @@ else
 fi
 run_step "3. Install oh-my-zsh"            step_ohmyzsh
 run_step "4. Install oh-my-zsh plugins"    step_omz_plugins
-run_step "5. Install spaceship theme"      step_spaceship
-run_step "6. Install mise runtimes"        step_mise
-run_step "7. Create symlinks"              step_symlinks
-run_step "7b. Set zsh as the login shell"  step_login_shell
+run_step "5. Install mise runtimes"        step_mise
+run_step "6. Create symlinks"              step_symlinks
+run_step "7. Set zsh as the login shell"   step_login_shell
 run_step "8. Set up private env vars"      step_env_vars
 run_step "9. Install Claude Code plugins"  step_claude_plugins
 run_step "10. Machine-local overrides"     step_local_overrides

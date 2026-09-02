@@ -56,10 +56,8 @@ SAVEHIST=$HISTSIZE
 [[ -n "$HISTFILE" ]] || HISTFILE="$HOME/.zsh_history"
 unsetopt HASH_CMDS HASH_DIRS   # mise swaps a shim's target mid-session
 
-# for default/bash/init. mise is activated by .zshrc already. starship is left
-# out because .zshrc sets the spaceship theme; running both leaves whichever
-# initialised last in charge. To prefer starship, set ZSH_THEME= and run
-# `eval "$(starship init zsh)"` in .zshrc-local.
+# for default/bash/init. mise and starship are both initialised by .zshrc
+# already, for every platform, so they are not repeated here.
 command -v zoxide &>/dev/null && eval "$(zoxide init zsh)"
 if command -v try &>/dev/null; then
   try() {
