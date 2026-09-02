@@ -2,8 +2,12 @@
 # Resolve dotfiles path from this file's location (works when repo is anywhere, e.g. ~/t-configs or /mnt/c/.../t-configs)
 dotfiles_path="${${(%):-%x}:A:h}"
 [[ -z "$dotfiles_path" ]] && dotfiles_path="$HOME/t-configs/dotfiles"
-# Add Homebrew to PATH early so direnv and mise are found below
-if [[ "$OSTYPE" == linux* ]]; then
+# Add Homebrew to PATH early so direnv and mise are found below.
+# Arch installs these through pacman (see Pacfile) and has no brew prefix at all,
+# so the eval is skipped rather than left to fail quietly on every shell start.
+if [[ "$OSTYPE" == linux* ]] && [[ -r /etc/os-release ]] && grep -qE '^(ID|ID_LIKE)=.*arch' /etc/os-release; then
+  IS_ARCH=1
+elif [[ "$OSTYPE" == linux* ]]; then
   eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv 2>/dev/null)" || true
 else
   eval "$(/opt/homebrew/bin/brew shellenv 2>/dev/null)" || true
@@ -21,6 +25,10 @@ plugins=(git deno colored-man-pages zsh-syntax-highlighting zsh-autosuggestions)
 
 source $ZSH/oh-my-zsh.sh
 
+# Omarchy's bash defaults (aliases, functions, env, keybindings), ported to zsh.
+# After oh-my-zsh so compinit exists; before the aliases below so these win.
+[ -f "$dotfiles_path/.zshrc-omarchy" ] && source "$dotfiles_path/.zshrc-omarchy"
+
 # ===== Aliases =====
 
 # General
@@ -32,7 +40,11 @@ export HOMEBREW_NO_UPGRADE_AUTO_UPDATES_CASKS=1
 alias zshconf="nvim ~/.zshrc"
 alias zshre="source ~/.zshrc; clear"
 alias zshr="source ~/.zshrc"
-alias brewup="brew update; brew upgrade -y; brew cleanup; brew doctor; claude upgrade;"
+if [[ -n "${IS_ARCH:-}" ]]; then
+  alias brewup="yay -Syu; claude upgrade;"
+else
+  alias brewup="brew update; brew upgrade -y; brew cleanup; brew doctor; claude upgrade;"
+fi
 alias codeconf="code $HOME/t-configs"
 alias claw="claude --dangerously-skip-permissions"
 
@@ -67,8 +79,12 @@ export PATH="$PATH:$HOME/.foundry/bin"
 export PATH="$HOME/.opencode/bin:$PATH"
 [[ "$OSTYPE" == darwin* ]] && export PATH="${HOMEBREW_PREFIX:-/opt/homebrew}/opt/mysql-client/bin:$PATH"
 
-# pnpm
-export PNPM_HOME="$HOME/Library/pnpm"
+# pnpm — ~/Library is macOS-only; elsewhere pnpm defaults to the XDG data dir
+if [[ "$OSTYPE" == darwin* ]]; then
+  export PNPM_HOME="$HOME/Library/pnpm"
+else
+  export PNPM_HOME="${XDG_DATA_HOME:-$HOME/.local/share}/pnpm"
+fi
 case ":$PATH:" in
   *":$PNPM_HOME:"*) ;;
   *) export PATH="$PNPM_HOME:$PATH" ;;

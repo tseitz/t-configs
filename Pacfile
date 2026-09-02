@@ -1,0 +1,25 @@
+# Pacfile — Arch / Omarchy packages
+#
+# The Linux counterpart to Brewfile.wsl. Arch ships everything in Brewfile.wsl in
+# the official repos, so a machine here uses pacman rather than a second Homebrew
+# toolchain shadowing /usr/bin. One package per line; blank lines and # comments
+# are ignored. install.sh feeds this to `pacman -S --needed`, which is a no-op for
+# anything already present.
+#
+# Omitted on purpose vs Brewfile.wsl:
+#   zlib, bzip2, openssl  — pulled in by the base system; not separately needed
+#   libomp, openblas      — the macOS build-flag dance in .zshrc is darwin-gated
+#   mise, deno, neovim    — Omarchy preinstalls these
+#   github-cli            — gh comes from mise here. Installing it from pacman
+#                           too would put /usr/bin/gh ahead of the mise shim,
+#                           since env-bootstrap appends the shim dir to PATH.
+
+# ===== Core Tools =====
+zsh
+neovim
+git
+direnv
+mise
+
+# ===== Languages & Runtimes =====
+deno

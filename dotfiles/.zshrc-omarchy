@@ -1,0 +1,107 @@
+# ============================================
+# Omarchy compatibility for zsh
+# ============================================
+# Omarchy is a bash-first distro: it ships aliases, functions, env vars and
+# keybindings under $OMARCHY_PATH/default/bash/ and wires them in through
+# /etc/skel/.bashrc. Switching the login shell to zsh silently drops all of it.
+#
+# Most of that content is written in the [[ ]] / (( )) / local subset that zsh
+# and bash share, so this file SOURCES Omarchy's own files rather than keeping a
+# translated copy — a fork would go stale the first time Omarchy updates. Only
+# the genuinely bash-specific files are skipped, each replaced below by its zsh
+# equivalent and labelled with what it stands in for.
+#
+# Sourced from .zshrc immediately after oh-my-zsh, so that (a) compinit has
+# already run, and (b) the personal aliases further down .zshrc still win where
+# the two collide. It is a no-op on any machine without Omarchy installed.
+# ============================================
+
+omarchy_bash="${OMARCHY_PATH:-/usr/share/omarchy}/default/bash"
+[[ -d "$omarchy_bash" ]] || return 0
+
+# ---- Sourced as-is (POSIX / shared bash-zsh syntax) ----
+
+# OMARCHY_PATH, mise shims and ~/.local/bin on PATH. Guards against duplicates,
+# so it is safe even when /etc/profile.d/omarchy.sh already ran for a login shell.
+[[ -r "$omarchy_bash/env-bootstrap" ]] && source "$omarchy_bash/env-bootstrap"
+
+# EDITOR, BROWSER, BAT_THEME, MANPAGER, locale fallback.
+[[ -r "$omarchy_bash/envs" ]] && source "$omarchy_bash/envs"
+
+# Clear the way for Omarchy's function names. oh-my-zsh's git plugin defines
+# `ga` and `gd` as aliases, and Omarchy defines functions of the same name in
+# fns/worktrees. zsh refuses to define a function whose name is an alias, and
+# the resulting parse error aborts the WHOLE file — so a single collision costs
+# every function defined after it, not just the clashing one. The names are read
+# out of Omarchy's own files rather than hardcoded, so a function added by a
+# future Omarchy release does not quietly hit the same wall.
+#
+# Omarchy's functions therefore win over the oh-my-zsh git aliases. To go the
+# other way for a given name, re-alias it in .zshrc-local, which is sourced last:
+#   alias gd='git diff'
+_omarchy_srcs=("$omarchy_bash"/aliases(N) "$omarchy_bash"/fns/*(N))
+if (( ${#_omarchy_srcs} )); then
+  for _omarchy_name in ${(f)"$(grep -hoE '^[[:space:]]*[a-zA-Z_][a-zA-Z0-9_-]*\(\)' \
+        "${_omarchy_srcs[@]}" 2>/dev/null | sed -E 's/^[[:space:]]*//; s/\(\)$//')"}; do
+    [[ -n "$_omarchy_name" ]] && unalias -- "$_omarchy_name" 2>/dev/null
+  done
+
+  # ls/eza, fzf preview, zoxide cd, the omarchy tool shortcuts, git shorthands,
+  # then compress, iso2sd, format-drive, the herdr layouts, tmux and worktree fns.
+  # KNOWN GAP: format-drive prompts with `read -rp`, and zsh reads -p as "from the
+  # coprocess" rather than "prompt". It fails closed — the confirmation reads empty
+  # and the function aborts before touching the disk — but it cannot succeed under
+  # zsh either. Run that one from bash.
+  for _omarchy_src in "${_omarchy_srcs[@]}"; do source "$_omarchy_src"; done
+fi
+unset _omarchy_srcs _omarchy_src _omarchy_name
+
+# ---- zsh equivalents of the files that are bash-only ----
+
+# stands in for: default/bash/shell (shopt histappend, HISTCONTROL, set +h)
+setopt APPEND_HISTORY INC_APPEND_HISTORY HIST_IGNORE_DUPS HIST_IGNORE_SPACE
+HISTSIZE=32768
+SAVEHIST=$HISTSIZE
+[[ -n "$HISTFILE" ]] || HISTFILE="$HOME/.zsh_history"
+# Omarchy disables command hashing so mise can swap a shim's target mid-session.
+unsetopt HASH_CMDS HASH_DIRS
+
+# stands in for: default/bash/init (mise/starship/zoxide/try/fzf inits)
+# - mise is already activated by .zshrc, so it is deliberately not repeated here.
+# - starship is skipped: .zshrc picks the spaceship theme, and initialising both
+#   leaves whichever ran last in charge. Set ZSH_THEME= in .zshrc-local and add
+#   `eval "$(starship init zsh)"` there to go the other way.
+command -v zoxide &>/dev/null && eval "$(zoxide init zsh)"
+if command -v try &>/dev/null; then
+  try() {
+    unfunction try
+    eval "$(SHELL=$(command -v zsh) command try init ~/Work/tries)"
+    try "$@"
+  }
+fi
+if command -v fzf &>/dev/null; then
+  [[ -f /usr/share/fzf/completion.zsh ]]   && source /usr/share/fzf/completion.zsh
+  [[ -f /usr/share/fzf/key-bindings.zsh ]] && source /usr/share/fzf/key-bindings.zsh
+fi
+
+# stands in for: default/bash/inputrc (readline settings; zsh uses ZLE instead)
+# and default/bash/completions (the `complete`-builtin dispatcher for omarchy-*,
+# which has no zsh port — `omarchy <tab>` will not complete subcommands).
+if [[ -o interactive ]]; then
+  zstyle ':completion:*' matcher-list 'm:{a-zA-Z}={A-Za-z}'   # completion-ignore-case on
+  zstyle ':completion:*' menu select                          # TAB: menu-complete
+  setopt AUTO_MENU ALWAYS_TO_END MARK_DIRS                    # + mark-symlinked-directories
+  bindkey '^[[Z' reverse-menu-complete                        # "\e[Z": menu-complete-backward
+
+  # Arrow keys match what you have typed so far against history, as Omarchy's
+  # inputrc does with history-search-backward/forward.
+  autoload -Uz up-line-or-beginning-search down-line-or-beginning-search
+  zle -N up-line-or-beginning-search
+  zle -N down-line-or-beginning-search
+  bindkey '^[[A' up-line-or-beginning-search
+  bindkey '^[[B' down-line-or-beginning-search
+  bindkey '^[OA' up-line-or-beginning-search    # application cursor mode
+  bindkey '^[OB' down-line-or-beginning-search
+fi
+
+unset omarchy_bash

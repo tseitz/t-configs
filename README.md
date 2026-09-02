@@ -12,8 +12,8 @@ cd ~/t-configs
 
 The install script is idempotent — safe to run multiple times. It will:
 
-1. Install [Homebrew](https://brew.sh) (if not already installed)
-2. Install all packages from the `Brewfile`
+1. Install [Homebrew](https://brew.sh) (if not already installed) — skipped on Arch
+2. Install all packages from the `Brewfile` (`Pacfile` via pacman on Arch)
 3. Install [oh-my-zsh](https://ohmyz.sh) with custom plugins and spaceship theme
 4. Install default runtimes via [mise](https://mise.jdx.dev) (Node, etc. from `mise.toml`)
 5. Symlink dotfiles to their expected locations
@@ -106,10 +106,74 @@ The script uses a sparse checkout to fetch only that directory. Run it again wit
 | `mise.toml` | Default runtimes managed by mise (e.g. Node) |
 | `Brewfile` | Homebrew packages, casks, and dependencies (macOS) |
 | `Brewfile.wsl` | Homebrew formulae for WSL/Linux (no casks) |
+| `Pacfile` | Arch/Omarchy packages, installed with `pacman -S --needed` |
+| `dotfiles/.zshrc-omarchy` | Omarchy's bash defaults (aliases, fns, env, keybindings) bridged to zsh |
 | `winget-packages.json` | Windows app list for `winget import` (Docker, Chrome, mise, etc.) |
-| `install.sh` | Bootstrap script for new machines (macOS / WSL) |
+| `install.sh` | Bootstrap script for new machines (macOS / WSL / Arch) |
 | `install-windows.ps1` | Sync Claude config, VS Code settings, `.gitconfig` to native Windows (run from repo root in PowerShell) |
 | `dotfiles/.zshrc-local.example.wsl` | Example WSL overrides for `brew_prefix` and PATH |
+
+## Arch / Omarchy
+
+Arch machines use **pacman, not Homebrew**. Every formula in `Brewfile.wsl` is in the
+official Arch repos, so installing linuxbrew would put a second `git`, `neovim` and
+`deno` ahead of `/usr/bin` on `PATH` for no benefit. `install.sh` detects Arch from
+`/etc/os-release` (`ID` or `ID_LIKE`) and installs `Pacfile` with
+`sudo pacman -S --needed` instead. The one interactive moment is pacman's sudo prompt.
+
+```bash
+git clone git@github.com:tseitz/t-configs.git ~/t-configs
+cd ~/t-configs
+./install.sh
+```
+
+`--check` reports Pacfile drift with `pacman -T`, which treats a renamed provider
+(`mise-bin` for `mise`) as satisfied.
+
+**Omarchy** is detected separately (`ID=omarchy`) and is narrower than Arch — it
+gates the two places Omarchy owns config this repo must not take over:
+
+- **`~/.config/nvim` is left alone.** Omarchy ships a LazyVim wired into the system
+  theme (`omarchy-theme-hotreload`, transparency, `all-themes`). This repo's nvim
+  config is near-stock LazyVim, so linking it over the top would trade real desktop
+  integration for nothing.
+- **`~/.claude/skills` is linked per skill, not as a directory.** Omarchy symlinks its
+  own `diagnose-crash` and `omarchy` skills into that directory, and a whole-directory
+  link removes both. The cost is that a newly committed skill appears on the next
+  install run rather than instantly.
+
+`.hushlogin` (a macOS-only file) and the VS Code settings link (when `code` isn't
+installed) are skipped on every non-macOS machine.
+
+### Omarchy's shell defaults under zsh
+
+Omarchy is bash-first: its aliases, functions, env vars and keybindings live in
+`/usr/share/omarchy/default/bash/` and are wired in through `/etc/skel/.bashrc`.
+Changing the login shell to zsh drops all of it.
+
+`dotfiles/.zshrc-omarchy` bridges the gap. It **sources Omarchy's own files** where
+they're written in the syntax bash and zsh share (`env-bootstrap`, `envs`, `aliases`,
+`fns/*`) rather than keeping a translated copy that would go stale on the next Omarchy
+update, and provides zsh equivalents for the four genuinely bash-only files:
+
+| Omarchy file | zsh replacement |
+|---|---|
+| `shell` | `setopt` history options; `unsetopt HASH_CMDS` for mise |
+| `init` | `zoxide init zsh`, fzf's `*.zsh` files, `try`. **starship is skipped** — `.zshrc` uses the spaceship theme |
+| `inputrc` | ZLE: `up-line-or-beginning-search` on the arrows, menu completion, case-insensitive matching |
+| `completions` | no port — `omarchy <tab>` won't complete subcommands |
+
+It is sourced from `.zshrc` just after oh-my-zsh, so `compinit` already exists and the
+personal aliases further down still win where the two collide. On a machine without
+Omarchy it returns immediately.
+
+**Known gap:** `format-drive` prompts with `read -rp`, and zsh reads `-p` as "from the
+coprocess" rather than "prompt". It fails closed — the confirmation reads empty and the
+function aborts before touching the disk — but it can't succeed under zsh either. Run
+that one from bash.
+
+To use starship instead of spaceship, set `ZSH_THEME=` and add
+`eval "$(starship init zsh)"` in `.zshrc-local`.
 
 ## Windows (WSL)
 

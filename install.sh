@@ -24,6 +24,24 @@ set -euo pipefail
 REPO_DIR="$(cd "$(dirname "$0")" && pwd)"
 DOTFILES_DIR="$REPO_DIR/dotfiles"
 
+# ------------------------------------------
+# Platform detection
+# ------------------------------------------
+# Three platforms now, not two. macOS and WSL both use Homebrew; Arch does not —
+# every Brewfile.wsl package is in the official repos, so installing linuxbrew
+# there would put a second git/neovim/deno ahead of /usr/bin on PATH. IS_OMARCHY
+# is narrower than IS_ARCH: it gates the places where Omarchy ships its own
+# config (neovim, ~/.claude/skills) that this repo must not clobber.
+IS_MACOS=false; IS_ARCH=false; IS_OMARCHY=false
+if [[ "$OSTYPE" == darwin* ]]; then
+  IS_MACOS=true
+elif [ -r /etc/os-release ]; then
+  # shellcheck disable=SC1091
+  . /etc/os-release
+  [[ "${ID:-}" == arch || "${ID_LIKE:-}" == *arch* ]] && IS_ARCH=true
+  [[ "${ID:-}" == omarchy ]] && IS_OMARCHY=true
+fi
+
 # Colors for output
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -68,11 +86,15 @@ fi
 # Brew PATH — run unconditionally so step 2
 # works even when step 1 is skipped
 # ------------------------------------------
-if [[ "$OSTYPE" == linux* ]]; then
-  eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv 2>/dev/null)" || true
-else
-  eval "$(/opt/homebrew/bin/brew shellenv 2>/dev/null)" || true
-fi
+brew_shellenv() {
+  $IS_ARCH && return 0   # Arch uses pacman; there is no brew to put on PATH
+  if [[ "$OSTYPE" == linux* ]]; then
+    eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv 2>/dev/null)" || true
+  else
+    eval "$(/opt/homebrew/bin/brew shellenv 2>/dev/null)" || true
+  fi
+}
+brew_shellenv
 
 # ------------------------------------------
 # Step runner — prompts unless --yes/--dry-run
@@ -122,25 +144,43 @@ run_step() {
 # 1. Install Homebrew
 # ------------------------------------------
 step_homebrew() {
-  if command -v brew &>/dev/null; then
+  if $IS_ARCH; then
+    success "Arch — packages come from pacman, skipping Homebrew"
+  elif command -v brew &>/dev/null; then
     success "Homebrew already installed"
   else
     info "Installing Homebrew..."
     /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
     success "Homebrew installed"
-    # Re-eval shellenv so brew is in PATH immediately after fresh install
-    if [[ "$OSTYPE" == linux* ]]; then
-      eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv 2>/dev/null)" || true
-    else
-      eval "$(/opt/homebrew/bin/brew shellenv 2>/dev/null)" || true
-    fi
+    brew_shellenv   # so brew is in PATH immediately after a fresh install
   fi
 }
 
 # ------------------------------------------
 # 2. Install Homebrew packages
 # ------------------------------------------
-step_brew_packages() {
+# One package line per non-blank, non-comment line of the Pacfile.
+pacfile_packages() { sed -e 's/#.*//' -e 's/[[:space:]]//g' "$REPO_DIR/Pacfile" | grep -v '^$'; }
+
+step_packages() {
+  if $IS_ARCH; then
+    [ -f "$REPO_DIR/Pacfile" ] || { warn "No Pacfile found, skipping"; return 0; }
+    # Resolve what is actually missing first. `pacman -S --needed` is already
+    # idempotent, but it still needs root — so asking it to install a fully
+    # satisfied list makes a no-op re-run prompt for a password for nothing.
+    local missing=() pkg
+    while IFS= read -r pkg; do
+      pacman -T "$pkg" >/dev/null 2>&1 || missing+=("$pkg")
+    done < <(pacfile_packages)
+    if (( ${#missing[@]} == 0 )); then
+      success "Pacfile already satisfied — nothing to install"
+      return 0
+    fi
+    info "Installing ${#missing[@]} missing package(s) via pacman: ${missing[*]}"
+    sudo pacman -S --needed "${missing[@]}"
+    success "pacman packages installed"
+    return 0
+  fi
   if [[ "$OSTYPE" == linux* ]] && [ -f "$REPO_DIR/Brewfile.wsl" ]; then
     BREWFILE="$REPO_DIR/Brewfile.wsl"
   else
@@ -348,6 +388,33 @@ create_symlink() {
   LINKS_DRIFT=$((LINKS_DRIFT - 1))
 }
 
+# Link each entry of a repo directory into an existing destination directory,
+# instead of replacing the directory itself. Needed where something else owns
+# the destination and has put its own entries there: Omarchy symlinks its
+# diagnose-crash and omarchy skills into ~/.claude/skills, and a whole-directory
+# link would take both out. Costs one thing — a skill added to the repo only
+# appears after the next install run, rather than the instant it is committed.
+link_dir_contents() {
+  local src_dir="$1" dest_dir="$2" entry
+
+  # Convert a legacy whole-directory link left by an earlier run.
+  if [ -L "$dest_dir" ]; then
+    if $CHECK_ONLY; then
+      warn "drift: $dest_dir is a directory symlink (want per-entry links)"
+    else
+      warn "replacing directory symlink $dest_dir with per-entry links"
+      rm "$dest_dir"
+    fi
+  fi
+  ensure_dir "$dest_dir"
+  $CHECK_ONLY && [ ! -d "$dest_dir" ] && return 0
+
+  for entry in "$src_dir"/*; do
+    [ -e "$entry" ] || continue     # unmatched glob when the repo dir is empty
+    create_symlink "$entry" "$dest_dir/$(basename "$entry")"
+  done
+}
+
 step_symlinks() {
   if $CHECK_ONLY; then
     info "Auditing symlinks (no changes)..."
@@ -360,7 +427,8 @@ step_symlinks() {
   create_symlink "$DOTFILES_DIR/.zshenv"     "$HOME/.zshenv"
   create_symlink "$DOTFILES_DIR/.gitconfig"  "$HOME/.gitconfig"
   create_symlink "$DOTFILES_DIR/.zprofile"   "$HOME/.zprofile"
-  create_symlink "$DOTFILES_DIR/.hushlogin"  "$HOME/.hushlogin"
+  # .hushlogin only suppresses the macOS login banner — inert clutter elsewhere.
+  $IS_MACOS && create_symlink "$DOTFILES_DIR/.hushlogin" "$HOME/.hushlogin"
 
   # .gitconfig-work: work commit identity, pulled in by .gitconfig's includeIf for
   # repos under ~/Code/presentation/. Gitignored because this repo is public — and a
@@ -375,25 +443,42 @@ step_symlinks() {
     success ".gitconfig-work already set (work identity preserved)"
   fi
 
-  # Neovim config
+  # Neovim config. Omarchy ships its own LazyVim wired into the system theme
+  # (omarchy-theme-hotreload, transparency, all-themes). This repo's copy is
+  # near-stock LazyVim, so taking the destination over there would trade real
+  # desktop integration for nothing.
   ensure_dir "$HOME/.config"
-  create_symlink "$DOTFILES_DIR/.config/nvim" "$HOME/.config/nvim"
+  if $IS_OMARCHY; then
+    info "Omarchy provides its own neovim config — leaving ~/.config/nvim alone"
+  else
+    create_symlink "$DOTFILES_DIR/.config/nvim" "$HOME/.config/nvim"
+  fi
 
   # VS Code User settings. The file lives under .config/editors/ rather than
   # .config/Code/ so a second editor can share it without moving the source.
-  if [[ "$OSTYPE" == darwin* ]]; then
+  if $IS_MACOS; then
     VSCODE_USER_DIR="$HOME/Library/Application Support/Code/User"
   else
     VSCODE_USER_DIR="$HOME/.config/Code/User"
   fi
-  ensure_dir "$VSCODE_USER_DIR"
-  create_symlink "$DOTFILES_DIR/.config/editors/settings.json" "$VSCODE_USER_DIR/settings.json"
+  # Only seed the settings link when VS Code is actually on the machine —
+  # otherwise this conjures an empty ~/.config/Code/User on every box.
+  if command -v code &>/dev/null || [ -d "$VSCODE_USER_DIR" ]; then
+    ensure_dir "$VSCODE_USER_DIR"
+    create_symlink "$DOTFILES_DIR/.config/editors/settings.json" "$VSCODE_USER_DIR/settings.json"
+  else
+    info "VS Code not installed — skipping editor settings link"
+  fi
 
   # ── Claude Code (.claude is the first-class citizen) ──────────────────
   ensure_dir "$HOME/.claude"
 
   # Directories (symlink entire dirs)
-  create_symlink "$DOTFILES_DIR/.claude/skills"   "$HOME/.claude/skills"
+  if $IS_OMARCHY; then
+    link_dir_contents "$DOTFILES_DIR/.claude/skills" "$HOME/.claude/skills"
+  else
+    create_symlink "$DOTFILES_DIR/.claude/skills" "$HOME/.claude/skills"
+  fi
   create_symlink "$DOTFILES_DIR/.claude/rules"    "$HOME/.claude/rules"
   create_symlink "$DOTFILES_DIR/.claude/agents"   "$HOME/.claude/agents"
   create_symlink "$DOTFILES_DIR/.claude/commands" "$HOME/.claude/commands"
@@ -466,7 +551,24 @@ step_symlinks() {
 # ------------------------------------------
 # Read-only drift checks (--check only)
 # ------------------------------------------
-step_check_brew() {
+step_check_packages() {
+  if $IS_ARCH; then
+    [ -f "$REPO_DIR/Pacfile" ] || { warn "no Pacfile found"; return 0; }
+    info "Checking Pacfile against installed packages..."
+    local missing=() pkg
+    while IFS= read -r pkg; do
+      # -T prints the arg back when nothing PROVIDES it, so virtual packages and
+      # renamed providers (e.g. mise-bin for mise) count as satisfied.
+      pacman -T "$pkg" >/dev/null 2>&1 || missing+=("$pkg")
+    done < <(pacfile_packages)
+    if (( ${#missing[@]} == 0 )); then
+      success "Pacfile satisfied — nothing missing"
+    else
+      warn "packages missing (install with: sudo pacman -S --needed ${missing[*]}):"
+      for pkg in "${missing[@]}"; do warn "  $pkg"; done
+    fi
+    return 0
+  fi
   if ! command -v brew &>/dev/null; then warn "brew not installed on this machine"; return 0; fi
   local brewfile="$REPO_DIR/Brewfile"
   if [[ "$OSTYPE" == linux* ]] && [ -f "$REPO_DIR/Brewfile.wsl" ]; then brewfile="$REPO_DIR/Brewfile.wsl"; fi
@@ -610,7 +712,7 @@ if $CHECK_ONLY; then
   echo ""
   step_check_claude_plugins
   echo ""
-  step_check_brew
+  step_check_packages
   echo ""
   # settings.json is machine-owned, so --check only reports; --sync-lists applies.
   node "$DOTFILES_DIR/.claude/scripts/settings-drift.js" --check || true
@@ -622,8 +724,12 @@ if $CHECK_ONLY; then
   exit 0
 fi
 
-run_step "1. Install Homebrew"             step_homebrew
-run_step "2. Install Homebrew packages"    step_brew_packages
+if $IS_ARCH; then
+  run_step "1. Install system packages (pacman)" step_packages
+else
+  run_step "1. Install Homebrew"             step_homebrew
+  run_step "2. Install Homebrew packages"    step_packages
+fi
 run_step "3. Install oh-my-zsh"            step_ohmyzsh
 run_step "4. Install oh-my-zsh plugins"    step_omz_plugins
 run_step "5. Install spaceship theme"      step_spaceship
