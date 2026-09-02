@@ -43,7 +43,13 @@ export HOMEBREW_NO_UPGRADE_AUTO_UPDATES_CASKS=1
 alias zshconf="nvim ~/.zshrc"
 alias zshre="source ~/.zshrc; clear"
 alias zshr="source ~/.zshrc"
-if [[ -n "${IS_ARCH:-}" ]]; then
+if command -v omarchy &>/dev/null; then
+  # `omarchy update` snapshots the filesystem before it changes anything, then
+  # runs the keyring, system and AUR packages, migrations, mise tools and orphan
+  # pruning in the order its migrations expect. A bare `yay -Syu` skips all of
+  # that, including the snapshot to roll back to. mise tools cover claude here.
+  alias brewup="omarchy update"
+elif [[ -n "${IS_ARCH:-}" ]]; then
   alias brewup="yay -Syu; claude upgrade;"
 else
   alias brewup="brew update; brew upgrade -y; brew cleanup; brew doctor; claude upgrade;"
