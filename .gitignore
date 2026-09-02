@@ -5,6 +5,11 @@ dotfiles/.zshrc-local
 # Work commit identity — this repo is public. Seeded from .gitconfig-work.example.
 dotfiles/.gitconfig-work
 
+# Docker Desktop rewrites the whole marker block in here on every start, so any
+# edit is lost and the file churns. Nothing of ours lives in it — put shell
+# config in .zshrc instead.
+dotfiles/.zprofile
+
 # dotfiles/.claude — track everything EXCEPT runtime state and secrets
 # settings.json is machine-owned (seeded from settings.base.json); never commit it.
 # settings.base.json is the shared, hand-curated baseline — that one IS tracked.
