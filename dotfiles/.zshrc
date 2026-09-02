@@ -48,6 +48,10 @@ if command -v omarchy &>/dev/null; then
   # runs the keyring, system and AUR packages, migrations, mise tools and orphan
   # pruning in the order its migrations expect. A bare `yay -Syu` skips all of
   # that, including the snapshot to roll back to. mise tools cover claude here.
+  # omup is the honest name; brewup stays because the muscle memory is worth
+  # more than the tidiness. Both run the full machine update, which includes the
+  # mise step that `mup` runs on its own.
+  alias omup="omarchy update"
   alias brewup="omarchy update"
 elif [[ -n "${IS_ARCH:-}" ]]; then
   alias brewup="yay -Syu; claude upgrade;"
