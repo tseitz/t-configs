@@ -100,7 +100,19 @@ run_step() {
     esac
   fi
 
-  if ! ( set -euo pipefail; $fn ); then
+  # The subshell must NOT be the condition of an `if`. Bash suspends `set -e` for
+  # the whole command being tested — including inside the subshell, even though it
+  # re-arms the flag itself — so `if ! ( set -euo pipefail; $fn )` let every step
+  # run past its own failures and then report success from its final statement.
+  # Running it standalone (with -e off in the parent so the script survives) is
+  # what actually makes the inner `set -e` bite.
+  local status=0
+  set +e
+  ( set -euo pipefail; $fn )
+  status=$?
+  set -e
+
+  if (( status != 0 )); then
     error "Step failed: $label"
     FAILED_STEPS+=("$label")
   fi
@@ -147,13 +159,44 @@ step_brew_packages() {
 # 3. Install oh-my-zsh
 # ------------------------------------------
 step_ohmyzsh() {
-  if [ -d "$HOME/.oh-my-zsh" ]; then
+  # Test for the loader, not the directory. Steps 4 and 5 clone into
+  # $ZSH_CUSTOM (~/.oh-my-zsh/custom) and create ~/.oh-my-zsh as a side effect,
+  # so a directory test reports "already installed" for an empty husk that has
+  # no oh-my-zsh.sh in it — and .zshrc then fails to source on every start.
+  if [ -f "$HOME/.oh-my-zsh/oh-my-zsh.sh" ]; then
     success "oh-my-zsh already installed"
-  else
-    info "Installing oh-my-zsh..."
-    sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended
-    success "oh-my-zsh installed"
+    return 0
   fi
+  # The upstream installer refuses to run without zsh on PATH, which is exactly
+  # the case on a fresh box before the package step has run.
+  if ! command -v zsh &>/dev/null; then
+    error "zsh is not installed — run the package step first, then re-run"
+    return 1
+  fi
+  # The upstream installer aborts outright when $ZSH already exists, so a husk
+  # left by steps 4/5 blocks the install forever. Clear it — but carry custom/
+  # across, since that is where those steps put the plugins and the theme.
+  local stash=""
+  if [ -d "$HOME/.oh-my-zsh" ]; then
+    warn "~/.oh-my-zsh exists but has no oh-my-zsh.sh — reinstalling over the husk"
+    if [ -d "$HOME/.oh-my-zsh/custom" ]; then
+      stash="$(mktemp -d "${TMPDIR:-/tmp}/omz-custom.XXXXXX")"
+      mv "$HOME/.oh-my-zsh/custom" "$stash/custom"
+    fi
+    rm -rf "$HOME/.oh-my-zsh"
+  fi
+  info "Installing oh-my-zsh..."
+  # KEEP_ZSHRC: the installer otherwise moves our symlinked .zshrc aside and
+  # drops its own template in place, undoing step 7.
+  KEEP_ZSHRC=yes RUNZSH=no CHSH=no \
+    sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended
+  if [ -n "$stash" ]; then
+    rm -rf "$HOME/.oh-my-zsh/custom"
+    mv "$stash/custom" "$HOME/.oh-my-zsh/custom"
+    rmdir "$stash"
+    info "restored ~/.oh-my-zsh/custom (plugins and theme)"
+  fi
+  success "oh-my-zsh installed"
 }
 
 # ------------------------------------------
@@ -391,7 +434,12 @@ step_symlinks() {
   # produced a churn loop: every install backed up the file and re-linked, Claude
   # replaced the link with a file again, and the next run made another .bak.
   ensure_dir "$HOME/.claude/plugins"
-  if [ -L "$HOME/.claude/plugins/installed_plugins.json" ]; then
+  # The manifest is gitignored (see .gitignore), so a fresh clone never has it.
+  # Both branches below cp from the repo copy unconditionally, which aborted the
+  # whole step under `set -e` on exactly the machine this script exists to set up.
+  if [ ! -f "$DOTFILES_DIR/.claude/plugins/installed_plugins.json" ]; then
+    warn "no plugin manifest in the repo (it is gitignored) — nothing to seed"
+  elif [ -L "$HOME/.claude/plugins/installed_plugins.json" ]; then
     warn "installed_plugins.json is a symlink (legacy) — replacing with a real copy"
     $CHECK_ONLY || { rm "$HOME/.claude/plugins/installed_plugins.json"; \
       cp "$DOTFILES_DIR/.claude/plugins/installed_plugins.json" "$HOME/.claude/plugins/installed_plugins.json"; }
