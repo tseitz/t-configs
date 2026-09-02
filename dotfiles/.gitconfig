@@ -3,6 +3,36 @@
 	name = tseitz
 [init]
 	defaultBranch = main
+
+# ===== Absorbed from Omarchy's ~/.config/git/config =====
+# Git treats $XDG_CONFIG_HOME/git/config as a FALLBACK, not a lower-priority
+# layer: the moment ~/.gitconfig exists, the XDG file is not read at all. So
+# symlinking this file over a machine that had one silently dropped every
+# setting in it. These are the ones worth keeping, and they are good defaults
+# everywhere — not just on Arch. Omarchy's pull.rebase, init.defaultBranch and
+# user.name are deliberately NOT taken: this file's values win on those.
+[alias]
+	co = checkout
+	br = branch
+	ci = commit
+	st = status
+[push]
+	autoSetupRemote = true   # Automatically set upstream branch on push
+[diff]
+	algorithm = histogram    # Clearer diffs on moved/edited lines
+	colorMoved = plain       # Highlight moved blocks in diffs
+	mnemonicPrefix = true    # More intuitive refs in diff output
+[commit]
+	verbose = true           # Include the diff in the commit message template
+[column]
+	ui = auto                # Output in columns when possible
+[branch]
+	sort = -committerdate    # Most recently committed branches first
+[tag]
+	sort = -version:refname  # Sort version numbers as you would expect
+[rerere]
+	enabled = true           # Record and reuse conflict resolutions
+	autoupdate = true        # Apply stored conflict resolutions automatically
 [filter "lfs"]
 	process = git-lfs filter-process
 	required = true
