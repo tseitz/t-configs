@@ -32,6 +32,13 @@
  * changes a key that is already there, so a different value stays a machine
  * decision.
  *
+ * WHY A WORK OVERLAY
+ * Work-only plugins and marketplaces live in settings.work.json, which applies
+ * only on a machine carrying the dotfiles/.work-machine marker. Without reading
+ * it here, every work plugin would look like drift on a work machine and every
+ * one would look wanted on a personal machine. "The baseline" below therefore
+ * means base, plus the work overlay when the marker is present.
+ *
  * Usage:
  *   settings-drift.js --hook     JSON for a SessionStart hook; silent if clean
  *   settings-drift.js --check    Human-readable; exit 1 if drift found
@@ -54,21 +61,53 @@ const ADDITIVE_LISTS = [
   "permissions.allow",
 ];
 
+// The map equivalent of ADDITIVE_LISTS: paths where a base KEY should exist
+// everywhere, but its VALUE is a machine decision. enabledPlugins is the case
+// that forces the distinction — the base deliberately carries `false` entries
+// ("tried it, don't want it"), and a plugin switched off on one machine on
+// purpose must not be switched back on by a sync. So keys are compared and
+// values never are.
+const ADDITIVE_KEYS = ["enabledPlugins", "extraKnownMarketplaces"];
+
 // Overridable so --apply can be exercised against a scratch copy. Nothing in
 // normal use sets this; it exists so the write path is testable without
 // pointing a test at the real settings file.
 const LIVE_PATH =
   process.env.CLAUDE_SETTINGS_DRIFT_TARGET || path.join(os.homedir(), ".claude", "settings.json");
 
-/** Resolve the base next to this script, following the ~/.claude symlink back
+/** The repo's .claude directory, found by following the ~/.claude symlink back
  *  into the repo, so a clone anywhere still works. */
-function basePath() {
-  const realScript = fs.realpathSync(__filename);
-  return path.join(path.dirname(path.dirname(realScript)), "settings.base.json");
+function repoClaudeDir() {
+  return path.dirname(path.dirname(fs.realpathSync(__filename)));
 }
 
 function readJson(p) {
   return JSON.parse(fs.readFileSync(p, "utf8"));
+}
+
+function mergeDeep(base, overlay) {
+  const out = { ...base };
+  for (const [key, value] of Object.entries(overlay)) {
+    const isPlainObject = (v) => v && typeof v === "object" && !Array.isArray(v);
+    out[key] = isPlainObject(value) && isPlainObject(out[key]) ? mergeDeep(out[key], value) : value;
+  }
+  return out;
+}
+
+/** The baseline this machine should match: settings.base.json, plus
+ *  settings.work.json when the work marker is present. */
+function readBaseline() {
+  const claudeDir = repoClaudeDir();
+  const base = readJson(path.join(claudeDir, "settings.base.json"));
+  const marker = path.join(path.dirname(claudeDir), ".work-machine");
+  if (!fs.existsSync(marker)) return base;
+  try {
+    return mergeDeep(base, readJson(path.join(claudeDir, "settings.work.json")));
+  } catch {
+    // A work machine with no work file is a half-finished setup, not a reason to
+    // report every base entry as drift. Fall back to the base alone.
+    return base;
+  }
 }
 
 function getPath(obj, dotted) {
@@ -106,6 +145,22 @@ function findMissingKeys(live, base) {
   return Object.keys(base).filter((k) => !(k in live));
 }
 
+/** For each additive-key path, the base keys absent from this machine's map. */
+function findKeyDrift(live, base) {
+  const drift = [];
+  for (const dotted of ADDITIVE_KEYS) {
+    const baseMap = getPath(base, dotted);
+    if (!baseMap || typeof baseMap !== "object") continue;
+    const liveMap = getPath(live, dotted);
+    // No map at all is a whole absent top-level key, which --seed already
+    // reports. Flagging it here too would print the same fix twice.
+    if (!liveMap || typeof liveMap !== "object") continue;
+    const missing = Object.keys(baseMap).filter((k) => !(k in liveMap));
+    if (missing.length) drift.push({ path: dotted, missing });
+  }
+  return drift;
+}
+
 /** Write via a temp file and rename so a crash cannot leave a partial
  *  settings.json behind -- Claude Code reads this file constantly. */
 function writeLive(live) {
@@ -125,7 +180,7 @@ function main() {
   let live, base;
   try {
     live = readJson(LIVE_PATH);
-    base = readJson(basePath());
+    base = readBaseline();
   } catch (err) {
     // A missing or half-written settings file must never block a session.
     if (mode === "--check") console.error(`settings-drift: ${err.message}`);
@@ -133,6 +188,7 @@ function main() {
   }
 
   const drift = findDrift(live, base);
+  const keyDrift = findKeyDrift(live, base);
   const missingKeys = findMissingKeys(live, base);
 
   if (mode === "--seed") {
@@ -150,8 +206,10 @@ function main() {
   }
 
   if (mode === "--hook") {
-    if (drift.length || missingKeys.length) {
-      const lines = drift.map((d) => `    ${d.path} missing: ${d.missing.join(", ")}`);
+    if (drift.length || keyDrift.length || missingKeys.length) {
+      const lines = [...drift, ...keyDrift].map(
+        (d) => `    ${d.path} missing: ${d.missing.join(", ")}`
+      );
       if (missingKeys.length) {
         lines.push(`    absent keys: ${missingKeys.join(", ")}`);
         lines.push("  Run ./install.sh --sync-settings to add them.");
@@ -169,13 +227,21 @@ function main() {
   }
 
   if (mode === "--apply") {
-    if (!drift.length) {
-      console.log("settings already in sync with the base additive lists.");
+    if (!drift.length && !keyDrift.length) {
+      console.log("settings already in sync with the baseline additive entries.");
       process.exit(0);
     }
     for (const d of drift) {
       const current = getPath(live, d.path);
       setPath(live, d.path, [...(Array.isArray(current) ? current : []), ...d.missing]);
+      console.log(`  ${d.path} += ${d.missing.join(", ")}`);
+    }
+    for (const d of keyDrift) {
+      const current = getPath(live, d.path) || {};
+      // Copy the baseline's value for a key this machine lacks entirely. Keys it
+      // already has are left alone, so a local toggle survives the sync.
+      for (const k of d.missing) current[k] = getPath(base, d.path)[k];
+      setPath(live, d.path, current);
       console.log(`  ${d.path} += ${d.missing.join(", ")}`);
     }
     // Write via a temp file and rename so a crash cannot leave a partial
@@ -186,13 +252,15 @@ function main() {
   }
 
   // --check
-  if (!drift.length && !missingKeys.length) {
-    console.log("settings: additive lists and base keys match.");
+  if (!drift.length && !keyDrift.length && !missingKeys.length) {
+    console.log("settings: additive lists, plugin keys and base keys all match.");
     process.exit(0);
   }
-  if (drift.length) {
-    console.log("settings drift vs t-configs base:");
-    for (const d of drift) console.log(`  ${d.path} missing: ${d.missing.join(", ")}`);
+  if (drift.length || keyDrift.length) {
+    console.log("settings drift vs t-configs baseline:");
+    for (const d of [...drift, ...keyDrift]) {
+      console.log(`  ${d.path} missing: ${d.missing.join(", ")}`);
+    }
     console.log("Run ./install.sh --sync-lists to add them.");
   }
   if (missingKeys.length) {

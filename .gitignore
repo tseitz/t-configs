@@ -5,6 +5,10 @@ dotfiles/.zshrc-local
 # Work commit identity — this repo is public. Seeded from .gitconfig-work.example.
 dotfiles/.gitconfig-work
 
+# Work-machine marker, written by install.sh --work. Same reason as above: this
+# repo is public, and which machine is the work one stays on the machine.
+dotfiles/.work-machine
+
 # Docker Desktop rewrites the whole marker block in here on every start, so any
 # edit is lost and the file churns. Nothing of ours lives in it — put shell
 # config in .zshrc instead.
@@ -28,6 +32,9 @@ dotfiles/.claude/skills/work/
 
 # Sandbox-friction capture log — per-project runtime state, written by the hook
 .claude/sandbox-friction.jsonl
+
+# Working plan artifacts — ephemeral, promoted into docs/ by hand when worth sharing
+.claude/plans/
 
 .DS_Store
 .tmp/

@@ -13,6 +13,7 @@ set -euo pipefail
 #        ./install.sh --dry-run # list the steps, change nothing
 #        ./install.sh --verbose # also print already-correct symlinks
 #        ./install.sh --sync-settings # add base settings keys this machine lacks
+#        ./install.sh --work    # mark this a work machine (once, then sticky)
 #
 # --sync is the "get this machine back in line with my other one" mode. It runs
 # every step non-interactively, but refuses the one destructive branch: if a real
@@ -20,6 +21,12 @@ set -euo pipefail
 # reports the drift and moves on instead of backing the file up and replacing it.
 # So it only ever ADDS what's missing. Use a full ./install.sh to take over a
 # destination that already has local content.
+#
+# --work writes the dotfiles/.work-machine marker, which makes settings.work.json
+# (work-only plugins and marketplaces) merge over the shared base. Pass it on the
+# FIRST install of a work machine; the marker is sticky, so later runs need no
+# flag. Work-ness is NOT inferred from .gitconfig-work — step 7 seeds that file
+# with a placeholder email, so at first-install time it always looks personal.
 # ============================================
 
 REPO_DIR="$(cd "$(dirname "$0")" && pwd)"
@@ -64,6 +71,7 @@ CHECK_ONLY=false
 SYNC_LISTS=false
 SYNC_SETTINGS=false
 VERBOSE=false
+WORK_FLAG=false
 for arg in "$@"; do
   [[ "$arg" == "--yes"     || "$arg" == "-y" ]] && YES_ALL=true
   [[ "$arg" == "--dry-run" || "$arg" == "-n" ]] && DRY_RUN=true
@@ -72,7 +80,72 @@ for arg in "$@"; do
   [[ "$arg" == "--check"   || "$arg" == "-c" ]] && CHECK_ONLY=true
   [[ "$arg" == "--sync-lists"                ]] && SYNC_LISTS=true
   [[ "$arg" == "--sync-settings"             ]] && SYNC_SETTINGS=true
+  [[ "$arg" == "--work"                      ]] && WORK_FLAG=true
 done
+
+# Work-machine marker. Gitignored for the same reason as .gitconfig-work: this
+# repo is public, and which machine is the work one is not the internet's
+# business. Sticky, so --work is a one-time flag rather than something to
+# remember on every run.
+WORK_MARKER="$DOTFILES_DIR/.work-machine"
+is_work_machine() { [ -f "$WORK_MARKER" ]; }
+
+if $WORK_FLAG && ! $CHECK_ONLY && ! $DRY_RUN && [ ! -f "$WORK_MARKER" ]; then
+  echo "Work machine. Created by install.sh --work; delete this file to go back to personal." > "$WORK_MARKER"
+fi
+
+# The shared base, plus the work overlay on a work machine. Deep-merged so the
+# work file only has to carry the keys that differ (plugins, marketplaces) rather
+# than restating the whole baseline.
+merge_settings() {
+  local files=("$DOTFILES_DIR/.claude/settings.base.json")
+  if is_work_machine; then files+=("$DOTFILES_DIR/.claude/settings.work.json"); fi
+  python3 - "${files[@]}" <<'PY'
+import json, sys
+
+def merge(base, overlay):
+    out = dict(base)
+    for key, value in overlay.items():
+        if isinstance(value, dict) and isinstance(out.get(key), dict):
+            out[key] = merge(out[key], value)
+        else:
+            out[key] = value
+    return out
+
+result = {}
+for path in sys.argv[1:]:
+    try:
+        with open(path) as fh:
+            result = merge(result, json.load(fh))
+    except FileNotFoundError:
+        pass
+print(json.dumps(result, indent=2))
+PY
+}
+
+# The WANTED plugin list: every enabledPlugins key set to true, from the base plus
+# the work overlay. This replaced installed_plugins.json, which is gitignored and
+# so was never present on the fresh clone it was supposed to bootstrap — step 9
+# read an absent file and silently installed nothing. settings.base.json is
+# tracked, so this list actually travels. A `false` entry is a recorded opinion
+# ("tried it, don't want it"), not an install target.
+wanted_plugins() {
+  local files=("$DOTFILES_DIR/.claude/settings.base.json")
+  if is_work_machine; then files+=("$DOTFILES_DIR/.claude/settings.work.json"); fi
+  python3 - "${files[@]}" <<'PY'
+import json, sys
+wanted = {}
+for path in sys.argv[1:]:
+    try:
+        with open(path) as fh:
+            wanted.update(json.load(fh).get("enabledPlugins", {}))
+    except FileNotFoundError:
+        pass
+for name, enabled in sorted(wanted.items()):
+    if enabled:
+        print(name)
+PY
+}
 
 # --sync-lists: append base entries this machine is missing from the additive
 # allow-lists in settings.json. Runs alone and exits — it must not drag the
@@ -492,8 +565,12 @@ step_symlinks() {
     warn "missing: $HOME/.claude/settings.json (would seed from settings.base.json)"
   else
     [ -L "$HOME/.claude/settings.json" ] && warn "Replacing settings.json symlink with a copy (symlinks break Claude Code atomic writes)" && rm "$HOME/.claude/settings.json"
-    cp "$DOTFILES_DIR/.claude/settings.base.json" "$HOME/.claude/settings.json"
-    success "settings.json seeded from settings.base.json (now machine-owned)"
+    merge_settings > "$HOME/.claude/settings.json"
+    if is_work_machine; then
+      success "settings.json seeded from settings.base.json + settings.work.json (now machine-owned)"
+    else
+      success "settings.json seeded from settings.base.json (now machine-owned)"
+    fi
   fi
   # CLAUDE.md IS symlinked (unlike settings.json). Claude Code edits it in place,
   # so a symlink is safe — and it means "update my global instructions" edits land
@@ -507,24 +584,15 @@ step_symlinks() {
   create_symlink "$DOTFILES_DIR/.claude/the-security-guide.md"  "$HOME/.claude/the-security-guide.md"
   create_symlink "$DOTFILES_DIR/.claude/PLUGIN_SCHEMA_NOTES.md" "$HOME/.claude/PLUGIN_SCHEMA_NOTES.md"
 
-  # Plugins: the repo manifest is the WANTED list; step 9 installs from it.
-  # installed_plugins.json is deliberately NOT symlinked. Claude Code rewrites it
-  # in place as a real file (same reason settings.json isn't linked), so linking it
-  # produced a churn loop: every install backed up the file and re-linked, Claude
-  # replaced the link with a file again, and the next run made another .bak.
+  # installed_plugins.json is Claude Code's own runtime state — absolute install
+  # paths, resolved versions, git SHAs — so the repo neither tracks nor seeds it.
+  # Copying one machine's copy onto another wrote paths that were true somewhere
+  # else. The wanted list lives in enabledPlugins instead; step 9 installs from
+  # that and Claude Code rebuilds this file itself.
   ensure_dir "$HOME/.claude/plugins"
-  # The manifest is gitignored (see .gitignore), so a fresh clone never has it.
-  # Both branches below cp from the repo copy unconditionally, which aborted the
-  # whole step under `set -e` on exactly the machine this script exists to set up.
-  if [ ! -f "$DOTFILES_DIR/.claude/plugins/installed_plugins.json" ]; then
-    warn "no plugin manifest in the repo (it is gitignored) — nothing to seed"
-  elif [ -L "$HOME/.claude/plugins/installed_plugins.json" ]; then
-    warn "installed_plugins.json is a symlink (legacy) — replacing with a real copy"
-    $CHECK_ONLY || { rm "$HOME/.claude/plugins/installed_plugins.json"; \
-      cp "$DOTFILES_DIR/.claude/plugins/installed_plugins.json" "$HOME/.claude/plugins/installed_plugins.json"; }
-  elif [ ! -f "$HOME/.claude/plugins/installed_plugins.json" ]; then
-    $CHECK_ONLY || cp "$DOTFILES_DIR/.claude/plugins/installed_plugins.json" "$HOME/.claude/plugins/installed_plugins.json"
-    success "installed_plugins.json seeded from repo manifest"
+  if [ -L "$HOME/.claude/plugins/installed_plugins.json" ]; then
+    warn "installed_plugins.json is a symlink (legacy) — Claude Code needs a real file"
+    $CHECK_ONLY || rm "$HOME/.claude/plugins/installed_plugins.json"
   fi
 
   # settings.local.json: create from example if it doesn't exist (account-specific overrides)
@@ -580,31 +648,49 @@ step_check_packages() {
 # Drift goes both ways: plugins added on the other machine, and plugins installed
 # here that were never written back to the repo.
 step_check_claude_plugins() {
-  local repo_manifest="$DOTFILES_DIR/.claude/plugins/installed_plugins.json"
   local local_manifest="$HOME/.claude/plugins/installed_plugins.json"
-  [ -f "$repo_manifest" ] || { warn "no repo plugin manifest"; return 0; }
   [ -f "$local_manifest" ] || { warn "no local plugin manifest yet"; return 0; }
   command -v python3 &>/dev/null || { warn "python3 not found — skipping plugin diff"; return 0; }
-  info "Checking Claude plugins against the repo manifest..."
-  python3 - "$repo_manifest" "$local_manifest" <<'PY'
+  if is_work_machine; then
+    info "Checking Claude plugins against the base + work overlay..."
+  else
+    info "Checking Claude plugins against the base (personal machine)..."
+  fi
+  local files=("$DOTFILES_DIR/.claude/settings.base.json")
+  if is_work_machine; then files+=("$DOTFILES_DIR/.claude/settings.work.json"); fi
+  python3 - "$local_manifest" "${files[@]}" <<'PY'
 import json, sys
 
-def names(path):
+manifest, settings_files = sys.argv[1], sys.argv[2:]
+
+toggles = {}
+for path in settings_files:
     try:
         with open(path) as fh:
-            return set(json.load(fh).get("plugins", {}))
-    except Exception as exc:
-        print(f"[warn] could not read {path}: {exc}")
-        return set()
+            toggles.update(json.load(fh).get("enabledPlugins", {}))
+    except FileNotFoundError:
+        pass
 
-repo, local = names(sys.argv[1]), names(sys.argv[2])
-missing, extra = sorted(repo - local), sorted(local - repo)
-if not missing and not extra:
-    print("[ok]   Claude plugins match the repo manifest")
-for p in missing:
-    print(f"[warn] in repo manifest but NOT installed here: {p}")
-for p in extra:
-    print(f"[warn] installed here but NOT in repo manifest: {p}")
+try:
+    with open(manifest) as fh:
+        installed = set(json.load(fh).get("plugins", {}))
+except Exception as exc:
+    print(f"[warn] could not read {manifest}: {exc}")
+    sys.exit(0)
+
+wanted = {name for name, on in toggles.items() if on}
+# Installed-but-`false` is a deliberate "tried it, don't want it", not drift.
+# Reporting it every run is how a check earns being ignored. Only a plugin the
+# baseline has never heard of is worth a word.
+unknown = installed - set(toggles)
+absent = sorted(wanted - installed)
+
+if not absent and not unknown:
+    print("[ok]   Claude plugins match the wanted list")
+for p in absent:
+    print(f"[warn] wanted but NOT installed here: {p}")
+for p in sorted(unknown):
+    print(f"[warn] installed here but absent from the baseline: {p}")
 PY
 }
 
@@ -694,16 +780,32 @@ step_env_vars() {
 # 9. Install Claude Code plugins
 # ------------------------------------------
 step_claude_plugins() {
-  CLAUDE_PLUGINS_MANIFEST="$DOTFILES_DIR/.claude/plugins/installed_plugins.json"
-  if [ -f "$CLAUDE_PLUGINS_MANIFEST" ] && command -v claude &>/dev/null; then
-    info "Installing Claude plugins from manifest..."
-    while IFS= read -r plugin; do
-      claude plugin install "$plugin" &>/dev/null && success "Claude plugin installed: $plugin" || warn "Claude plugin already installed or failed: $plugin"
-    done < <(python3 -c "import json,sys; [print(k) for k in json.load(open('$CLAUDE_PLUGINS_MANIFEST'))['plugins']]")
-    success "Claude plugins processed"
-  elif [ -f "$CLAUDE_PLUGINS_MANIFEST" ] && ! command -v claude &>/dev/null; then
+  if ! command -v claude &>/dev/null; then
     warn "claude CLI not in PATH — skipping plugin install (re-run after adding Claude to PATH)"
+    return 0
   fi
+  local wanted; wanted="$(wanted_plugins)"
+  if [ -z "$wanted" ]; then
+    warn "no plugins marked true in enabledPlugins — nothing to install"
+    return 0
+  fi
+  if is_work_machine; then
+    info "Installing Claude plugins (base + work overlay)..."
+  else
+    info "Installing Claude plugins (base only — pass --work for the work set)..."
+  fi
+  # A plugin from a marketplace this machine has not registered fails here rather
+  # than mid-session. The loudest case is presentation-skills: it is a `directory`
+  # source under ~/Code, so every plugin from it fails until that repo is cloned.
+  while IFS= read -r plugin; do
+    [ -n "$plugin" ] || continue
+    if claude plugin install "$plugin" &>/dev/null; then
+      success "Claude plugin installed: $plugin"
+    else
+      warn "Claude plugin already installed, or its marketplace is missing: $plugin"
+    fi
+  done <<< "$wanted"
+  success "Claude plugins processed"
 }
 
 # ------------------------------------------
@@ -733,6 +835,11 @@ step_local_overrides() {
 # ------------------------------------------
 if $CHECK_ONLY; then
   info "Checking this machine against $REPO_DIR — nothing will be changed."
+  if is_work_machine; then
+    info "Machine role: WORK (settings.work.json applies)"
+  else
+    info "Machine role: personal — run ./install.sh --work to add the work plugin set"
+  fi
   echo ""
   step_symlinks
   echo ""

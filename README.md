@@ -17,8 +17,18 @@ The install script is idempotent — safe to run multiple times. It will:
 3. Install [oh-my-zsh](https://ohmyz.sh) with custom plugins (the prompt is starship, not an oh-my-zsh theme)
 4. Install default runtimes via [mise](https://mise.jdx.dev) (Node, etc. from `mise.toml`)
 5. Symlink dotfiles to their expected locations
-6. Install Claude Code plugins from `dotfiles/.claude/plugins/installed_plugins.json`
+6. Install every Claude Code plugin marked `true` in `enabledPlugins` (see below)
 7. Create `.zshrc-env-vars` (private secrets) and `.zshrc-local` (machine-specific overrides) from example templates
+
+### Work machines
+
+Work-only plugins and marketplaces live in `dotfiles/.claude/settings.work.json` and apply only where the gitignored `dotfiles/.work-machine` marker exists:
+
+```bash
+./install.sh --work    # mark this a work machine — once, then sticky
+```
+
+Pass it on the first install of a work machine. Personal machines never see the work set. The marker is deliberately explicit rather than read off `.gitconfig-work`, which `install.sh` seeds with a placeholder email in the same step that seeds `settings.json` — so at first-install time it always looks personal.
 
 ### On a machine that's already set up
 
@@ -29,7 +39,9 @@ Use `--check` and `--sync` instead of a bare `./install.sh`:
 ./install.sh --sync    # non-interactive, add-only: create what's missing
 ```
 
-`--check` audits every symlink, lists dangling links and stale `.bak` files, diffs the installed Claude plugins against `dotfiles/.claude/plugins/installed_plugins.json`, and runs `brew bundle check`.
+`--check` audits every symlink, lists dangling links and stale `.bak` files, diffs the installed Claude plugins against the wanted list, and runs `brew bundle check`.
+
+The wanted list is `enabledPlugins` in `settings.base.json` (plus `settings.work.json` on a work machine) — every key set to `true`. `dotfiles/.claude/plugins/installed_plugins.json` is **not** it: that file is Claude Code's runtime state, holding absolute install paths and git SHAs, and it is gitignored, so a fresh clone never had it and step 6 silently installed nothing.
 
 `--sync` runs every step non-interactively but refuses the single destructive branch in `create_symlink`: where a real file — or a link to somewhere else — already occupies a destination, it reports the drift and leaves it alone rather than moving it to `.bak`. So `--sync` can only ever add. Run a bare `./install.sh` when you actually want the repo copy to take over a destination that has local content; that path backs the original up first, to a `.bak` name that doesn't already exist.
 

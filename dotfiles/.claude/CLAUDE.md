@@ -48,5 +48,25 @@ work and personal machines. Understand how it syncs before editing anything unde
     to be copied into `settings.base.json` by hand to reach your other machine.
   - `dotfiles/.claude/settings.json` is a gitignored local snapshot written by two hooks.
     It is a backup, **not** a sync path — it never leaves the machine.
+- **Work-only config lives in `settings.work.json`, gated on a marker.** Work plugins
+  (Atlassian, the `presentation-skills` and `inmarket-skills` sets) and their marketplaces
+  are in `~/t-configs/dotfiles/.claude/settings.work.json`, which applies **only** on a
+  machine carrying `dotfiles/.work-machine`. Create the marker with `./install.sh --work`
+  once; it is sticky and gitignored. The base is then merged with the work overlay at seed
+  time, and `settings-drift.js` reads both, so a work plugin is not drift on a work machine
+  and not wanted on a personal one.
+  - Work-ness is **not** inferred from `.gitconfig-work`. `install.sh` seeds that file with a
+    placeholder email in the same step that seeds `settings.json`, so at first-install time
+    it always looks personal. The explicit marker exists to dodge that ordering trap.
+  - Put something in the work file only if it is genuinely work-only. Widening it past
+    plugins and marketplaces turns it into a second baseline that has to be kept in step.
+- **`enabledPlugins` in `settings.base.json` is the plugin wanted list.** `install.sh` step 9
+  installs every key set to `true` (plus the work overlay's keys on a work machine); `false`
+  is a recorded "tried it, don't want it". `plugins/installed_plugins.json` is Claude Code's
+  runtime state — gitignored, never seeded, never a wanted list. It held absolute install
+  paths and git SHAs, so copying one machine's copy to another wrote paths that were true
+  somewhere else, and because it was gitignored a fresh clone never had it at all.
+  `settings-drift.js` compares plugin **keys** but never their values, so a plugin toggled
+  off here on purpose is not switched back on by a sync.
 - When in doubt about whether something syncs, check if the target is a symlink
   (`ls -l`) before editing.

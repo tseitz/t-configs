@@ -8,7 +8,6 @@
   "effortLevel" : "high",
   "enabledPlugins" : {
     "astral@astral-sh" : true,
-    "atlassian@claude-plugins-official" : true,
     "chrome-devtools-mcp@claude-plugins-official" : true,
     "claude-md-management@claude-plugins-official" : true,
     "code-review@claude-plugins-official" : false,
@@ -33,12 +32,6 @@
     "astral-sh" : {
       "source" : {
         "repo" : "astral-sh\/claude-code-plugins",
-        "source" : "github"
-      }
-    },
-    "cc-marketplace" : {
-      "source" : {
-        "repo" : "ananddtyagi\/cc-marketplace",
         "source" : "github"
       }
     }
@@ -224,7 +217,6 @@
   "sandbox" : {
     "autoAllowBashIfSandboxed" : true,
     "enabled" : true,
-    "enableWeakerNetworkIsolation" : true,
     "excludedCommands" : [
       "chrome-headless-shell",
       "mkdir",

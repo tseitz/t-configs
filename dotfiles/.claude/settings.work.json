@@ -1,0 +1,25 @@
+{
+  "enabledPlugins": {
+    "atlassian@claude-plugins-official": true,
+    "db-queries@presentation-skills": true,
+    "inmarket-reporting-analytics@inmarket-skills": true,
+    "log-improvement@presentation-skills": true,
+    "pact-contracts@presentation-skills": true,
+    "team-pr-review@presentation-skills": true,
+    "up-remote-scaffold@inmarket-skills": true
+  },
+  "extraKnownMarketplaces": {
+    "inmarket-skills": {
+      "source": {
+        "source": "git",
+        "url": "git@github.com:ThinkNear/agent-skills"
+      }
+    },
+    "presentation-skills": {
+      "source": {
+        "source": "directory",
+        "path": "/Users/tseitz/Code/presentation"
+      }
+    }
+  }
+}
