@@ -132,6 +132,7 @@ compinit
 # .zshrc-local, so the choice travels. Adding a line here is the whole override
 # mechanism: it runs after Omarchy, so it wins.
 alias lsa="ls -al"          # Omarchy: ls -a
+alias c="claude"             # Omarchy: opencode --auto
 
 # ===== Machine-Specific Overrides =====
 # Source local overrides last so they can extend or override anything above
