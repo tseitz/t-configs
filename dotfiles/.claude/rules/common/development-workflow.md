@@ -127,11 +127,14 @@ looks like **once I've agreed to add one**. This rule governs whether it gets ad
 - **`/code-review`** on the diff (it has real teeth — gates commits via the pre-commit hook).
   One pass for most work. Escalate to the full two-stage / specialized-agent sweep only for
   security, auth, payments, or architectural changes.
-- **`/team-pr-review`** before pushing anything that will become a PR — the deep read against the
+- **`/pr-review`** before pushing anything that will become a PR — the deep read against the
   team's recurring topics, plus the behaviour-change ledger. Local only; it never posts. **I invoke
   this one, not you:** it carries `disable-model-invocation: true`, so say the transition has
   arrived and stop. Don't paraphrase the review inline as a substitute — a hand-rolled imitation
   looks like the real thing and silently skips the topics table.
+  - Not to be confused with the `team-pr-review` plugin from `presentation-skills`, which is the
+    team-published version of the same idea and *is* model-invocable. `/pr-review` is my copy and
+    the one this workflow means.
 - **`security-reviewer` is not optional** for auth/authz, user input handling, database queries,
   file system operations, external API calls, crypto, or anything touching payments. Any one of
   those in the diff means run it, regardless of how small the change looks.

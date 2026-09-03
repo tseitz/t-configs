@@ -1,6 +1,6 @@
 ---
-name: team-pr-review
-description: Reviews the current diff the way the presentation team would — orientation, premise check, the team's recurring review topics, a behaviour-change ledger, then architecture and product-owner lenses. Treats the PR description and ticket as claims to verify, never as facts. Run it yourself with /team-pr-review before pushing. Local findings only; never posts to GitHub.
+name: pr-review
+description: Reviews the current diff the way the presentation team would — orientation, premise check, the team's recurring review topics, a behaviour-change ledger, then architecture and product-owner lenses. Treats the PR description and ticket as claims to verify, never as facts. Run it yourself with /pr-review before pushing. Local findings only; never posts to GitHub.
 disable-model-invocation: true
 ---
 

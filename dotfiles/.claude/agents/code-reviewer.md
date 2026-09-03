@@ -1,6 +1,6 @@
 ---
 name: code-reviewer
-description: General code review pass for quality, correctness, and maintainability. The quick delegated read on a diff; team-pr-review is the deep one and runs inline.
+description: General code review pass for quality, correctness, and maintainability. The quick delegated read on a diff; pr-review is the deep one and runs inline.
 model: sonnet
 ---
 
