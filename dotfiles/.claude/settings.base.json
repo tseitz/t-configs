@@ -222,7 +222,8 @@
       "mkdir",
       "git *",
       "gcloud",
-      "kubectl"
+      "kubectl",
+      "brew"
     ],
     "filesystem" : {
       "allowWrite" : [
