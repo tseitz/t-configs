@@ -223,7 +223,8 @@
       "git *",
       "gcloud",
       "kubectl",
-      "brew"
+      "brew",
+      "gh"
     ],
     "filesystem" : {
       "allowWrite" : [
