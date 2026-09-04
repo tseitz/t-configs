@@ -217,6 +217,7 @@
   "sandbox" : {
     "autoAllowBashIfSandboxed" : true,
     "enabled" : true,
+    "enableWeakerNetworkIsolation" : true,
     "excludedCommands" : [
       "chrome-headless-shell",
       "mkdir",
