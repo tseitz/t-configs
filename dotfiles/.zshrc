@@ -137,3 +137,5 @@ alias c="claude"             # Omarchy: opencode --auto
 # ===== Machine-Specific Overrides =====
 # Source local overrides last so they can extend or override anything above
 [ -f "$dotfiles_path/.zshrc-local" ] && source "$dotfiles_path/.zshrc-local"
+
+[ -f "$HOME/.local/bin/env" ] && . "$HOME/.local/bin/env"
