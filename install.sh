@@ -534,6 +534,37 @@ step_symlinks() {
     info "VS Code not installed — skipping editor settings link"
   fi
 
+  # ── Omarchy / Hyprland / terminals (desktop-only) ──────────────────────
+  if $IS_OMARCHY; then
+    for f in bindings.lua input.lua looknfeel.lua autostart.lua hyprland.lua \
+             xdph.conf hyprsunset.conf .luarc.json; do
+      create_symlink "$DOTFILES_DIR/.config/hypr/$f" "$HOME/.config/hypr/$f"
+    done
+    # monitors.lua is real hardware per machine (desktop vs laptop displays), so
+    # it is never symlinked — only seeded once from a template, same idea as
+    # .gitconfig-work above.
+    if [ ! -f "$HOME/.config/hypr/monitors.lua" ]; then
+      ensure_dir "$HOME/.config/hypr"
+      $CHECK_ONLY || cp "$DOTFILES_DIR/.config/hypr/monitors.lua.example" "$HOME/.config/hypr/monitors.lua"
+      warn "Created hypr/monitors.lua from example — edit it for this machine's displays"
+    fi
+
+    create_symlink "$DOTFILES_DIR/.config/omarchy/shell.json" "$HOME/.config/omarchy/shell.json"
+    for d in bar branding defaults extensions hooks themes themed; do
+      create_symlink "$DOTFILES_DIR/.config/omarchy/$d" "$HOME/.config/omarchy/$d"
+    done
+    # omarchy/plugins is deliberately NOT tracked here: `omarchy plugin clone`
+    # checks out each plugin as its own git repo, so copying them in would nest
+    # git repos inside this one. Re-clone them instead: `omarchy plugin clone
+    # hzerrad.bottleneck` and `git clone git@github.com:tseitz/omarchy-mouse-settings.git
+    # ~/.config/omarchy/plugins/io.github.tseitz.mouse-settings`.
+
+    create_symlink "$DOTFILES_DIR/.config/alacritty" "$HOME/.config/alacritty"
+    create_symlink "$DOTFILES_DIR/.config/foot"      "$HOME/.config/foot"
+    create_symlink "$DOTFILES_DIR/.config/kitty"     "$HOME/.config/kitty"
+    create_symlink "$DOTFILES_DIR/.config/ghostty"   "$HOME/.config/ghostty"
+  fi
+
   # ── Claude Code (.claude is the first-class citizen) ──────────────────
   ensure_dir "$HOME/.claude"
 

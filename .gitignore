@@ -38,3 +38,6 @@ dotfiles/.claude/skills/work/
 
 .DS_Store
 .tmp/
+
+# hypr/*.bak.* — omarchy's own edit-time backups, timestamped and per-machine
+dotfiles/.config/hypr/*.bak.*
