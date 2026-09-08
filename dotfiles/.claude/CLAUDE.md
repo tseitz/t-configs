@@ -87,5 +87,14 @@ work and personal machines. Understand how it syncs before editing anything unde
     two files. `./install.sh --check` asserts they agree, because otherwise moving the work
     root would silently break the prompt *and* send work commits from the personal email.
     `T_WORK_FORCE=1` is the escape hatch for a work clone outside the root.
+  - **Claude Code's own plugin settings stay on the machine axis — this was checked, don't
+    redo it.** `enabledPlugins` and `extraKnownMarketplaces` are settable in *any* scope
+    including project settings, so a directory split looks available. It isn't useful here:
+    Claude Code anchors project settings on the **git repository root**, and the
+    presentation workspace is 12 independent clones rather than a monorepo — each nested
+    repo resolves to itself, which is why several already carry their own
+    `.claude/settings.local.json`. Covering work would mean the same declaration copied into
+    13 repo roots, most of them team-visible. One `settings.work.json` on the machine axis is
+    strictly better, and installing a plugin is "what this machine has" anyway.
 - When in doubt about whether something syncs, check if the target is a symlink
   (`ls -l`) before editing.
