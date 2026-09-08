@@ -117,6 +117,22 @@ command -v starship &>/dev/null && eval "$(starship init zsh)"
 command -v direnv &>/dev/null && eval "$(direnv hook zsh)"
 command -v mise &>/dev/null && eval "$(mise activate zsh)"
 
+# ===== Work vs Personal Context =====
+# Exports T_WORK under the work root, unsets it elsewhere. Tools that can gate on
+# an env var read it — starship's detect_env_vars keys off its PRESENCE, not value,
+# so never set it to 0 or "false" to mean personal; unset it.
+# Registered after mise so ours runs last, and this prefix is also in .gitconfig's
+# includeIf — `./install.sh --check` asserts the two agree.
+T_WORK_ROOT="$HOME/Code/presentation"
+t_work_context() {
+  # T_WORK_FORCE is the escape hatch for a work clone outside the root.
+  if [[ -n "$T_WORK_FORCE" ]]; then export T_WORK=1; return; fi
+  if [[ "$PWD" == "$T_WORK_ROOT"* ]]; then export T_WORK=1; else unset T_WORK; fi
+}
+autoload -Uz add-zsh-hook
+add-zsh-hook chpwd t_work_context
+t_work_context   # chpwd does not fire at startup, so a shell opened in a work dir needs this
+
 # Initialize zsh completions (Docker fpath added first so its completions are included)
 fpath=($HOME/.docker/completions $fpath)
 autoload -Uz compinit

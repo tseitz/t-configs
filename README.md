@@ -104,7 +104,7 @@ The script uses a sparse checkout to fetch only that directory. Run it again wit
 
 | File | Description |
 |------|-------------|
-| `dotfiles/.zshrc` | Zsh configuration — aliases, functions, PATH, tool init |
+| `dotfiles/.zshrc` | Zsh configuration — aliases, functions, PATH, tool init. Also exports `T_WORK` by directory (a `chpwd` hook; root in `T_WORK_ROOT`) so tools with no directory mechanism of their own can behave differently at work — currently starship's kubernetes/gcloud modules, via `detect_env_vars`. `install.sh --check` asserts `T_WORK_ROOT` agrees with `.gitconfig`'s `includeIf` path, since a mismatch breaks the prompt and the work commit identity together. |
 | `dotfiles/.zshenv` | Zsh environment — Homebrew PATH, Cargo/Rust |
 | `dotfiles/.zshrc-env-vars.example` | Template for private environment variables |
 | `dotfiles/.zshrc-local.example` | Template for machine-specific overrides |
