@@ -52,6 +52,9 @@ style = "bright-black"
 
 # Work-only. detect_env_vars gates the whole module: with T_WORK unset it renders
 # nothing at all. .zshrc sets T_WORK by directory.
+# Styles stay plain ANSI colour names, never `dimmed` and never hex: dimmed crushes
+# contrast on a near-black background, and hex would stop the prompt following an
+# Omarchy theme switch.
 [kubernetes]
 disabled = false
 detect_env_vars = ["T_WORK"]
@@ -66,11 +69,11 @@ style = "bold red"
 [[kubernetes.contexts]]
 context_pattern = "gke_meas-dev-.*"
 context_alias = "dev"
-style = "dimmed green"
+style = "green"
 
 [gcloud]
 disabled = false
 detect_env_vars = ["T_WORK"]
 format = '[$symbol$project]($style) '
 symbol = "☁ "
-style = "dimmed blue"
+style = "purple"
