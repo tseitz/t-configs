@@ -68,5 +68,33 @@ work and personal machines. Understand how it syncs before editing anything unde
   somewhere else, and because it was gitignored a fresh clone never had it at all.
   `settings-drift.js` compares plugin **keys** but never their values, so a plugin toggled
   off here on purpose is not switched back on by a sync.
+- **There are TWO work/personal axes, and picking the wrong one is the usual mistake.**
+  `.work-machine` above is the *machine* axis: it answers "what does this machine have
+  installed" (plugins, packages, credentials), which cannot be directory-scoped. The
+  *directory* axis is `T_WORK`, exported by a `chpwd` hook in `dotfiles/.zshrc` whenever
+  `$PWD` is under `T_WORK_ROOT` (`~/Code/presentation`): it answers "how should a tool
+  behave in this project". This machine is both work and personal — it carries the marker
+  *and* is where t-configs itself is edited — so a machine-level switch would leak work
+  config into personal work.
+  - **Reach for the tool's own directory mechanism first.** `.gitconfig`'s `includeIf`,
+    VS Code folder settings and per-repo `mise.toml` already do this properly. `T_WORK`
+    exists for tools that have *no* such mechanism — starship is the only current consumer,
+    because it supports neither includes nor conditionals, only `detect_env_vars`.
+  - **Gate on presence, never on value.** `detect_env_vars = ["T_WORK"]` hides a module
+    when the variable is absent, so "personal" must mean *unset*. Setting `T_WORK=0` would
+    read as work.
+  - `T_WORK_ROOT` in `.zshrc` and the `includeIf` path in `.gitconfig` are the same fact in
+    two files. `./install.sh --check` asserts they agree, because otherwise moving the work
+    root would silently break the prompt *and* send work commits from the personal email.
+    `T_WORK_FORCE=1` is the escape hatch for a work clone outside the root.
+  - **Claude Code's own plugin settings stay on the machine axis — this was checked, don't
+    redo it.** `enabledPlugins` and `extraKnownMarketplaces` are settable in *any* scope
+    including project settings, so a directory split looks available. It isn't useful here:
+    Claude Code anchors project settings on the **git repository root**, and the
+    presentation workspace is 12 independent clones rather than a monorepo — each nested
+    repo resolves to itself, which is why several already carry their own
+    `.claude/settings.local.json`. Covering work would mean the same declaration copied into
+    13 repo roots, most of them team-visible. One `settings.work.json` on the machine axis is
+    strictly better, and installing a plugin is "what this machine has" anyway.
 - When in doubt about whether something syncs, check if the target is a symlink
   (`ls -l`) before editing.

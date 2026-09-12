@@ -501,6 +501,26 @@ step_symlinks() {
     success ".gitconfig-work already set (work identity preserved)"
   fi
 
+  # The work root is written twice: T_WORK_ROOT in .zshrc (drives the T_WORK prompt
+  # switch) and .gitconfig's includeIf (drives the work commit identity). Moving one
+  # and not the other fails silently in BOTH directions — the prompt just looks
+  # personal, and work commits go out under the personal email. Nothing else checks
+  # this: step_check_leftovers only finds dangling symlinks, and git ignores a
+  # missing include without a word. So assert it here.
+  # sed -n, not grep|sed: under `set -euo pipefail` (:2) a grep that matches nothing
+  # fails the pipeline and aborts the whole install. `sed -n ... p` always exits 0.
+  work_root=$(sed -n 's|^T_WORK_ROOT="\(.*\)"$|\1|p' "$DOTFILES_DIR/.zshrc")
+  work_root="${work_root#\$HOME/}"
+  work_root="${work_root#"$HOME"/}"
+  work_root="${work_root%/}"
+  if [ -z "$work_root" ]; then
+    warn "Could not read T_WORK_ROOT from .zshrc — the work/personal prompt switch may be gone"
+  elif grep -qF "gitdir/i:~/$work_root/" "$DOTFILES_DIR/.gitconfig"; then
+    success "work root agrees in .zshrc and .gitconfig (~/$work_root)"
+  else
+    warn "work root mismatch: .zshrc says ~/$work_root, .gitconfig's includeIf does not — work commits or the prompt will be wrong"
+  fi
+
   ensure_dir "$HOME/.config"
   # Omarchy seeds starship.toml from /etc/skel once and never rewrites it (its
   # upgrade path is hash-gated, so a symlink is skipped), unlike the nvim config
