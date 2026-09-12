@@ -9,9 +9,9 @@
   "enabledPlugins" : {
     "astral@astral-sh" : true,
     "chrome-devtools-mcp@claude-plugins-official" : true,
-    "claude-md-management@claude-plugins-official" : true,
+    "claude-md-management@claude-plugins-official" : false,
     "code-review@claude-plugins-official" : false,
-    "code-simplifier@claude-plugins-official" : true,
+    "code-simplifier@claude-plugins-official" : false,
     "explanatory-output-style@claude-plugins-official" : false,
     "github@claude-plugins-official" : true,
     "playwright@claude-plugins-official" : true,
@@ -106,6 +106,14 @@
           }
         ],
         "matcher" : ".*"
+      },
+      {
+        "hooks" : [
+          {
+            "command" : "~\/.claude\/scripts\/hooks\/session-resume-end.js",
+            "type" : "command"
+          }
+        ]
       }
     ],
     "SessionStart" : [
@@ -259,14 +267,17 @@
     "sentry:sentry-android-sdk" : "off",
     "sentry:sentry-cloudflare-sdk" : "off",
     "sentry:sentry-cocoa-sdk" : "off",
+    "sentry:sentry-code-review" : "off",
     "sentry:sentry-dotnet-sdk" : "off",
     "sentry:sentry-elixir-sdk" : "off",
+    "sentry:sentry-feature-setup" : "off",
     "sentry:sentry-flutter-sdk" : "off",
     "sentry:sentry-go-sdk" : "off",
     "sentry:sentry-nestjs-sdk" : "off",
     "sentry:sentry-nextjs-sdk" : "off",
     "sentry:sentry-otel-exporter-setup" : "off",
     "sentry:sentry-php-sdk" : "off",
+    "sentry:sentry-pr-code-review" : "off",
     "sentry:sentry-react-native-sdk" : "off",
     "sentry:sentry-react-router-framework-sdk" : "off",
     "sentry:sentry-ruby-sdk" : "off",
