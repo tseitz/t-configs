@@ -1,9 +1,8 @@
 # Development Workflow
 
 > **This doc is the orchestrator, and it wins over any skill that disagrees with it.**
-> Superpowers is a toolbox I invoke where this doc calls for it — never an auto-pilot. Don't run
-> its `brainstorming → writing-plans → subagent-driven-development → finishing` chain
-> automatically, and don't treat `using-superpowers`'s "invoke a skill every turn" as binding.
+> Skills are tools invoked where this doc calls for one — never an auto-pilot. Don't invoke a
+> skill on every turn just because it might apply.
 
 ## Core Principle: Tier Everything to the Task
 
@@ -29,11 +28,12 @@ Skip for local changes to existing code. For net-new work or unfamiliar librarie
 `gh search` + official docs to find an existing pattern to adopt before writing from scratch.
 Prefer porting a proven approach over hand-rolling. (This is a lightweight check, not a phase.)
 
-### 1. Design — `superpowers:brainstorming`, when intent is unclear
+### 1. Design — when intent is unclear
 
-Collaborative dialogue → short design, scaled to complexity, with an approval gate before
-implementation. **Optional**: run it when I don't yet know what I want, skip it when I do. For
-trivial changes the "design" is one sentence — but still confirm intent before coding.
+Talk it through before building: a short back-and-forth on what's wanted, scaled to complexity,
+with an approval gate before implementation starts. **Optional**: skip it when I already know
+what I want. For trivial changes the "design" is one sentence — but still confirm intent before
+coding.
 
 Skipping it does NOT skip rigor. The gate lives in step 2, not here.
 
@@ -91,19 +91,17 @@ problem, not merely a hard one.
 
 ### 4. Execute — inline-first
 
-- **Default inline, on the session model.** Follow TDD (`superpowers:test-driven-development`):
-  RED → GREEN → REFACTOR. Inline is the default *because* it needs no brief — I already have the
-  context. Only propose a downshift when the cold-brief test above passes.
+- **Default inline, on the session model.** Inline is the default *because* it needs no brief —
+  I already have the context. Only propose a downshift when the cold-brief test above passes.
 - **Delegate the residual, not the discovery** — the most common shape for anything non-trivial.
   Step 2's scout already did the expensive part on the session model, and its context is costly
   to transfer. What remains is prescriptive — paths, signature, pattern snippet, verify command —
   and *that* delegates to a cheap model safely, because nothing is left to infer. Splitting this
   way is what makes downshifting real rather than hopeful.
-- **Subagents** only for parallel fan-out (`superpowers:dispatching-parallel-agents` for
-  independent problems) or isolation. When using `subagent-driven-development` as the engine,
-  **strip the mandatory 3-agents-per-task review loop** — implementer does TDD + self-review;
-  a single review pass happens at checkpoints or at the end (see Review). Reserve the full
-  spec-then-quality two-stage review for security-sensitive or architecturally significant tasks.
+- **Subagents** only for parallel fan-out (2+ genuinely independent problems) or isolation.
+  Implementer self-reviews before handing back; a single review pass happens at checkpoints or
+  at the end (see Review). Reserve the full spec-then-quality two-stage review for
+  security-sensitive or architecturally significant tasks.
 - **Validation standard (ported from `/prp:implement`):** verify in levels as appropriate —
   static/lint → unit → build → integration → edge. Don't claim done before the relevant levels pass.
 
@@ -138,12 +136,11 @@ looks like **once I've agreed to add one**. This rule governs whether it gets ad
 - **`security-reviewer` is not optional** for auth/authz, user input handling, database queries,
   file system operations, external API calls, crypto, or anything touching payments. Any one of
   those in the diff means run it, regardless of how small the change looks.
-- **`superpowers:verification-before-completion`** — always. No "done"/"passing" claims without
-  fresh command output as evidence.
+- **Verify before claiming done.** No "done"/"passing" claims without fresh command output as
+  evidence — always.
 - **`/test-coverage`** to confirm 80%+ when coverage matters.
-- Responding to review feedback → `superpowers:receiving-code-review` (verify before
-  implementing; no performative agreement; push back when warranted). Incoming PR comments →
-  `receiving-pr-review`.
+- Responding to review feedback: verify before implementing, no performative agreement, push
+  back when warranted. Incoming PR comments → `receiving-pr-review`.
 
 **Findings reach me in one vocabulary: blocking / should-fix / nit.** Several agents grade
 internally on CRITICAL/HIGH/MEDIUM/LOW — that's their detection logic, leave it alone, but
@@ -154,17 +151,16 @@ finding that won't sit on this scale usually didn't clear the bar.
 that the required ones exist at startup so a missing one fails loudly. **If a secret may have been
 exposed, say so immediately and rotate it** — patching the code that leaked it is not enough.
 
-### 6. Debug — `superpowers:systematic-debugging`
+### 6. Debug
 
-Root-cause before fixes. No competitor in either suite; keep it. 3+ failed fixes → question the
-architecture, don't keep patching.
+Root-cause before fixes — reproduce, isolate, understand why, then fix. 3+ failed fixes →
+question the architecture, don't keep patching.
 
 ### 7. Commit & Finish
 
 - **`commit` skill** — branch safety, conventional format, staging. Targeted staging routes
   through `/prp:stage-commit`.
-- **`superpowers:finishing-a-development-branch`** — the "what next" menu (merge / PR / keep /
-  discard) after tests pass.
+- **After tests pass, decide what's next** — merge, open a PR, keep the branch, or discard it.
 - **PR creation** — use `/prp:pr` mechanics (template discovery, heredoc-safe bodies). **The body
   itself follows [pr-descriptions.md](pr-descriptions.md) — high level, no change-by-change
   enumeration — which overrides `/prp:pr`'s own verbosity and any repo template's prompting for
@@ -198,13 +194,6 @@ architecture, don't keep patching.
 - **Don't start a large refactor or a multi-file feature in the last 20% of the context window.**
   Single-file edits, docs, and simple fixes are fine anywhere.
 
-## Superpowers hook — re-run after every plugin update
-
-Superpowers' `SessionStart` injection is quieted by `scripts/quiet-superpowers-hook.sh`, which
-surgically removes the hook from the plugin's own `hooks.json` because Claude Code has no
-per-plugin hook toggle. **It is not update-safe — `/plugin update` restores the hook, so re-run
-the script after any update.**
-
 ## Where Work Happens — Primary Clone, and Which Branch
 
 Two separate decisions, often conflated. **(A)** *which directory* — always my existing clone,
@@ -218,10 +207,10 @@ setup and repointing that isn't worth it for most work, and I rarely work out of
 
 **A worktree requires my explicit OK, asked for BEFORE you create it.** Never create one
 silently, never as a "safety" default, never mid-task without stopping. Don't let a skill pull
-one in automatically either — that includes `superpowers:using-git-worktrees`,
-`subagent-driven-development`, plan execution, and `isolation: 'worktree'` on subagents. If you
-think one is genuinely right (parallel agents mutating the same files, or my checkout must stay
-runnable with uncommitted work intact), say why a branch won't do in a line or two, and wait.
+one in automatically either — that includes plan execution and `isolation: 'worktree'` on
+subagents. If you think one is genuinely right (parallel agents mutating the same files, or my
+checkout must stay runnable with uncommitted work intact), say why a branch won't do in a line
+or two, and wait.
 
 ### B. Branch: personal → default branch directly; work → feature branch
 

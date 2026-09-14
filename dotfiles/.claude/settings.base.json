@@ -19,7 +19,7 @@
     "pyright-lsp@claude-plugins-official" : true,
     "security-guidance@claude-plugins-official" : true,
     "sentry@claude-plugins-official" : true,
-    "superpowers@claude-plugins-official" : true,
+    "superpowers@claude-plugins-official" : false,
     "typescript-lsp@claude-plugins-official" : true
   },
   "env" : {
