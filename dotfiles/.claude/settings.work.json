@@ -2,7 +2,7 @@
   "enabledPlugins": {
     "atlassian@claude-plugins-official": true,
     "db-queries@presentation-skills": true,
-    "inmarket-reporting-analytics@inmarket-skills": true,
+    "inmarket-reporting-analytics@inmarket-skills": false,
     "log-improvement@presentation-skills": true,
     "pact-contracts@presentation-skills": true,
     "team-pr-review@presentation-skills": true,

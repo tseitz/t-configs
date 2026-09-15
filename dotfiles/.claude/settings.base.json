@@ -10,7 +10,7 @@
     "astral@astral-sh" : true,
     "chrome-devtools-mcp@claude-plugins-official" : true,
     "claude-md-management@claude-plugins-official" : false,
-    "code-review@claude-plugins-official" : false,
+    "code-review@claude-plugins-official" : true,
     "code-simplifier@claude-plugins-official" : false,
     "explanatory-output-style@claude-plugins-official" : false,
     "github@claude-plugins-official" : true,
@@ -298,6 +298,9 @@
   "statusLine" : {
     "command" : "bash $HOME\/.claude\/statusline-command.sh",
     "type" : "command"
+  },
+  "permissions" : {
+    "defaultMode" : "auto"
   },
   "tui" : "fullscreen",
   "wheelScrollAccelerationEnabled" : false
