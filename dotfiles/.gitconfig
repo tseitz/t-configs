@@ -3,6 +3,8 @@
 	name = tseitz
 [init]
 	defaultBranch = main
+[core]
+	excludesFile = ~/t-configs/dotfiles/.gitignore_global
 
 # ===== Absorbed from Omarchy's ~/.config/git/config =====
 # Git treats $XDG_CONFIG_HOME/git/config as a FALLBACK, not a lower-priority

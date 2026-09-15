@@ -1,0 +1,8 @@
+# Personal, every repo on this machine — never shared with a team, never
+# committed anywhere. See core.excludesFile in .gitconfig.
+
+# mattpocock-skills domain-modeling glossary (CONTEXT.md / CONTEXT-MAP.md).
+# No team repo I work in has adopted this workflow, so these stay local-only
+# regardless of which repo they land in.
+CONTEXT.md
+CONTEXT-MAP.md
