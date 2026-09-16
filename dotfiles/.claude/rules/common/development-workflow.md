@@ -45,7 +45,14 @@ scout found (surprises, not guessed size), plan at that tier, then critique it �
 fresh-context subagent on anything that scouted FULL, because a plan self-graded by its author
 comes back "looks fine."
 
-The plan's own shape, once that skill calls for one:
+**Inside the Matt Pocock chain, the beat is `to-plan` instead** — `/to-spec` → `/to-tickets` →
+`/to-plan #<ticket>` → `/implement`. Same four beats, but the spec already agreed the seams and
+the tickets already sliced the work, so `to-plan` carries those forward by reference rather than
+re-deciding them, and it reuses one saved scout across every ticket of a spec. It is user-invoked,
+like the rest of that chain. **Run one or the other, never both.** No spec upstream →
+`pre-implementation-review`.
+
+The plan's own shape, once either skill calls for one:
 
 - **One document, not two.** A single file with a short `## Design` section (the approved
   intent) + `## Tasks`. No separate spec-then-plan artifacts. Reserve two docs only for genuine

@@ -65,6 +65,18 @@ restate it here.
 Carry the scout's citations into the plan. A step that names a file the scout never opened is
 an assumption, and Step 3 will ask about it.
 
+### Name symbols in the Tasks, not line numbers
+
+**`file:line` belongs in the scout. `file:symbol` belongs in the Tasks.**
+
+The scout is read once, before any edit, so a line number there is accurate and clickable. The
+Tasks are read *during* editing — and the plan's own earlier tasks move the lines its later
+tasks cite. A plan that says "extract `levels.py:86-89`" in task 1 and "delete lines 238-248"
+in task 2 has invalidated itself by the time task 2 runs.
+
+Write "`shortlist`'s truncation tail", not "`levels.py:86-89`". Symbols survive the edit;
+directional is good enough.
+
 ## Step 3 — Critique the plan
 
 **SHORT** — answer the questions below inline, briefly.

@@ -32,7 +32,7 @@ Blueprint runs a 5-phase pipeline:
 
 1. **Research** — Pre-flight checks (git, gh auth, remote, default branch), then reads project structure, existing plans, and memory files to gather context.
 2. **Design** — Breaks the objective into one-PR-sized steps (3–12 typical). Assigns dependency edges, parallel/serial ordering, model tier (strongest vs default), and rollback strategy per step.
-3. **Draft** — Writes a self-contained Markdown plan file to `<repo>/.claude/plans/` (gitignored — see `rules/common/development-workflow.md`). Every step includes a context brief, task list, verification commands, and exit criteria — so a fresh agent can execute any step without reading prior steps.
+3. **Draft** — Writes a self-contained Markdown plan file to `<repo>/.claude/plans/` (gitignored — see `rules/common/development-workflow.md`). Every step includes a context brief, task list, verification commands, and exit criteria — so a fresh agent can execute any step without reading prior steps. **Task lists name symbols, never line numbers** (`shortlist`'s truncation tail, not `levels.py:86-89`): steps here execute days apart and each one moves the lines the next would cite, so a line number is wrong before it is read.
 4. **Review** — Delegates adversarial review to a strongest-model sub-agent (e.g., Opus) against a checklist and anti-pattern catalog. Fixes all critical findings before finalizing.
 5. **Register** — Saves the plan, updates memory index, and presents the step count and parallelism summary to the user.
 
