@@ -30,11 +30,11 @@ dotfiles/.claude/plugins/marketplaces/
 # Skills: ignore work-specific skills (may contain company-internal references)
 dotfiles/.claude/skills/work/
 
-# Sandbox-friction capture log — per-project runtime state, written by the hook
-.claude/sandbox-friction.jsonl
-
-# Working plan artifacts — ephemeral, promoted into docs/ by hand when worth sharing
-.claude/plans/
+# Root-level .claude/ — local runtime state for this repo (settings.local.json,
+# sandbox-friction log, plans, etc.), never shared config. The leading slash anchors this
+# to the repo root: a bare `.claude/` matches at any depth, so it also swallows
+# `dotfiles/.claude/` and silently hides every newly added skill, rule and command.
+/.claude/
 
 .DS_Store
 .tmp/
