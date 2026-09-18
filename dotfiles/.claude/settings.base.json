@@ -43,7 +43,7 @@
       }
     }
   },
-  "outputStyle" : "ELI5",
+  "outputStyle" : "My Concise",
   "hooks" : {
     "PostToolUse" : [
       {
