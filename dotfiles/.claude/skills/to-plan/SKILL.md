@@ -118,7 +118,7 @@ prevent, and a wasted FULL costs one subagent.
 - **`## Tasks`** — grouped by file, in the order they must land.
 - **`## Verify`** — the exact commands, plus anything they do not cover.
 
-### Name symbols in Tasks, not line numbers
+### Name symbols in the Tasks, not line numbers
 
 **`file:line` belongs in the scout. `file:symbol` belongs in the Tasks.**
 

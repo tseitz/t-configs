@@ -16,9 +16,8 @@ paths:
 
 ## Agent Support
 
-- **tdd-guide** — TDD workflow enforcement, proactively triggered
 - **e2e-runner** — Playwright E2E testing specialist
 
 ## Reference
 
-See skill: `superpowers:test-driven-development` for the RED → GREEN → REFACTOR cycle.
+See skill: `mattpocock-skills:tdd` for the RED → GREEN → REFACTOR cycle.
