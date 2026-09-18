@@ -55,6 +55,10 @@
           {
             "command" : "~\/.claude\/scripts\/hooks\/post-edit-comment-length.js",
             "type" : "command"
+          },
+          {
+            "command" : "~\/.claude\/scripts\/hooks\/post-edit-comment-style.js",
+            "type" : "command"
           }
         ],
         "matcher" : "Edit|Write|MultiEdit"
