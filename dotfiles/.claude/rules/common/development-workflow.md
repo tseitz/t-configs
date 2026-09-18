@@ -175,9 +175,10 @@ question the architecture, don't keep patching.
 - **Comment triage — a required beat before the PR is opened**, done by
   `/post-implementation-reflection` and its Comments lens: sweep the branch diff, the commit
   bodies, and the session, and route each piece of rationale out of the code and onto the PR.
-  **I invoke this one too** (`disable-model-invocation: true`), so prompt me and wait. It still
-  has to happen in the session that did the work — triaged cold it degrades into diff narration —
-  so raise it while that context is live rather than letting the PR go out without it.
+  **Invoke it yourself** — unlike `/pr-review` above, this one is model-invocable. Run it when a
+  change is built and a PR is next, without waiting to be asked. It has to happen in the session
+  that did the work: triaged cold it degrades into diff narration, so the trigger is that
+  context still being live, not the PR being ready.
 
 ## Model & Effort Reference
 
