@@ -15,6 +15,11 @@ one call site. Auth, payments, a schema, or a public contract never qualify, reg
 
 **A spec upstream? Use `to-plan` instead** — see Relationship to other tools. Never both.
 
+**Already carries a `## Critique` section? The gate is done — do not re-run it.** Implementation
+starts in a fresh session, so a plan arrives with no memory of having been checked. Re-scouting
+it wastes the work and, worse, lets the model re-argue its way to an approach that was already
+rejected. Read the plan, honour its rejected findings, and build.
+
 ---
 
 ## Step 0 — Scout. Always. Bounded.
@@ -67,6 +72,9 @@ restate it here.
 - **`## Tasks`** — grouped by file, in the order they must land, each with its considerations or
   open questions.
 - **`## Verify`** — the exact commands, plus anything they do not cover.
+- **`## Critique`** — written in Step 4, not now. The assumptions Step 3 named, what was folded
+  in, and **what was rejected and why**. This section is what tells a fresh session the gate
+  already ran, so a plan without it gets re-scouted.
 
 Carry the scout's citations into the Design. A step that names a file the scout never opened is
 an assumption, and Step 3 will ask about it.
@@ -109,27 +117,32 @@ The questions, hardest first:
 Every finding cites `file:line` or a specific step of the plan. A question with no citation is
 not a finding — answer "nothing to flag" and move on.
 
-## Step 4 — Checkpoint, then route
+## Step 4 — Checkpoint, then hand off
 
 **Stop. Present, and wait.** No code before approval.
 
-Fold accepted findings into the plan and say what changed. If a finding is rejected, say so in
-one line rather than silently dropping it — the rejected ones are worth having on record when
-the plan turns out to be wrong later.
+Fold accepted findings into the plan and say what changed.
+
+**On FULL, write this down in the plan's `## Critique` section** — the assumptions Step 3
+named, what was folded in, and what was rejected and why. A rejected finding held only in the
+conversation dies with it, and the next session re-introduces the approach confidently, because
+it looks like an improvement. Recording it is also what marks the gate as run.
 
 **A finding can invalidate the tier, not just the plan.** A SHORT that turns out to cross a
 boundary or change asserted behaviour was mis-tiered — go back to Step 1 and redo it as FULL.
 Folding a tier finding into a SHORT plan keeps the wrong ceremony.
 
-Then route, per `rules/common/development-workflow.md` §3. One question: would a subagent with
-only the system prompt, CLAUDE.md and this plan know what to do? Yes → hand it to Sonnet. No →
-stay inline. Say which in a sentence; the approval above was the same moment.
+Then hand off. Implementation runs cold — a fresh session or a subagent, either way with only
+the system prompt, CLAUDE.md and this plan. That is the test `development-workflow.md` §3 sets,
+and the plan is the whole brief. Anything the implementer needs that lives only in this
+conversation has to be in the doc before you stop.
 
-`.claude/plans/` is gitignored and a subagent gets nothing but what you name, so print the path:
+`.claude/plans/` is gitignored and nothing will find the plan unless the invocation names it,
+so print the path:
 
 ```
 Plan: .claude/plans/<slug>.md
-Next: <inline | delegate to Sonnet — this plan is the brief>
+Next session: implement .claude/plans/<slug>.md
 ```
 
 **Not `/implement`** — that reads a ticket, which this path doesn't produce.
@@ -140,12 +153,15 @@ Next: <inline | delegate to Sonnet — this plan is the brief>
 
 **SHORT** — prose, not a form. The scout's five answers with their citations, the tier and its
 deciding surprise, the plan in a few sentences, the critique questions answered briefly, then
-the route. Anything the code could not answer goes at the end as an open question for the user.
+the handoff. Anything the code could not answer goes at the end as an open question for the user.
 
 **FULL** — the same beats as headed sections: `### Scout` (the five answers, each citing
 `file:line`, plus anything you could not determine, named as such) · `### Tier` · `### Plan`
 (path to the doc and a 3–5 bullet summary) · `### Critique` (one line per question, each a
-finding with a citation or "nothing to flag") · `### Open questions for you` · the route block.
+finding with a citation or "nothing to flag") · `### Open questions for you` · the handoff block.
+
+The FULL response's `### Critique` is what gets written into the plan's own `## Critique`
+section once you have my call on each finding. Say it here, record it there.
 
 Either way, stop for approval.
 
@@ -161,4 +177,4 @@ Either way, stop for approval.
 - **`blueprint`** — for multi-session, multi-PR work. It has its own adversarial review gate;
   don't run both.
 - **`/implement`** — chain-only. It reads a ticket, so it has nothing to read on this path, and
-  its tail conflicts with `development-workflow.md` §5 and §7. Route per Step 4 instead.
+  its tail conflicts with `development-workflow.md` §5 and §7. Hand off per Step 4 instead.
