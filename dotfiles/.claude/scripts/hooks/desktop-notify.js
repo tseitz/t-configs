@@ -44,10 +44,6 @@ if (process.platform === 'linux') {
   }
 }
 
-/**
- * Find available PowerShell executable on WSL.
- * Returns first accessible path, or null if none found.
- */
 function findPowerShell() {
   if (!isWSL) return null;
 

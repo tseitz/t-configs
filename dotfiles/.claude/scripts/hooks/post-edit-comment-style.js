@@ -53,9 +53,7 @@ function alreadyWarned(filePath) {
   let seen = '';
   try {
     seen = fs.readFileSync(seenFile, 'utf8');
-  } catch {
-    // No file yet — first comment of the session.
-  }
+  } catch {}
   if (seen.split('\n').includes(filePath)) return true;
   fs.appendFileSync(seenFile, filePath + '\n', 'utf8');
   return false;

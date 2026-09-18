@@ -72,7 +72,6 @@ function findVerboseBlocks(text, isWholeFile = false) {
     while (i < lines.length && COMMENT_RE.test(lines[i])) i += 1;
     const commentLines = i - start;
 
-    // Count the code this block introduces: up to the next blank line or comment.
     let code = 0;
     let j = i;
     while (j < lines.length && !BLANK_RE.test(lines[j]) && !COMMENT_RE.test(lines[j])) {

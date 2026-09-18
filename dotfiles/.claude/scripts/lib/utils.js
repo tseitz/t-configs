@@ -21,23 +21,14 @@ const WINDOWS_RESERVED_SESSION_IDS = new Set([
   'LPT1', 'LPT2', 'LPT3', 'LPT4', 'LPT5', 'LPT6', 'LPT7', 'LPT8', 'LPT9'
 ]);
 
-/**
- * Get the user's home directory (cross-platform)
- */
 function getHomeDir() {
   return os.homedir();
 }
 
-/**
- * Get the Claude config directory
- */
 function getClaudeDir() {
   return path.join(getHomeDir(), '.claude');
 }
 
-/**
- * Get the sessions directory
- */
 function getSessionsDir() {
   return path.join(getClaudeDir(), SESSION_DATA_DIR_NAME);
 }
@@ -56,16 +47,10 @@ function getSessionSearchDirs() {
   return Array.from(new Set([getSessionsDir(), getLegacySessionsDir()]));
 }
 
-/**
- * Get the learned skills directory
- */
 function getLearnedSkillsDir() {
   return path.join(getClaudeDir(), 'skills', 'learned');
 }
 
-/**
- * Get the temp directory (cross-platform)
- */
 function getTempDir() {
   return os.tmpdir();
 }
@@ -111,9 +96,6 @@ function getTimeString() {
   return `${hours}:${minutes}`;
 }
 
-/**
- * Get the git repository name
- */
 function getGitRepoName() {
   const result = runCommand('git rev-parse --show-toplevel');
   if (!result.success) return null;
@@ -250,7 +232,6 @@ function findFiles(dir, pattern, options = {}) {
 
   searchDir(dir);
 
-  // Sort by modification time (newest first)
   results.sort((a, b) => b.mtime - a.mtime);
 
   return results;
@@ -335,9 +316,6 @@ function output(data) {
   }
 }
 
-/**
- * Read a text file safely
- */
 function readFile(filePath) {
   try {
     return fs.readFileSync(filePath, 'utf8');
@@ -346,17 +324,11 @@ function readFile(filePath) {
   }
 }
 
-/**
- * Write a text file
- */
 function writeFile(filePath, content) {
   ensureDir(path.dirname(filePath));
   fs.writeFileSync(filePath, content, 'utf8');
 }
 
-/**
- * Append to a text file
- */
 function appendFile(filePath, content) {
   ensureDir(path.dirname(filePath));
   fs.appendFileSync(filePath, content, 'utf8');
@@ -540,9 +512,6 @@ function stripAnsi(str) {
   return str.replace(/\x1b(?:\[[0-9;?]*[A-Za-z]|\][^\x07\x1b]*(?:\x07|\x1b\\)|\([A-Z]|[A-Z])/g, '');
 }
 
-/**
- * Search for pattern in file and return matching lines with line numbers
- */
 function grepFile(filePath, pattern) {
   const content = readFile(filePath);
   if (content === null) return [];
