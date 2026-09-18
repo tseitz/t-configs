@@ -1,7 +1,6 @@
 ---
 name: post-implementation-reflection
-description: After work is implemented, reflects on the changes and then polishes them — comment triage, simplification, cleanup. Scales from a quick pass on a small diff to a full retrospective on a plan. Works on uncommitted changes, the last N commits, or a whole PR branch. Run it yourself with /post-implementation-reflection when a change is built and you want a lap on it before review.
-disable-model-invocation: true
+description: After work is implemented, reflects on the changes and then polishes them — comment triage, simplification, cleanup. Scales from a quick pass on a small diff to a full retrospective on a plan. Works on uncommitted changes, the last N commits, or a whole PR branch. Run it yourself with /post-implementation-reflection, or invoke it whenever a change is built and it deserves a lap before review.
 memory: user
 ---
 
@@ -71,7 +70,7 @@ small change gets skimmed, and a skimmed lap catches nothing.
 - **SHORT** — roughly under ten files, no new subsystem, no architectural decision. Run
   **Comments · Simplicity & navigability · Technical debt**. Skip the rest.
 - **FULL** — a plan, a multi-session feature, a new subsystem, or anything architectural. Run
-  every lens, then route learnings in Close the Loop.
+  every lens.
 
 ### 2. Reflect Through These Lenses
 
@@ -88,38 +87,27 @@ For each lens, be concrete. Skip any lens that doesn't apply.
 
 **Comments** ← run this one first, and on every depth
 
-The standard lives in `rules/common/coding-style.md`. Apply it; don't restate it. Judge only the
-comments **this diff added**, and leave pre-existing ones alone.
-
-**Measure before you judge.** Count the comments in each changed file and in its siblings, and put
-the numbers in the finding. Do not estimate them. The count is the entire point of this lens: the
-rule was already loaded while the code was being written and it did not fire, so only a number
-changes the outcome now.
-
-```bash
-for f in <dir>/*.<ext>; do echo "$(grep -cE '^\s*(//|#)' "$f") $f"; done | sort -rn
-```
-
-Then route every added comment by the test in the rules file. Both directions count: also flag a
-non-obvious decision that genuinely lacks a *why*. State the density numbers first, so "add a
-comment here" is a decision against a budget.
+The standard lives in `rules/common/coding-style.md` — apply its routing test, don't restate it.
+Judge only comments **this diff added**; leave pre-existing ones alone. No length or density rule
+in this lens — just route each one, as concisely as the point allows.
 
 **Cuts are relocated, not deleted.** Rationale that fails the test is still worth having — it just
-belongs on the PR instead of in the repo.
+doesn't belong in the repo.
 
 - **Stays in the code:** an invariant a cleanup would break · a tooling or library workaround ·
-  why a redundant-looking check is load-bearing · why an annotation that looks removable isn't ·
-  why two similar things are deliberately not shared.
-- **Goes up as an inline PR comment:** the bug's history and impact · why this approach over the
-  alternative · why a file *wasn't* changed · what was left out of scope · test-strategy choices ·
-  measurements and cross-repo facts that justified a decision.
+  why a redundant-looking check is load-bearing · why two similar things are deliberately not
+  shared.
+- **Moves out:** the bug's history and impact · why this approach over the alternative · why a
+  file *wasn't* changed · what was left out of scope · test-strategy choices · measurements and
+  cross-repo facts. On a PR this becomes an inline comment on the anchor line; off a PR — any
+  other task — say it to me directly as part of your summary instead. Either way, keep it tight:
+  fragments and dropped grammar are fine if the point still lands.
 
-**Never triage cold.** The most valuable PR comments explain *absences* — why an endpoint was left
-alone, why an obvious refactor was declined, why a file isn't in the diff — and a diff cannot show
-what isn't in it. Other load-bearing facts live outside the repo entirely: ticket impact tables,
-consumer behaviour in another repo, out-of-band product decisions, one-off measurements. Run this
-in the session that did the work, or feed it the tickets and cross-repo context first. Triaged
-cold, the comments degrade into fluent diff narration — the exact noise this is meant to prevent.
+**Never triage cold.** The most valuable of these explain *absences* — why an endpoint was left
+alone, why an obvious refactor was declined, why a file isn't in the diff — and a diff can't show
+what isn't in it. Run this in the session that did the work, or feed it the tickets/cross-repo
+context first. Triaged cold, it degrades into fluent diff narration — the exact noise this is
+meant to prevent.
 
 If the cuts become PR comments, **draft them, never post unasked.** When approved: push the code
 cuts *first* (comments anchor to line numbers in the PR head, so posting before the trim lands
@@ -182,26 +170,12 @@ absent or has pre-authorized cleanup, proceed with Must items only and note what
   history, so it stays reviewable and revertable on its own
 - **Stay in scope:** do not fix unrelated pre-existing issues or start new features. Reflection
   surfaces tangents; capture them as follow-up notes, don't act on them here
-- Run the project's validation gate to confirm no regressions (see Close the Loop)
+- Run the project's validation gate to confirm no regressions
 
 ### 6. Close the Loop
 
-This step is project-specific. Check **CLAUDE.md** (or the project's equivalent conventions file)
-and your **memory / lessons system** for the right commands and documents. Typical things to do:
-
-- **Run the validation gate** — CLAUDE.md usually names this (e.g. `make precommit`, `pnpm check`,
-  `./scripts/validate.sh`). This is the one place to run it; don't claim "done" without its output
-  (see `verification-before-completion`).
-- **Update session state** — if the project uses a HANDOFF.md, CONTEXT.md, or similar doc, overwrite
-  it to reflect the current state of the codebase. The next agent session starts cold.
-- **Capture learnings via existing tooling, don't hand-roll it.** The Agent QoL findings above are
-  the raw material. Route them: a durable cross-project pattern worth a new skill →
-  `superpowers:writing-skills`; wrong/misleading CLAUDE.md lines → `claude-md-improver`; project
-  facts not derivable from code → memory. Only write a freeform `.claude/lessons/` note if the
-  project has no such system.
-- **Flag if docs need updating** — README, architecture docs, or API docs that are now stale.
-
-If you're unsure where these live, check CLAUDE.md first, then your memory files.
+Suggestion, not a rule: if the reflection turned up a doc (CLAUDE.md, README, architecture doc) or
+a memory that's now wrong or missing, say so and offer to update it. Nothing more required.
 
 ---
 
@@ -215,7 +189,7 @@ If you're unsure where these live, check CLAUDE.md first, then your memory files
 [1–5 bullets]
 
 ### Reflection
-**Comments:** [density counts vs siblings, then keep/cut/relocate — or "nothing to flag"]
+**Comments:** [keep/cut/relocate per comment, or "nothing to flag"]
 **Simplicity & navigability:** [finding or "nothing to flag"]
 **Technical debt:** [finding or "nothing to flag"]
 --- FULL only ---
@@ -226,9 +200,9 @@ Must: ...
 Should: ...
 Nice to have: ...
 
-### For the PR (if any)
-[comment cuts to post as inline comments — drafted, NOT posted]
+### Comment cuts
+[rationale moved out of code — inline PR comments if there's a PR, otherwise said here — drafted/stated, NOT posted for you]
 ```
 
-Then **stop for approval** (step 4). Once approved, implement in separate commits, then close the
-loop: run the validation gate, update session state, route learnings to the right tooling.
+Then **stop for approval** (step 4). Once approved, implement in separate commits, run the
+validation gate, and offer to update any doc or memory the reflection flagged.
