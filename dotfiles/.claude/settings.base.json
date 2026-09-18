@@ -43,7 +43,7 @@
       }
     }
   },
-  "outputStyle" : "ELI5",
+  "outputStyle" : "My Concise",
   "hooks" : {
     "PostToolUse" : [
       {
@@ -253,6 +253,7 @@
         "~\/Library\/pnpm",
         "~\/.bundle",
         "~\/.npm",
+        "~\/.config\/rclone",
         "~\/t-configs"
       ]
     },
