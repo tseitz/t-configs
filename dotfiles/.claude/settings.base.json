@@ -253,6 +253,7 @@
         "~\/Library\/pnpm",
         "~\/.bundle",
         "~\/.npm",
+        "~\/.config\/rclone",
         "~\/t-configs"
       ]
     },
