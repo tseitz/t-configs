@@ -1,0 +1,12 @@
+onboarding = false
+
+[ui.toast]
+delivery = "herdr"
+
+[theme]
+name = "catppuccin"
+auto_switch = false
+
+[worktrees]
+directory = "~/code/worktrees"
+
