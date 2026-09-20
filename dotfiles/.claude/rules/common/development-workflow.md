@@ -59,7 +59,7 @@ The plan's own shape, once either skill calls for one:
   multi-subsystem work where one design anchors several plans.
 - **Location: `<repo>/.claude/plans/` — gitignored, ephemeral.** These are working artifacts,
   not deliverables. Do NOT commit them by default; promote one into `docs/` only when I ask to
-  share it. Ensure `.claude/plans/` is gitignored (like the worktrees convention below).
+  share it. Ensure `.claude/plans/` is gitignored.
 - **Granularity tiers with execution mode:**
   - *Inline / capable / supervised* → **intent-level**: goal, the units/files in play,
     approach + constraints + gotchas, and how to verify. Leave the *how* to the implementer;
@@ -241,8 +241,31 @@ still applies on work repos.
 
 ### If I approve a worktree
 
-Location is always `<repo-root>/.claude/worktrees/<branch-name>` — never improvised, never asked
-about. Then run `~/.claude/scripts/worktree-bootstrap.sh` from inside it. **Read that script's
-header first**: it carries the gitignore requirement, why tracked-files-only breaks local config,
-and the polling flags an rspack dev server needs. Both of these override the skill's own
-directory-selection and `npm install` steps.
+Location is always `~/code/worktrees/<repo-name>/<branch-name>` — never improvised, never asked
+about. **Central, deliberately not inside the repo.** A worktree nested under the repo root is a
+second full copy of the source that file explorers list and that any linter run without an
+explicit path walks.
+
+Then run `~/.claude/scripts/worktree-bootstrap.sh` from inside it. **Read that script's header
+first**: it carries why tracked-files-only breaks local config, and the polling flags an rspack
+dev server needs. Both of these override the skill's own directory-selection and `npm install`
+steps.
+
+**Inside Herdr (`HERDR_ENV=1`), let it own the worktree** — its model is one worktree, one
+workspace, so each gets its own panes, editor and agent:
+
+```bash
+herdr worktree create --branch <name> [--base <ref>]   # creates it and opens the workspace
+herdr worktree open --branch <name>                    # an existing one
+herdr worktree list
+herdr worktree remove --workspace <id>
+```
+
+No `--path` needed: `[worktrees] directory` in `~/.config/herdr/config.toml` is set to
+`~/code/worktrees` and Herdr appends `<repo-name>/<branch>` itself. Note that key is a single
+global base resolved against `$HOME` — it cannot be made repo-relative, which is why the
+convention above is central rather than in-repo.
+
+**One editor per worktree.** Don't `cd` between worktrees inside one long-lived nvim: LSP
+clients stay rooted at the directory they attached to, and claudecode.nvim's lock file
+advertises a workspace folder that `/ide` then matches against the wrong tree.
