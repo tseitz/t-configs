@@ -23,6 +23,18 @@
 vim.keymap.set("v", "J", ":m '>+1<cr>gv=gv", { desc = "Move selection down" })
 vim.keymap.set("v", "K", ":m '<-2<cr>gv=gv", { desc = "Move selection up" })
 
+-- Plan docs from the pre-implementation-review skill. Both flags are needed, not one:
+-- .claude/ is a dotfile AND the plans dir is gitignored, so either filter alone still
+-- hides them. The picker's own <A-h>/<A-i> toggle the same two.
+vim.keymap.set("n", "<leader>fp", function()
+  local dir = vim.fn.getcwd() .. "/.claude/plans"
+  if vim.fn.isdirectory(dir) == 0 then
+    vim.notify("No .claude/plans in " .. vim.fn.getcwd(), vim.log.levels.WARN)
+    return
+  end
+  Snacks.picker.files({ cwd = dir, hidden = true, ignored = true })
+end, { desc = "Find plan" })
+
 -- denols returns hover docs as markdown with ```ts fences. Without this they render as
 -- plain text.
 vim.g.markdown_fenced_languages = { "ts=typescript" }
