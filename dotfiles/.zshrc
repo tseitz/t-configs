@@ -76,6 +76,9 @@ function cd_up() {
 }
 alias 'cd..'='cd_up'
 
+# Herdr pane/tab layout helpers (hdl, hds, hdlm, hsl)
+[ -f "$dotfiles_path/.zshrc-herdr" ] && source "$dotfiles_path/.zshrc-herdr"
+
 # ===== Environment Variables =====
 
 # Build flags (for Python packages with native dependencies — macOS only)
