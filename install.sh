@@ -538,6 +538,12 @@ step_symlinks() {
     create_symlink "$DOTFILES_DIR/.config/nvim" "$HOME/.config/nvim"
   fi
 
+  # Herdr edits config.toml in place rather than replacing it, so the repo can own the
+  # whole file. Do not copy the settings.json seed-once dance here, and do not link the
+  # rest of ~/.config/herdr — the sockets, logs and session.json beside it are machine state.
+  ensure_dir "$HOME/.config/herdr"
+  create_symlink "$DOTFILES_DIR/.config/herdr/config.toml" "$HOME/.config/herdr/config.toml"
+
   # VS Code User settings. The file lives under .config/editors/ rather than
   # .config/Code/ so a second editor can share it without moving the source.
   if $IS_MACOS; then

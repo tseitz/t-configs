@@ -17,11 +17,12 @@
 # CREATING the worktree (worktrees need explicit approval first — see
 # rules/common/development-workflow.md):
 #
-#   Location is always <repo-root>/.claude/worktrees/<branch-name>. Do not improvise
-#   one from `git worktree list`, from external tooling paths, or from the skill's
-#   ~/.config/superpowers fallback. Before creating, make sure .claude/worktrees/ is
-#   gitignored and commit that — .claude/ itself is usually tracked, the subdirectory
-#   must not be.
+#   Location is always ~/code/worktrees/<repo-name>/<branch-name> — central, not inside
+#   the repo. Do not improvise one from `git worktree list`, from external tooling
+#   paths, or from the skill's ~/.config/superpowers fallback.
+#
+#   Inside Herdr, `herdr worktree create --branch <name>` produces exactly that path
+#   and opens it as its own workspace.
 #
 # AFTER bootstrapping, to run an rspack dev server from the worktree, prefix it with
 # CHOKIDAR_USEPOLLING=true WATCHPACK_POLLING=true, or chokidar crashes with EMFILE.
