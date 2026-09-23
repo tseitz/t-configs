@@ -16,6 +16,11 @@
 # like a command that *hit* one. A real denial always goes to stderr, so precision costs almost
 # no recall. The exception is a command that merges with `2>&1`, which this cannot see; that is
 # the deliberate trade, because a log nobody trusts is read by nobody.
+#
+# Exception: the harness's `deny network-outbound <host>` / `deny file-write… <path>` lines are
+# scanned in every field — the only signal that survives `2>&1`. Anchored to line start: the
+# harness writes them that way, while a command that merely prints one (a trace, a `cat` of
+# this log) has it mid-line.
 
 set -euo pipefail
 
@@ -37,6 +42,10 @@ resp=$(printf '%s' "$input" | jq -r '
 sig=$(printf '%s' "$resp" | grep -ioE \
   'operation not permitted|read-only file system|could not resolve host|network is unreachable|connection refused|sandbox[ -][a-z]*: deny|blocked by sandbox' \
   | head -1 || true)
+if [ -z "$sig" ]; then
+  sig=$(printf '%s' "$input" | jq -r '[.tool_response] | .. | strings' 2>/dev/null \
+    | grep -oE '^deny (network-outbound|file-[a-z-]+) [^ ]+' | head -1 || true)
+fi
 [ -n "$sig" ] || exit 0
 
 log="${CLAUDE_PROJECT_DIR:-.}/.claude/sandbox-friction.jsonl"
