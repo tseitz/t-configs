@@ -194,9 +194,11 @@ function ensureWorkspace(ctx) {
   return ctx.workspaceId;
 }
 
-// cwd survives a tab rename; the label survives both shells cd-ing away.
+// cwd survives a tab rename; the label survives both shells cd-ing away. A cwd match
+// counts only beside an agent pane: a bare shell left in the worktree isn't the review tab.
 function findTab(ctx, wt, label) {
-  const pane = ctx.panes.find(p => [p.cwd, p.foreground_cwd].some(c => c && within(c, wt)));
+  const hasAgent = tabId => ctx.panes.some(p => p.tab_id === tabId && p.agent);
+  const pane = ctx.panes.find(p => [p.cwd, p.foreground_cwd].some(c => c && within(c, wt)) && hasAgent(p.tab_id));
   if (pane) return pane.tab_id;
   const tab = ctx.tabs.find(t => t.label === label);
   return tab ? tab.tab_id : null;
