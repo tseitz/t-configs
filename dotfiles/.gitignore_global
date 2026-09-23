@@ -10,3 +10,6 @@ CONTEXT-MAP.md
 **/.claude/.cc-writes/
 
 **/.claude/settings.local.json
+
+# nvim falls back to the cwd for its log when its state dir is unwritable, as in Claude's sandbox.
+nvim.log

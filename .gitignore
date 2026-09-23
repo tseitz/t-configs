@@ -29,6 +29,9 @@ dotfiles/.claude/plugins/marketplaces/
 
 # Skills: ignore work-specific skills (may contain company-internal references)
 dotfiles/.claude/skills/work/
+# Installed per machine by `npx skills`; the link is absolute, since a relative one breaks behind
+# the symlinked ~/.claude/skills.
+dotfiles/.claude/skills/herdr
 
 # Root-level .claude/ — local runtime state for this repo (settings.local.json,
 # sandbox-friction log, plans, etc.), never shared config. The leading slash anchors this
