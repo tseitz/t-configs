@@ -10,3 +10,11 @@ auto_switch = false
 [worktrees]
 directory = "~/code/worktrees"
 
+[keys]
+next_tab = ""
+previous_tab = ""
+
+next_workspace = "prefix+n"
+previous_workspace = "prefix+p"
+focus_agent = "prefix+shift+1..9"
+
