@@ -258,7 +258,8 @@
         "~\/.bundle",
         "~\/.npm",
         "~\/.config\/rclone",
-        "~\/t-configs"
+        "~\/t-configs",
+        "~\/Code\/worktrees"
       ]
     },
     "network" : {
@@ -267,7 +268,9 @@
         "api.github.com",
         "rubygems.org",
         "index.rubygems.org",
-        "thinknear.jfrog.io"
+        "thinknear.jfrog.io",
+        "jfrog-prod-use1-shared-virginia-main.s3.amazonaws.com",
+        "results-receiver.actions.githubusercontent.com"
       ],
       "allowLocalBinding" : true,
       "allowUnixSockets" : [
