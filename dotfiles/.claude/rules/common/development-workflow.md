@@ -266,6 +266,11 @@ No `--path` needed: `[worktrees] directory` in `~/.config/herdr/config.toml` is 
 global base resolved against `$HOME` — it cannot be made repo-relative, which is why the
 convention above is central rather than in-repo.
 
+**Exception — PR reviews.** `~/code/worktrees/<repo>/pr-<n>` belongs to
+`~/.claude/scripts/review-prs.js` (`/review-assigned-prs`): detached worktrees, one *tab* each in
+the `presentation-review` workspace — a shape `herdr worktree` can't produce. `herdr worktree
+list/remove` doesn't see them; clean up with `review-prs --prune`.
+
 **One editor per worktree.** Don't `cd` between worktrees inside one long-lived nvim: LSP
 clients stay rooted at the directory they attached to, and claudecode.nvim's lock file
 advertises a workspace folder that `/ide` then matches against the wrong tree.

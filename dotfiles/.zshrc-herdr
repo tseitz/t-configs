@@ -146,3 +146,32 @@ hsl() {
     herdr pane run "$pane" "$cmd" >/dev/null
   done
 }
+
+# One nvim per tab listens here (nvim/lua/plugins/personal.lua), so nv in any pane can reach it
+[[ -n $HERDR_TAB_ID ]] && export HERDR_NVIM_SOCK="$HOME/.cache/herdr-nvim/${HERDR_TAB_ID//:/_}.sock"
+
+# Open a file in this tab's nvim, or in a new nvim when the tab has none
+# Usage: nv <path>[:line[:col]]
+nv() {
+  [[ -z $1 ]] && { echo "Usage: nv <path>[:line[:col]]"; return 1; }
+
+  local file="$1" line col
+  if [[ $1 =~ '^(.+):([0-9]+):([0-9]+)$' ]]; then
+    file=$match[1] line=$match[2] col=$match[3]
+  elif [[ $1 =~ '^(.+):([0-9]+)$' ]]; then
+    file=$match[1] line=$match[2]
+  fi
+  file="${file:a}"
+
+  if [[ -S $HERDR_NVIM_SOCK ]] && nvim --server "$HERDR_NVIM_SOCK" --remote-expr 1 &>/dev/null; then
+    # tab drop, so a review tab's file never opens inside a Diffview window
+    local quoted=${file//\'/\'\'}
+    nvim --server "$HERDR_NVIM_SOCK" --remote-expr \
+      "execute('tab drop ' .. fnameescape('$quoted')) .. execute('call cursor(${line:-1}, ${col:-1})')" >/dev/null
+  else
+    nvim ${line:++$line} "$file"
+  fi
+}
+
+# PR review workspace (~/.claude/scripts/review-prs.js)
+alias review-prs="$HOME/.claude/scripts/review-prs.js"

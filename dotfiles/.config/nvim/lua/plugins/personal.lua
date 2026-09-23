@@ -39,6 +39,20 @@ end, { desc = "Find plan" })
 -- plain text.
 vim.g.markdown_fenced_languages = { "ts=typescript" }
 
+-- nv in .zshrc-herdr, which also names the path, reaches this tab's nvim here. The first
+-- nvim in a tab takes it; a file left by a crashed nvim is reclaimed.
+local herdr_sock = vim.env.HERDR_NVIM_SOCK
+if herdr_sock and herdr_sock ~= "" then
+  local ok, chan = pcall(vim.fn.sockconnect, "pipe", herdr_sock)
+  if ok and chan > 0 then
+    vim.fn.chanclose(chan)
+  else
+    vim.fn.mkdir(vim.fs.dirname(herdr_sock), "p", tonumber("700", 8))
+    os.remove(herdr_sock)
+    vim.fn.serverstart(herdr_sock)
+  end
+end
+
 return {
   {
     -- Eager on purpose. The LazyVim extra loads this on <leader>a* only, and until it
@@ -46,6 +60,39 @@ return {
     -- separate terminal has nothing to find when you run /ide.
     "coder/claudecode.nvim",
     lazy = false,
+  },
+  {
+    "sindrets/diffview.nvim",
+    cmd = { "DiffviewOpen", "DiffviewFileHistory" },
+  },
+  {
+    -- review-prs.js sets HERDR_REVIEW on PR review tabs: someone else's unread code. These
+    -- servers run project JS (eslint/tailwind/oxlint config, a committed
+    -- node_modules/typescript), so they stay off there. tsc stays on, but pinned to Mason's
+    -- binary: its default root_dir runs <root>/node_modules/.bin/tsc --version to pick one.
+    -- A function, not a table, so it runs after the extras have defined these servers.
+    "neovim/nvim-lspconfig",
+    opts = function(_, opts)
+      if vim.env.HERDR_REVIEW ~= "1" then
+        return
+      end
+      local lockfiles = { "package-lock.json", "yarn.lock", "pnpm-lock.yaml", "bun.lock", "bun.lockb" }
+      opts.servers = vim.tbl_deep_extend("force", opts.servers or {}, {
+        eslint = { enabled = false },
+        tailwindcss = { enabled = false },
+        oxlint = { enabled = false },
+        vtsls = { settings = { vtsls = { autoUseWorkspaceTsdk = false } } },
+        tsc = {
+          cmd = { vim.fn.stdpath("data") .. "/mason/bin/tsc", "--lsp", "--stdio" },
+          root_dir = function(bufnr, on_dir)
+            if vim.fs.root(bufnr, { "deno.json", "deno.jsonc" }) then
+              return
+            end
+            on_dir(vim.fs.root(bufnr, { lockfiles, ".git" }) or vim.fn.getcwd())
+          end,
+        },
+      })
+    end,
   },
   {
     -- LazyVim's typescript extra only sets up vtsls, and vtsls refuses to attach when a
