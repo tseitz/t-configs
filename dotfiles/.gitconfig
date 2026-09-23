@@ -42,9 +42,14 @@
 	smudge = git-lfs smudge -- %f
 [pull]
 	rebase = false
-[url "git@github.com:NinthDecimal/"]
-	insteadOf = https://github.com/NinthDecimal/
-[url "git@github.com:ThinkNear/"]
-	insteadOf = https://github.com/ThinkNear/
+# HTTPS, not SSH: Claude Code's sandbox proxy requires auth its injected ssh ProxyCommand can't send.
+[url "https://github.com/"]
+	insteadOf = git@github.com:
+# Empty helper drops Homebrew's osxkeychain: it would cache a stale gh token, and sandboxed it fails
+# storing the proxy's creds. Every remote is GitHub, served by gh below.
+[credential]
+	helper =
+[credential "https://github.com"]
+	helper = !gh auth git-credential
 [includeIf "gitdir/i:~/Code/presentation/"]
 	path = ~/t-configs/dotfiles/.gitconfig-work
