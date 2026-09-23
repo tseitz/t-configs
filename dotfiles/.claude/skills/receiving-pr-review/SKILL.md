@@ -13,11 +13,8 @@ Work through review comments as a collaborative conversation — **one comment p
 
 ## Bundled Scripts
 
-Reuses `fetch_pr_feedback.py` from the `iterate-pr` skill:
-
 ```bash
-ITERATE_PR_SKILL=$(dirname ${CLAUDE_SKILL_ROOT})/iterate-pr
-uv run ${ITERATE_PR_SKILL}/scripts/fetch_pr_feedback.py [--pr NUMBER]
+uv run ${CLAUDE_SKILL_ROOT}/scripts/fetch_pr_feedback.py [--pr NUMBER]
 ```
 
 ---
@@ -74,8 +71,7 @@ was passed as an argument, use `--pr <number>`.
 ### 2. Fetch All Feedback
 
 ```bash
-ITERATE_PR_SKILL=$(dirname ${CLAUDE_SKILL_ROOT})/iterate-pr
-uv run ${ITERATE_PR_SKILL}/scripts/fetch_pr_feedback.py
+uv run ${CLAUDE_SKILL_ROOT}/scripts/fetch_pr_feedback.py
 ```
 
 Fetching everything at once is fine and expected — it's the *presenting* that goes one at
