@@ -28,8 +28,8 @@ reviewer reads in under a minute before opening the diff.
   thing that can go wrong goes near the top, not in the fourth paragraph. A body that is correct
   but flat gets skimmed, and skimming means the risky part is the part they miss.
 - **Say each thing once.** Every point lives in exactly one section. If the lead covered it, Key
-  decisions doesn't repeat it; if a decision already explains a risk, Where to look names the file
-  without re-arguing it. A repeat means a section didn't earn its place.
+  decisions doesn't repeat it; if a decision already explains a risk, Where to start passes through
+  that file without re-arguing it. A repeat means a section didn't earn its place.
 - **Sections only if they earn it, and only from the fixed set below.** A couple of short
   paragraphs is usually the whole PR — leave it bare. Once there's more, use the standard
   headings so every PR reads the same way. Never add an empty section for form's sake, and never
@@ -38,7 +38,7 @@ reviewer reads in under a minute before opening the diff.
 ## Shape
 
 The body answers the four questions a reviewer actually opens a PR with: *what is this and did it
-do what the ticket asked* · *what does merging it ship* · *where do I look hard* · *which tests
+do what the ticket asked* · *what does merging it ship* · *where do I start reading* · *which tests
 prove it works*.
 
 ```
@@ -46,7 +46,7 @@ prove it works*.
 
 ## Key decisions
 ## On merge
-## Where to look
+## Where to start
 ## Key tests
 
 <one-line footer: stack position, ticket link. No heading.>
@@ -58,14 +58,15 @@ prove it works*.
   or have to reverse-engineer. Each point is either settled in the lead, or named there and argued
   here — never both in full.
 - **On merge** — blast radius: tells the reviewer how expensive a read this needs to be. Include
-  it ONLY when the answer isn't the boring default (goes live on
-  the next deploy, self-contained, nothing to coordinate). Earned by: ships dark behind a flag ·
+  it ONLY when the answer isn't the boring default (goes live on the next deploy, self-contained,
+  nothing to coordinate). Earned by: ships dark behind a flag ·
   needs a flag flip or config change to activate · deploy order matters (contract tests, a stack,
   a migration) · a caller-visible contract or schema changes · a migration that blocks the deploy.
   **Never write "None" here** — if there's nothing to say, delete the heading. An empty section is
   worse than no section, because a heading that's usually empty teaches people to skip it.
-- **Where to look** — one or two sentences, max. Name the file or path and say why it's the spot
-  that matters: what breaks if it's wrong.
+- **Where to start** — the reading route, told as a short story the reviewer can follow. The file
+  to open first and why it's the way in, then where it leads and what each stop adds. Flag the
+  stop to slow down on. Two to four stops; any longer and it's the file list again.
 - **Key tests** — the few tests that, if they didn't pass, would mean the whole change doesn't
   work. Named so the reviewer can open them. Positive or negative cases, whichever carries the
   core claim. Not a coverage list, not a suite dump.
