@@ -23,7 +23,7 @@ reviewer reads in under a minute before opening the diff.
   comment on that line, not in the body. Only genuinely PR-wide context goes in the description.
 - **Don't editorialize the process.** No "updated after review" changelogs, no narrating that you
   implemented and then reverted something, no evidence dumps of suite output / lint counts /
-  measured baselines. If verification matters, one line is enough.
+  measured baselines. Name the key tests instead (see Shape).
 - **Front-load the risk.** A reviewer's attention budget runs out before the body does. The one
   thing that can go wrong goes near the top, not in the fourth paragraph. A body that is correct
   but flat gets skimmed, and skimming means the risky part is the part they miss.
@@ -38,8 +38,8 @@ reviewer reads in under a minute before opening the diff.
 ## Shape
 
 The body answers the four questions a reviewer actually opens a PR with: *what is this and did it
-do what the ticket asked* · *what does merging it ship* · *where do I look hard* · *what can I
-trust without reading*.
+do what the ticket asked* · *what does merging it ship* · *where do I look hard* · *which tests
+prove it works*.
 
 ```
 <lead paragraph — NO heading. What changes and why. 2-4 sentences.>
@@ -47,7 +47,7 @@ trust without reading*.
 ## On merge
 ## Where to look
 ## Key decisions
-## How it's verified
+## Key tests
 
 <one-line footer: stack position, ticket link. No heading.>
 ```
@@ -60,10 +60,13 @@ trust without reading*.
   a migration) · a caller-visible contract or schema changes · a migration that blocks the deploy.
   **Never write "None" here** — if there's nothing to say, delete the heading. An empty section is
   worse than no section, because a heading that's usually empty teaches people to skip it.
-- **Where to look** — the attention map. Riskiest thing first, named by file or path. Say what's
-  mechanical and safe to skim; telling a reviewer where *not* to spend time is half the value.
+- **Where to look** — one or two sentences, max. Name the file or path and say why it's the spot
+  that matters: what breaks if it's wrong.
 - **Key decisions** — the non-obvious calls, plus anything you skipped from the ticket and why.
-- **How it's verified** — what proves it, and the honest gap. Not a suite dump.
+- **Key tests** — the few tests that, if they didn't pass, would mean the whole change doesn't
+  work. Named so the reviewer can open them. Positive or negative cases, whichever carries the
+  core claim. Not a coverage list, not a suite dump.
+- **3–4 bullets per section, max.** More than that means you're enumerating again.
 - **Small PRs stay bare.** If the whole thing fits in one paragraph, use no headings at all.
 - Drop any section with nothing real in it. Four headings is the ceiling, not a template — most
   PRs won't earn all four.
