@@ -15,7 +15,8 @@
  *               https://github.com/<owner>/<repo>/pull/<n> | <owner>/<repo>#<n> | <repo>#<n>
  *   --dry-run   print what would happen; change nothing
  *   --no-review start Claude idle instead of running team-pr-review
- *   --prune     first remove worktrees and tabs of closed or merged PRs
+ *   --prune     first remove worktrees and tabs of closed or merged PRs;
+ *               merged ones go even with local changes, closed ones are kept
  *
  * Must run inside herdr, and outside the Claude Code sandbox (herdr socket,
  * ~/code/worktrees, gh keychain).
@@ -382,8 +383,10 @@ function prune(ctx, dryRun) {
       try {
         const state = run('gh', ['pr', 'view', m[1], '--json', 'state', '--jq', '.state'], { cwd: wt });
         if (state === 'OPEN') continue;
+        const merged = state === 'MERGED';
         const ignored = ignoredWork(wt);
-        if (isDirty(wt) || ignored.length) {
+        const hasLocal = isDirty(wt) || ignored.length > 0;
+        if (hasLocal && !merged) {
           const extra = ignored.length ? ` (ignored: ${ignored.slice(0, 3).join(', ')})` : '';
           results.push({ label, status: 'kept', why: `PR ${state.toLowerCase()} but worktree has local changes${extra}` });
           continue;
@@ -392,9 +395,10 @@ function prune(ctx, dryRun) {
           const tabId = findTab(ctx, wt, label);
           if (tabId) run('herdr', ['tab', 'close', tabId]);
           const clone = path.dirname(run('git', ['-C', wt, 'rev-parse', '--path-format=absolute', '--git-common-dir']));
-          run('git', ['-C', clone, 'worktree', 'remove', wt]);
+          run('git', ['-C', clone, 'worktree', 'remove', ...(hasLocal ? ['--force'] : []), wt]);
         }
-        results.push({ label, status: dryRun ? 'would prune' : 'pruned', why: `PR ${state.toLowerCase()}` });
+        const discarded = hasLocal ? ', local changes discarded' : '';
+        results.push({ label, status: dryRun ? 'would prune' : 'pruned', why: `PR ${state.toLowerCase()}${discarded}` });
       } catch (err) {
         results.push({ label, status: 'failed', why: errorText(err) });
       }
