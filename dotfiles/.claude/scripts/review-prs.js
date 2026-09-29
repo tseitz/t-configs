@@ -8,6 +8,9 @@
  * Idempotent. A PR that already has a tab keeps it; if the PR has moved on,
  * its worktree is moved to the new head in place.
  *
+ * A search run then reorders the tabs: the first tab stays put, requested
+ * PRs follow longest-waiting first, and every other tab goes after them.
+ *
  * Usage:
  *   review-prs.js [--dry-run] [--no-review] [--prune] [PR ...]
  *
@@ -23,6 +26,7 @@
  */
 
 const fs = require('fs');
+const net = require('net');
 const os = require('os');
 const path = require('path');
 const { execFileSync } = require('child_process');
@@ -47,6 +51,16 @@ const CLAUDE_CONFIG = [/(^|\/)\.claude(\/|$)/i, /(^|\/)\.mcp\.json$/i, /(^|\/)CL
 const PANE_ENV = ['--env', 'MISE_PARANOID=1', '--env', 'HERDR_REVIEW=1'];
 // A repo-relative core.hooksPath (husky's .husky/_) resolves inside the PR's tree.
 const NO_HOOKS = ['-c', 'core.hooksPath=/dev/null'];
+const REVIEW_REQUESTS_QUERY = `query($owner: String!, $repo: String!, $number: Int!) {
+  repository(owner: $owner, name: $repo) {
+    pullRequest(number: $number) {
+      reviewRequests(first: 100) { nodes { requestedReviewer { ... on User { login } } } }
+      timelineItems(itemTypes: [REVIEW_REQUESTED_EVENT], last: 100) {
+        nodes { ... on ReviewRequestedEvent { createdAt requestedReviewer { ... on User { login } } } }
+      }
+    }
+  }
+}`;
 
 function run(cmd, args, opts = {}) {
   return execFileSync(cmd, args, { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'], ...opts }).trim();
@@ -77,6 +91,31 @@ function herdr(...args) {
   const response = runJson('herdr', args);
   if (response.error) throw new Error(`herdr ${args.slice(0, 2).join(' ')}: ${JSON.stringify(response.error)}`);
   return response.result;
+}
+
+// For socket methods the CLI doesn't wrap, e.g. tab.move.
+function herdrSocket(method, params) {
+  return new Promise((resolve, reject) => {
+    const socket = net.createConnection(process.env.HERDR_SOCKET_PATH);
+    let buffer = '';
+    socket.setEncoding('utf8');
+    socket.on('connect', () => socket.write(`${JSON.stringify({ id: method, method, params })}\n`));
+    socket.on('data', chunk => {
+      buffer += chunk;
+      const end = buffer.indexOf('\n');
+      if (end < 0) return;
+      socket.destroy();
+      try {
+        const response = JSON.parse(buffer.slice(0, end));
+        if (response.error) reject(new Error(`herdr ${method}: ${JSON.stringify(response.error)}`));
+        else resolve(response.result);
+      } catch {
+        reject(new Error(`herdr ${method}: unparseable response: ${buffer.slice(0, 200)}`));
+      }
+    });
+    socket.on('error', reject);
+    socket.on('close', () => reject(new Error(`herdr ${method}: socket closed without a response`)));
+  });
 }
 
 function sleep(ms) {
@@ -136,16 +175,25 @@ function parseTarget(target, roster) {
 function findRequested() {
   const me = run('gh', ['api', 'user', '--jq', '.login']);
   const hits = runJson('gh', [
-    'search', 'prs', '--review-requested=@me', '--state=open', '--limit', '100', '--json', 'repository,number',
+    'search', 'prs', '--review-requested=@me', '--state=open', '--limit', '100', '--json', 'repository,number,updatedAt',
   ]);
   const prs = [];
   let teamOnly = 0;
   for (const hit of hits) {
     const [owner, repo] = hit.repository.nameWithOwner.split('/');
+    const pull = runJson('gh', [
+      'api', 'graphql', '-f', `query=${REVIEW_REQUESTS_QUERY}`, '-f', `owner=${owner}`, '-f', `repo=${repo}`, '-F', `number=${hit.number}`,
+    ]).data.repository.pullRequest;
+    const byMe = node => node.requestedReviewer && node.requestedReviewer.login === me;
     // --review-requested=@me also matches requests to any team I'm on.
-    const users = run('gh', ['api', `repos/${owner}/${repo}/pulls/${hit.number}/requested_reviewers`, '--jq', '.users[].login']);
-    if (users.split('\n').includes(me)) prs.push({ owner, repo, number: hit.number });
-    else teamOnly++;
+    if (!pull.reviewRequests.nodes.some(byMe)) {
+      teamOnly++;
+      continue;
+    }
+    // Request time, not updatedAt: an author push or a comment bumps that without the PR waiting on me any less.
+    const asks = pull.timelineItems.nodes.filter(byMe);
+    const waitingSince = asks.length ? asks[asks.length - 1].createdAt : hit.updatedAt;
+    prs.push({ owner, repo, number: hit.number, waitingSince });
   }
   return { prs, teamOnly };
 }
@@ -305,11 +353,19 @@ function openTab(ctx, s, opts) {
   }
 }
 
+function labelOf(pr) {
+  return `${pr.repo}#${pr.number}`;
+}
+
+function worktreeOf(pr) {
+  return path.join(ROOT, pr.repo, `pr-${pr.number}`);
+}
+
 function syncPr(pr, ctx, roster, opts) {
-  const s = { pr, label: `${pr.repo}#${pr.number}`, notes: [], title: '', url: '' };
+  const s = { pr, label: labelOf(pr), notes: [], title: '', url: '' };
   const resolved = resolveClone(pr, roster);
   if (!resolved) return { ...s, status: 'skipped', why: `no known local clone for ${pr.owner}/${pr.repo}` };
-  Object.assign(s, resolved, { wt: path.join(ROOT, pr.repo, `pr-${pr.number}`) });
+  Object.assign(s, resolved, { wt: worktreeOf(pr) });
 
   const view = runJson('gh', [
     'pr', 'view', String(pr.number), '-R', `${pr.owner}/${pr.repo}`, '--json', 'baseRefName,headRefOid,state,title,url',
@@ -407,6 +463,27 @@ function prune(ctx, dryRun) {
   return results;
 }
 
+async function orderTabs(ctx, prs, dryRun) {
+  const waiting = prs
+    .map(pr => ({ label: labelOf(pr), since: pr.waitingSince, tabId: findTab(ctx, worktreeOf(pr), labelOf(pr)) }))
+    .filter(t => t.tabId)
+    .sort((a, b) => a.since.localeCompare(b.since));
+  const waitingIds = new Set(waiting.map(t => t.tabId));
+  let order = ctx.tabs.map(t => t.tab_id);
+  const lead = order.length && !waitingIds.has(order[0]) ? [order[0]] : [];
+  const rest = order.filter(id => !lead.includes(id) && !waitingIds.has(id));
+  const desired = [...lead, ...waiting.map(t => t.tabId), ...rest];
+  if (desired.every((id, i) => id === order[i])) return null;
+
+  if (!dryRun) {
+    for (const [i, tabId] of desired.entries()) {
+      if (order[i] === tabId) continue;
+      order = (await herdrSocket('tab.move', { tab_id: tabId, insert_index: i })).tabs.map(t => t.tab_id);
+    }
+  }
+  return waiting.map(t => `${t.label} ${t.since.slice(0, 10)}`).join(', ');
+}
+
 function printLine(r) {
   const head = `  ${r.status.padEnd(11)} ${r.label}`;
   console.log([head, r.title, r.why && `(${r.why})`].filter(Boolean).join('  '));
@@ -414,7 +491,7 @@ function printLine(r) {
   for (const note of r.notes || []) console.log(`              - ${note}`);
 }
 
-function main() {
+async function main() {
   const opts = parseArgs(process.argv.slice(2));
   if (!process.env.HERDR_SOCKET_PATH) throw new Error('not inside herdr (HERDR_SOCKET_PATH unset)');
   const roster = loadRoster();
@@ -443,20 +520,29 @@ function main() {
       result = syncPr(pr, ctx, roster, opts);
     } catch (err) {
       failed++;
-      result = { label: `${pr.repo}#${pr.number}`, status: 'failed', why: err.message.split('\n')[0] };
+      result = { label: labelOf(pr), status: 'failed', why: err.message.split('\n')[0] };
     }
     printLine(result);
+  }
+
+  if (!opts.targets.length) {
+    Object.assign(ctx, loadHerdr(opts.dryRun));
+    try {
+      const order = await orderTabs(ctx, prs, opts.dryRun);
+      if (order) printLine({ status: opts.dryRun ? 'would order' : 'ordered', label: 'tabs', why: order });
+    } catch (err) {
+      failed++;
+      printLine({ status: 'failed', label: 'tabs', why: err.message.split('\n')[0] });
+    }
   }
   process.exitCode = failed ? 1 : 0;
 }
 
 if (require.main === module) {
-  try {
-    main();
-  } catch (err) {
+  main().catch(err => {
     console.error(`review-prs: ${err.message}`);
     process.exit(1);
-  }
+  });
 }
 
 module.exports = { changedFiles, matchesAny, within, MISE_SENSITIVE, CLAUDE_CONFIG, NO_HOOKS };
