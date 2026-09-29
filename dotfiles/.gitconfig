@@ -50,6 +50,6 @@
 [credential]
 	helper =
 [credential "https://github.com"]
-	helper = !gh auth git-credential
+	helper = !/opt/homebrew/bin/gh auth git-credential
 [includeIf "gitdir/i:~/Code/presentation/"]
 	path = ~/t-configs/dotfiles/.gitconfig-work
