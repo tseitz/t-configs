@@ -271,7 +271,10 @@
         "index.rubygems.org",
         "thinknear.jfrog.io",
         "jfrog-prod-use1-shared-virginia-main.s3.amazonaws.com",
-        "results-receiver.actions.githubusercontent.com"
+        "results-receiver.actions.githubusercontent.com",
+        "localhost",
+        "127.0.0.1",
+        "::1"
       ],
       "allowLocalBinding" : true,
       "allowUnixSockets" : [
@@ -309,6 +312,11 @@
     "type" : "command"
   },
   "permissions" : {
+    "allow" : [
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:api.github.com)",
+      "mcp__plugin_atlassian_atlassian__getJiraIssue"
+    ],
     "defaultMode" : "auto"
   },
   "tui" : "fullscreen",
