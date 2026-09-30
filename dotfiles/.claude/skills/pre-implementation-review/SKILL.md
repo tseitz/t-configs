@@ -15,8 +15,8 @@ one call site. Auth, payments, a schema, or a public contract never qualify, reg
 
 **A spec upstream? Use `to-plan` instead** — see Relationship to other tools. Never both.
 
-**Already carries a `## Critique` section? The gate is done — do not re-run it.** Implementation
-starts in a fresh session, so a plan arrives with no memory of having been checked. Re-scouting
+**Already carries a `## Critique` section? The gate is done — do not re-run it.** A plan picked
+up in a new session arrives with no memory of having been checked. Re-scouting
 it wastes the work and, worse, lets the model re-argue its way to an approach that was already
 rejected. Read the plan, honour its rejected findings, and build.
 
@@ -70,7 +70,7 @@ restate it here.
 - **`## Patterns to mirror`** — real snippets from this codebase the implementer should match.
   This is what lets the plan stay short: point at the pattern instead of transcribing it.
 - **`## Tasks`** — grouped by file, in the order they must land, each with its considerations or
-  open questions.
+  open questions and its route line (`development-workflow.md` §2–3).
 - **`## Verify`** — the exact commands, plus anything they do not cover.
 - **`## Critique`** — written in Step 4, not now. The assumptions Step 3 named, what was folded
   in, and **what was rejected and why**. This section is what tells a fresh session the gate
@@ -113,6 +113,9 @@ The questions, hardest first:
   performance, deploy ordering.
 - **How will we know it worked** — and how would we know it silently didn't?
 - **What are we deliberately not doing, and why?**
+- **Are the routes right?** A `delegate` task a cold agent could not finish from the plan alone,
+  an `inline` task that matches none of §3's reasons, or two tasks running in parallel that share
+  a file.
 
 Every finding cites `file:line` or a specific step of the plan. A question with no citation is
 not a finding — answer "nothing to flag" and move on.
@@ -132,17 +135,20 @@ it looks like an improvement. Recording it is also what marks the gate as run.
 boundary or change asserted behaviour was mis-tiered — go back to Step 1 and redo it as FULL.
 Folding a tier finding into a SHORT plan keeps the wrong ceremony.
 
-Then hand off. Implementation runs cold — a fresh session or a subagent, either way with only
-the system prompt, CLAUDE.md and this plan. That is the test `development-workflow.md` §3 sets,
-and the plan is the whole brief. Anything the implementer needs that lives only in this
-conversation has to be in the doc before you stop.
+Then build, **in this session**, once I approve. This flow keeps the main thread on Opus and
+spends the cheaper model through subagents — run it per `development-workflow.md` §4. Each
+delegated task runs cold, with only the system prompt, CLAUDE.md and this plan, so anything it
+needs that lives only in this conversation has to be in the doc before you stop.
+
+SHORT has no task list: build it inline.
 
 `.claude/plans/` is gitignored and nothing will find the plan unless the invocation names it,
-so print the path:
+so print the path and the split:
 
 ```
 Plan: .claude/plans/<slug>.md
-Next session: implement .claude/plans/<slug>.md
+Build: here on approval — delegate <ids>, inline <ids>
+Resume elsewhere: execute .claude/plans/<slug>.md
 ```
 
 **Not `/implement`** — that reads a ticket, which this path doesn't produce.

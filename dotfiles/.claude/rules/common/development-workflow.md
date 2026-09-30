@@ -13,10 +13,10 @@ subagent fleet, and a two-stage review.
 
 Two axes drive most decisions:
 
-- **Inline vs. subagent** — Default to **inline** (you keep full context, no round-trip tax).
-  Reach for subagents only when they actually pay off: **parallel fan-out** (2+ genuinely
-  independent tasks) or **context isolation** (a task big/noisy enough to pollute the main
-  thread). Pick per task — subagent-first is fine when parallelism dominates.
+- **Inline vs. subagent** — Discovery, design, planning and review run **inline** (you keep
+  full context, no round-trip tax). Implementation is decided **per task, in the plan** — see
+  step 3. A task the plan marks `delegate` goes to a subagent even when nothing runs in
+  parallel; the point is the cheaper model, not only the fan-out.
 - **Cheap vs. robust** — see the Model & Effort section. Never default the whole flow to the
   most expensive tier.
 
@@ -68,6 +68,9 @@ The plan's own shape, once either skill calls for one:
   - *Parallel / cheap / unsupervised* → **prescriptive**: exact paths, signatures, and code,
     because you're trading reasoning for determinism and won't be in the loop to correct.
   - Each task carries a short **"considerations / open questions"** so reflection is built in.
+  - Each task carries a **route line**: `Route: delegate | inline · Files: <paths> · After:
+    <task ids or —>`. The route is set by step 3's rule and checked in the critique. `Files`
+    and `After` are what make parallel dispatch safe, so they are not optional.
 - **Port from PRP:** include a **"Patterns to Mirror"** section — real snippets from the
   codebase the implementer should match. This is the antidote to over-prescriptive plans:
   point at the pattern, let them reason.
@@ -75,38 +78,58 @@ The plan's own shape, once either skill calls for one:
   steps, per-step model tiering, cold-start briefs). Don't force big projects through a single
   plan doc.
 
-### 3. Routing — one question, not a ceremony
+### 3. Routing — per task, written into the plan
 
-**The session is Opus, set once and held.** Switching mid-session busts the prompt cache and
-re-ingests the whole conversation, so per-task variation is expressed by *delegating*, never by
-switching the main thread.
+**Route each task, not the plan.** One open task does not make the whole plan inline — that is
+the reflex this step exists to stop. Mark a task `inline` only when it:
 
-Design, planning and review all run inline, which means they are already on Opus. **Nothing to
-route.** The only real routing decision is whether **implementation** gets delegated:
+- runs a **probe or live measurement** whose answer later tasks are written against
+- carries an **open decision** or a **constant to tune** against real output
+- is **data-loss, auth or money sensitive**, where a wrong call is expensive to find
+- needs a **live, one-shot or account-writing check** to prove it
 
-> **The critiqued plan from step 2 is the brief, and therefore the test.** A subagent gets the
-> system prompt, CLAUDE.md, and that plan — nothing from our conversation. If the plan names
-> exact paths, signatures, and the pattern to mirror, hand it to **Sonnet**. If judgment is left
-> that the plan couldn't pre-resolve, keep it inline.
+Everything else is `delegate`. The critiqued plan is the brief: a subagent gets the system
+prompt, CLAUDE.md and the plan, nothing from our conversation. A task that fails that test
+without matching a bullet above means the plan is missing something — fix the plan.
 
-Haiku only for genuinely mechanical fan-out — porting N call sites to a known signature. Say
-which you picked in a sentence and carry on; don't build a table or wait for approval. I already
-approved the plan at step 2's checkpoint, and that's the same moment.
+**Which model a delegated task gets:**
 
-Escalate to **Fable** only when reasoning depth is the actual bottleneck — a novel architectural
-problem, not merely a hard one.
+- **Personal repo** → a `general-purpose` agent with `model` unset. The Jev router hook picks
+  Haiku or Sonnet, and inherits the session model when unsure. Named agents and forks pin their
+  own model, so the router never sees them.
+- **Work repo** → the router is off there by design, so pass `model: "sonnet"` explicitly.
+- **Haiku** only for genuinely mechanical fan-out — porting N call sites to a known signature.
+- **Fable** only when reasoning depth is the actual bottleneck — a novel architectural problem,
+  not merely a hard one.
 
-### 4. Execute — inline-first
+**The two flows spend this differently**, because a model switch mid-session busts the prompt
+cache and a new session does not:
 
-- **Default inline, on the session model.** Inline is the default *because* it needs no brief —
-  I already have the context. Only propose a downshift when the cold-brief test above passes.
-- **Delegate the residual, not the discovery** — the most common shape for anything non-trivial.
-  Step 2's scout already did the expensive part on the session model, and its context is costly
-  to transfer. What remains is prescriptive — paths, signature, pattern snippet, verify command —
-  and *that* delegates to a cheap model safely, because nothing is left to infer. Splitting this
-  way is what makes downshifting real rather than hopeful.
-- **Subagents** only for parallel fan-out (2+ genuinely independent problems) or isolation.
-  Implementer self-reviews before handing back; a single review pass happens at checkpoints or
+| Flow | Skill | Main thread | How a cheaper model is used |
+|---|---|---|---|
+| **Build here** | `pre-implementation-review` | Opus, held | Subagents take the `delegate` tasks |
+| **Hand off** | `to-plan` | Picked at the next session's start | All tasks `delegate` → start that session on Sonnet. Any `inline` → start on Opus and delegate the rest |
+
+Don't wait for approval of the routes separately — I approved them with the plan.
+
+### 4. Execute — Opus leads, subagents type
+
+- **The lead works the plan in task order.** `inline` tasks it does itself. `delegate` tasks
+  it dispatches. On a Sonnet session with every task `delegate`, just build — there is nothing
+  cheaper to hand to.
+- **Brief = plan path + task id + its `Files` + the scoped verify command.** Tell it to read the
+  plan's Design, Patterns to mirror and Critique before editing. Keep the brief under 12,000
+  characters: the router skips longer ones, and the task silently runs on Opus.
+- **Parallel only when it is safe.** Tasks whose `After` is met and whose `Files` do not
+  overlap go out in one message. They share one checkout, so:
+  - Subagents **do not commit** and run only their **scoped** tests — a full suite run would
+    read another agent's half-finished edit.
+  - The lead runs the plan's full Verify after each batch, reads the diff, then commits.
+- **A delegated task that fails:** read why. Retry once with the fix in the brief; if it fails
+  again, take it inline — a second failure means the plan left judgment in it.
+- **Parallel across tickets** (two plans at once) needs separate checkouts, so it needs a
+  worktree — ask first, per "Where Work Happens".
+- Implementer self-reviews before handing back; a single review pass happens at checkpoints or
   at the end (see Review). Reserve the full spec-then-quality two-stage review for
   security-sensitive or architecturally significant tasks.
 - **Validation standard (ported from `/prp:implement`):** verify in levels as appropriate —

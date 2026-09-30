@@ -115,7 +115,8 @@ prevent, and a wasted FULL costs one subagent.
   belongs here is which functions, types and seams change, and why each call was made.
 - **`## Patterns to mirror`** — real snippets from this codebase the implementer should match.
   This is what lets the plan stay short: point at the pattern instead of transcribing it.
-- **`## Tasks`** — grouped by file, in the order they must land.
+- **`## Tasks`** — grouped by file, in the order they must land, each with its route line
+  (`development-workflow.md` §2–3). The routes decide which model the next session starts on.
 - **`## Verify`** — the exact commands, plus anything they do not cover.
 
 ### Name symbols in the Tasks, not line numbers
@@ -154,6 +155,9 @@ The questions, hardest first:
   performance, deploy ordering.
 - **How will we know it worked** — and how would we know it silently didn't?
 - **Do the acceptance criteria all have a task?** Name any criterion no task delivers.
+- **Are the routes right?** A `delegate` task a cold agent could not finish from the plan alone,
+  an `inline` task that matches none of §3's reasons, or two tasks running in parallel that share
+  a file.
 
 Every finding cites `file:line`, a step of the plan, or a spec decision. A question with no
 citation is not a finding — answer "nothing to flag" and move on.
@@ -167,10 +171,15 @@ one line rather than silently dropping it — the rejected ones are worth having
 the plan turns out to be wrong later.
 
 Then print the handoff, exactly. `implement` reads the ticket, not this plan, and
-`.claude/plans/` is gitignored — nothing will find the plan unless the invocation names it:
+`.claude/plans/` is gitignored — nothing will find the plan unless the invocation names it.
+
+The next session is new, so its model is free to pick without busting a cache. Read it off the
+routes: every task `delegate` (or a SHORT plan) → `sonnet`; any `inline` → `opus`, which then
+delegates the rest per `development-workflow.md` §4.
 
 ```
-Next: /implement #<n> — plan at .claude/plans/issue-<n>-<slug>.md
+Next session: claude --model <sonnet|opus>   — inline: <ids or none>
+Then: /implement #<n> — plan at .claude/plans/issue-<n>-<slug>.md
 ```
 
 ---
@@ -208,11 +217,13 @@ SHORT or FULL — and the surprise that decided it
 **Blast radius:** [what else changes — or "self-contained"]
 **Verification:** [the commands, and the gap they don't cover]
 **Criteria coverage:** [any acceptance criterion with no task — or "all covered"]
+**Routes:** [a mis-routed task, cited — or "delegate <ids>, inline <ids>, holds"]
 
 ### Open questions for you
 [anything the code couldn't answer — product intent, cross-repo behaviour, a business rule]
 
-Next: /implement #<n> — plan at .claude/plans/issue-<n>-<slug>.md
+Next session: claude --model <sonnet|opus>   — inline: <ids or none>
+Then: /implement #<n> — plan at .claude/plans/issue-<n>-<slug>.md
 ```
 
 Then stop for approval.
