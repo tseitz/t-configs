@@ -22,10 +22,17 @@ and each new tab can take ~40s to come up.
 - **Not inside herdr** → the script exits non-zero. Say so; don't try to set the tabs up another way.
 
 Relay the report as-is, then call out anything that needs me: `failed`/`kept`/`skipped` lines, and
-notes saying Claude wasn't started or mise config was ignored. Those are deliberate: a PR that
-adds a symlink, or changes (vs trunk) `.claude/`, `.mcp.json` or `CLAUDE.md`, gets no auto-started
-Claude; one that changes mise config or a `.env*` file gets its mise config ignored — otherwise
-that config would run as me before I've read it.
+notes saying Claude wasn't started, mise config was ignored, or `deps:` weren't installed. Those
+are deliberate: a PR that adds a symlink, or changes (vs trunk) `.claude/`, `.mcp.json` or
+`CLAUDE.md`, gets no auto-started Claude; one that changes mise config, `mise.lock` or a `.env*`
+file gets its mise config ignored; one that changes package-manager config, the package.json
+fields that pick the package manager, the set of lockfiles, patch files, a non-registry lockfile
+resolution, or — in a yarn repo — any dependency gets no install. Nor does a worktree holding
+files bootstrap didn't write, since a sandboxed test in the tab could have planted them.
+Otherwise that code would run as me before I've read it. Installs that do run are scripts-off
+(`worktree-bootstrap.sh --untrusted`), once per PR head. Each review Claude starts with
+`--settings <git-dir>/review-sandbox.json`, so the PR code it runs can write only its own worktree
+and temp — a tab opened before that existed needs its Claude restarted to get it.
 
 Leave cleanup to `--prune`, which only removes worktrees and tabs of **closed or merged** PRs.
 Submitting a review drops me from the requested list, so "no longer requested" doesn't mean done.

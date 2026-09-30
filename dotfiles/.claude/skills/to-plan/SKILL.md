@@ -90,26 +90,35 @@ route around it quietly.
 `to-tickets` sized this ticket to fit one context window. That is not the same question as
 whether its mechanism is obvious.
 
-Count the surprises:
+Sort each surprise by what a miss costs.
+
+**Scope surprises** — more work, but a miss is loud: a test, the compiler or a reviewer finds it.
 
 - More call sites than expected
 - The pattern to mirror doesn't exist, or isn't applied consistently
-- The change crosses a boundary — module, repo, API contract, schema, another service
 - You had to open a file neither the ticket nor the spec mentioned
+- **The scout itself wasn't cheap** — that is the ticket telling you it isn't small
+
+**Risk surprises** — a miss is quiet, or lands outside this repo before anyone sees it.
+
+- The change crosses a boundary — repo, API contract, schema, persisted data, another service
 - Existing tests assert behaviour this will change
 - You can't name the verification command
 - A spec decision looks contradicted by the code
-- **The scout itself wasn't cheap** — that is the ticket telling you it isn't small
+- It touches auth, payments, or can lose data
 
-**Zero surprises → SHORT. One or more → FULL.** State which you picked and the surprise that
-decided it, in one line. When torn, go FULL — a wrong SHORT is the failure this skill exists to
-prevent, and a wasted FULL costs one subagent.
+**Zero surprises → SHORT. Scope only → FULL. Any risk surprise → DEEP.** State which you picked
+and the surprise that decided it, in one line.
+
+Torn between SHORT and FULL, go FULL — a wrong SHORT is the failure this skill exists to
+prevent, and a wasted FULL costs one Sonnet subagent. DEEP needs a named risk surprise; a hunch
+is FULL.
 
 ## Step 4 — Plan the mechanism
 
 **SHORT** — a few sentences inline: what changes, where, and the verify command. No document.
 
-**FULL** — write `<repo>/.claude/plans/issue-<n>-<slug>.md` with these sections:
+**FULL and DEEP** — write `<repo>/.claude/plans/issue-<n>-<slug>.md` with these sections:
 
 - **`## Design`** — the mechanism, at code level. The *problem* belongs to the spec; what
   belongs here is which functions, types and seams change, and why each call was made.
@@ -136,28 +145,36 @@ assumption, and Step 5 will ask about it.
 
 ## Step 5 — Critique the plan
 
-**SHORT** — answer the questions below inline, briefly.
+**SHORT** — answer the core questions below inline, briefly.
 
-**FULL** — dispatch a **fresh-context subagent** and give it the plan, the scout, the ticket and
-the spec. Do not self-review a FULL plan: the model that wrote it will grade it "looks fine,"
-which is the default failure mode, not a result.
+**FULL** — dispatch a **fresh-context `general-purpose` subagent with `model: "sonnet"`**. Give
+it the plan, the scout, the ticket, the spec, and the core questions.
 
-The questions, hardest first:
+**DEEP** — the same, with `model: "opus"` and every question.
+
+Always set `model`: unset, the subagent inherits the session's model and effort. Not `Explore` —
+it locates code, it doesn't review it. Do not self-review a FULL or DEEP plan: the model that
+wrote it will grade it "looks fine," which is the default failure mode, not a result.
+
+Core questions, hardest first:
 
 - **Claims vs. facts.** Which parts of this plan were verified in the scout, and which are
   assumed? Name every assumption explicitly. This is the highest-value question — most plans
   that half-work were written without opening enough code.
 - **Does it still match the spec?** Every departure from an agreed decision, named, with the
   `file:line` that forced it.
-- **Is the seam right?** Not *where should the seam be* — the spec settled that. Does this plan
-  actually test at the agreed seam, or has the mechanism quietly pushed the test lower?
-- **What else changes if this lands?** Callers, contracts, persisted data, permissions,
-  performance, deploy ordering.
 - **How will we know it worked** — and how would we know it silently didn't?
 - **Do the acceptance criteria all have a task?** Name any criterion no task delivers.
 - **Are the routes right?** A `delegate` task a cold agent could not finish from the plan alone,
   an `inline` task that matches none of §3's reasons, or two tasks running in parallel that share
   a file.
+
+DEEP adds the structure and blast-radius questions its surprises call for:
+
+- **Is the seam right?** Not *where should the seam be* — the spec settled that. Does this plan
+  actually test at the agreed seam, or has the mechanism quietly pushed the test lower?
+- **What else changes if this lands?** Callers, contracts, persisted data, permissions,
+  performance, deploy ordering.
 
 Every finding cites `file:line`, a step of the plan, or a spec decision. A question with no
 citation is not a finding — answer "nothing to flag" and move on.
@@ -204,17 +221,17 @@ Then: /implement #<n> — plan at .claude/plans/issue-<n>-<slug>.md
 [anything you could not determine, named as such]
 
 ### Tier
-SHORT or FULL — and the surprise that decided it
+SHORT, FULL or DEEP — and the surprise that decided it
 
 ### Plan
 [SHORT: a few sentences + verify command]
-[FULL: path to the plan doc, plus a 3–5 bullet summary]
+[FULL / DEEP: path to the plan doc, plus a 3–5 bullet summary]
 
 ### Critique
 **Assumptions:** [what was assumed rather than verified — or "none, all steps cite the scout"]
 **Spec departures:** [each one, cited — or "none, the plan holds every decision"]
-**Seam:** [does the plan test at the agreed seam — or the finding]
-**Blast radius:** [what else changes — or "self-contained"]
+**Seam:** [DEEP only — does the plan test at the agreed seam, or the finding]
+**Blast radius:** [DEEP only — what else changes, or "self-contained"]
 **Verification:** [the commands, and the gap they don't cover]
 **Criteria coverage:** [any acceptance criterion with no task — or "all covered"]
 **Routes:** [a mis-routed task, cited — or "delegate <ids>, inline <ids>, holds"]

@@ -42,7 +42,7 @@ Skipping it does NOT skip rigor. The gate lives in step 2, not here.
 **Run the `pre-implementation-review` skill.** It is the required beat, and it owns the scout,
 the tiering, and the plan critique: bounded scout of the real code first, tier from what the
 scout found (surprises, not guessed size), plan at that tier, then critique it — with a
-fresh-context subagent on anything that scouted FULL, because a plan self-graded by its author
+fresh-context subagent on anything past SHORT, because a plan self-graded by its author
 comes back "looks fine."
 
 **Inside the Matt Pocock chain, the beat is `to-plan` instead** — `/to-spec` → `/to-tickets` →
@@ -212,7 +212,8 @@ question the architecture, don't keep patching.
 | Cheap/fast | **Haiku** | Mechanical, fully-specified work; parallel fan-out |
 
 - **Effort is a separate knob** (`low`→`max`) and a large cost/latency lever on its own.
-  **Default `high`**, set globally in `settings.base.json`. Move it per task, not per session.
+  **Default `medium` on Opus 5.5 and Sonnet 5.5, `high` elsewhere**, set in `settings.base.json`
+  (`modelSettings` per model, `effortLevel` as the fallback). Move it per task, not per session.
 - **Subagents do NOT default to cheap** — a generic one inherits the session model. Downshifting
   is deliberate, and gated on the plan being prescriptive enough to hand over.
 - **Named agents route themselves.** Every agent in `~/.claude/agents/` pins a model, so invoking

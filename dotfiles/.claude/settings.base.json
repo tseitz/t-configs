@@ -6,6 +6,14 @@
   "awaySummaryEnabled" : false,
   "editorMode" : "vim",
   "effortLevel" : "high",
+  "modelSettings" : {
+    "claude-opus-5-5" : {
+      "effortLevel" : "medium"
+    },
+    "claude-sonnet-5-5" : {
+      "effortLevel" : "medium"
+    }
+  },
   "enabledPlugins" : {
     "astral@astral-sh" : true,
     "chrome-devtools-mcp@claude-plugins-official" : true,
