@@ -11,6 +11,11 @@ brew "mise"
 brew "starship"
 brew "gh"
 
+# ===== Editor (LazyVim) =====
+brew "ripgrep"
+brew "fd"
+brew "lazygit"
+
 # ===== Languages & Runtimes =====
 brew "deno"
 

@@ -53,6 +53,12 @@ if herdr_sock and herdr_sock ~= "" then
   end
 end
 
+-- PR review tabs (HERDR_REVIEW, see nvim-lspconfig below): format-on-save would run the PR's
+-- node_modules/.bin/prettier.
+if vim.env.HERDR_REVIEW == "1" then
+  vim.g.autoformat = false
+end
+
 return {
   {
     -- Eager on purpose. The LazyVim extra loads this on <leader>a* only, and until it
@@ -67,9 +73,10 @@ return {
   },
   {
     -- review-prs.js sets HERDR_REVIEW on PR review tabs: someone else's unread code. These
-    -- servers run project JS (eslint/tailwind/oxlint config, a committed
-    -- node_modules/typescript), so they stay off there. tsc stays on, but pinned to Mason's
-    -- binary: its default root_dir runs <root>/node_modules/.bin/tsc --version to pick one.
+    -- servers run project code (eslint/tailwind/oxlint/svelte config, a committed
+    -- node_modules/typescript, ruby-lsp bundling the PR's Gemfile, .rubocop.yml `require:`),
+    -- so they stay off there. tsc stays on, but pinned to Mason's binary: its default
+    -- root_dir runs <root>/node_modules/.bin/tsc --version to pick one.
     -- A function, not a table, so it runs after the extras have defined these servers.
     "neovim/nvim-lspconfig",
     opts = function(_, opts)
@@ -81,6 +88,9 @@ return {
         eslint = { enabled = false },
         tailwindcss = { enabled = false },
         oxlint = { enabled = false },
+        svelte = { enabled = false },
+        ruby_lsp = { enabled = false },
+        rubocop = { enabled = false },
         vtsls = { settings = { vtsls = { autoUseWorkspaceTsdk = false } } },
         tsc = {
           cmd = { vim.fn.stdpath("data") .. "/mason/bin/tsc", "--lsp", "--stdio" },
@@ -107,6 +117,26 @@ return {
         denols = { mason = false },
       },
     },
+  },
+  {
+    -- mason = false: each mise Ruby carries its own ruby-lsp gem, which bundles against the
+    -- project, so RuboCop/Standard and the Rails addon match the repo. It
+    -- already lints with that RuboCop; the extra's separate rubocop server would report twice.
+    "neovim/nvim-lspconfig",
+    opts = {
+      servers = {
+        ruby_lsp = { mason = false },
+        rubocop = { enabled = false },
+      },
+    },
+  },
+  {
+    -- Ruby formats through ruby-lsp and the bundle's RuboCop. conform's rubocop is whichever
+    -- one is on PATH, which misses the project's plugins. A function, as for nvim-lint below.
+    "stevearc/conform.nvim",
+    opts = function(_, opts)
+      opts.formatters_by_ft.ruby = {}
+    end,
   },
   {
     -- A function: an empty list in an opts table deep-merges back to the extra's list.

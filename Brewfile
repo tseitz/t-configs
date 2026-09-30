@@ -7,6 +7,11 @@ brew "mise"
 brew "starship"
 brew "gh"
 
+# ===== Editor (LazyVim) =====
+brew "ripgrep"
+brew "fd"
+brew "lazygit"
+
 # ===== Languages & Runtimes =====
 # Most versions managed by mise, but these provide system-level support
 brew "deno"
