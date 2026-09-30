@@ -53,8 +53,6 @@ Then:
 
 - Run `git log --oneline -10` to confirm what commits landed
 - Check for a session state doc (HANDOFF.md, CONTEXT.md, or equivalent) and read it
-- Read `.claude/sandbox-friction.jsonl` if present — the capture hook logs sandbox blocks that hit
-  during the work but are gone from working memory. These feed the Agent QoL lens.
 - Skim the key changed files — reflection is only as good as what you actually re-read
 
 ### 1. Summarize What Changed
@@ -64,7 +62,10 @@ original plan and why.
 
 ### 1b. Pick the Depth — ceremony scales to the diff
 
-State which depth you picked and why, in one line. When torn, go SHORT: an over-long lap on a
+**Lenses named in the invocation win.** `/post-implementation-reflection simplicity debt` runs
+only those, inline, and skips the depth pick. Names: `comments` · `simplicity` · `qol` · `debt`.
+
+Otherwise, state which depth you picked and why, in one line. When torn, go SHORT: an over-long lap on a
 small change gets skimmed, and a skimmed lap catches nothing.
 
 - **SHORT** — roughly under ten files, no new subsystem, no architectural decision. Run
@@ -78,14 +79,14 @@ Every finding **must cite a `file:line`** (or a specific function/pattern). A le
 is not a finding — write "nothing to flag" and move on. This is a forcing function: the same model
 that wrote the code is grading it, so "looks fine" is the default failure mode, not a result.
 
-**Counter author bias on large changes.** If the diff spans many files or the logic is subtle,
-dispatch a **fresh-context subagent** (`Explore` or `code-reviewer`) to do the reflection instead of
-self-reviewing — give it the diff and these lenses, and have it return findings with citations. For
-small, self-contained changes, inline self-review is fine.
+**Counter author bias on FULL.** Dispatch the **`code-reviewer`** agent with the diff and the
+Simplicity and Technical debt lenses, and have it return findings with citations. Not `Explore` —
+it locates code, it doesn't review it. Keep Comments and Agent QoL inline: both need this session's
+memory, which a subagent doesn't have. SHORT self-reviews inline.
 
 For each lens, be concrete. Skip any lens that doesn't apply.
 
-**Comments** ← run this one first, and on every depth
+**Comments** ← run this one first, on every depth. Skip it when the diff added no comments.
 
 The standard lives in `rules/common/coding-style.md` — apply its routing test, don't restate it.
 Judge only comments **this diff added**; leave pre-existing ones alone. No length or density rule
@@ -99,9 +100,13 @@ doesn't belong in the repo.
   shared.
 - **Moves out:** the bug's history and impact · why this approach over the alternative · why a
   file *wasn't* changed · what was left out of scope · test-strategy choices · measurements and
-  cross-repo facts. On a PR this becomes an inline comment on the anchor line; off a PR — any
-  other task — say it to me directly as part of your summary instead. Either way, keep it tight:
-  fragments and dropped grammar are fine if the point still lands.
+  cross-repo facts.
+
+**No PR open or about to open** — cut what fails the test and give each cut's rationale in one
+line of your summary. Stop there; the rest of this lens is PR-only.
+
+**A PR is open or about to open** — each cut becomes an inline comment on its anchor line. Keep it
+tight: fragments and dropped grammar are fine if the point still lands.
 
 **Never triage cold.** The most valuable of these explain *absences* — why an endpoint was left
 alone, why an obvious refactor was declined, why a file isn't in the diff — and a diff can't show
@@ -131,8 +136,8 @@ One question: would the next agent session — or you, cold in a month — find 
 **Agent Quality of Life**
 - Did any tool call fail unexpectedly? What did you do instead, and what would the right path have looked like?
 - Were any make/pnpm/npm/script targets missing that would have been useful? What would you have named them?
-- Did sandbox restrictions block you? Check `.claude/sandbox-friction.jsonl` and your own memory of
-  the session. For anything worth a durable fix, **delegate to the `sandbox-friction` skill** to
+- Did sandbox restrictions block you? Read `.claude/sandbox-friction.jsonl` if present — the
+  capture hook logs blocks that are gone from working memory — and your own memory of the session. For anything worth a durable fix, **delegate to the `sandbox-friction` skill** to
   diagnose the layer and propose the correctly-schemaed settings.json change — don't hand-write
   sandbox config from here.
 - Was anything in CLAUDE.md (or equivalent) **wrong** (actively misleading to a future agent)? Flag these first — they're the most dangerous. Then note any plain gaps.
@@ -183,12 +188,13 @@ a memory that's now wrong or missing, say so and offer to update it. Nothing mor
 
 ```
 ### Scope
-[which diff, and SHORT or FULL with the one-line reason]
+[which diff, and SHORT, FULL or the named lenses, with the one-line reason]
 
 ### What changed
 [1–5 bullets]
 
 ### Reflection
+[named lenses: only those lines]
 **Comments:** [keep/cut/relocate per comment, or "nothing to flag"]
 **Simplicity & navigability:** [finding or "nothing to flag"]
 **Technical debt:** [finding or "nothing to flag"]
@@ -200,8 +206,9 @@ Must: ...
 Should: ...
 Nice to have: ...
 
+--- PR only ---
 ### Comment cuts
-[rationale moved out of code — inline PR comments if there's a PR, otherwise said here — drafted/stated, NOT posted for you]
+[rationale moved out of code, drafted as inline PR comments — NOT posted for you]
 ```
 
 Then **stop for approval** (step 4). Once approved, implement in separate commits, run the
