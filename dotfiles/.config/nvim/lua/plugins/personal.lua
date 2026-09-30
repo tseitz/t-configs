@@ -109,6 +109,13 @@ return {
     },
   },
   {
+    -- A function: an empty list in an opts table deep-merges back to the extra's list.
+    "mfussenegger/nvim-lint",
+    opts = function(_, opts)
+      opts.linters_by_ft.markdown = {}
+    end,
+  },
+  {
     "nvim-neo-tree/neo-tree.nvim",
     opts = {
       filesystem = {
