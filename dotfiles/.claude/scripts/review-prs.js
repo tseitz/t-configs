@@ -1,9 +1,11 @@
 #!/usr/bin/env node
 /**
  * Stages every PR I'm personally asked to review as a tab in the herdr
- * workspace "presentation-review": a detached worktree at
- * ~/code/worktrees/<repo>/pr-<n>, nvim in Diffview on the left, and Claude
- * on the right, connected to that nvim via --ide and running team-pr-review.
+ * workspace "presentation-review", labelled "<repo>#<n> <JIRA-KEY>": a detached
+ * worktree at ~/code/worktrees/<repo>/pr-<n> with env files copied and deps
+ * installed scripts-off (worktree-bootstrap.sh --untrusted), nvim in Diffview on
+ * the left, and Claude on the right, connected to that nvim via --ide and running
+ * team-pr-review.
  *
  * Idempotent. A PR that already has a tab keeps it; if the PR has moved on,
  * its worktree is moved to the new head in place.
@@ -42,8 +44,20 @@ const REVIEW_MODEL = 'opus';
 // Case-insensitive: macOS resolves .Claude/ and MISE.toml to the real names.
 const MISE_CONFIG = /(^|\/)(\.?mise(\.local)?\.toml|\.config\/mise(\.local)?\.toml|\.?config\/mise\/config(\.local)?\.toml|\.?mise\/config(\.local)?\.toml)$/i;
 // mise config can load .env files (`_.file`), so an unchanged mise.toml still runs a PR-edited one.
-const MISE_SENSITIVE = [MISE_CONFIG, /(^|\/)\.env[^/]*$/i];
+// mise.lock carries the download URL for each tool.
+const MISE_SENSITIVE = [MISE_CONFIG, /(^|\/)\.env[^/]*$/i, /(^|\/)\.?mise(\.local)?\.lock$/i];
 const CLAUDE_CONFIG = [/(^|\/)\.claude(\/|$)/i, /(^|\/)\.mcp\.json$/i, /(^|\/)CLAUDE(\.local)?\.md$/i];
+// Each lets a PR choose what an install runs or where it fetches from; any change skips the install.
+const PM_CONFIG = [
+  /(^|\/)\.npmrc$/i, /(^|\/)\.yarnrc(\.yml)?$/i, /(^|\/)\.yarn\//i, /(^|\/)\.pnpmfile\.[cm]?js$/i,
+  /(^|\/)pnpm-workspace\.yaml$/i, /(^|\/)\.corepack\.env$/i,
+];
+// Root package.json fields that pick the package-manager binary or pull in a pnpmfile.
+const PM_FIELDS = ['packageManager', 'devEngines', 'pnpm'];
+const LOCKFILES = /^(pnpm-lock\.yaml|yarn\.lock|package-lock\.json|npm-shrinkwrap\.json|bun\.lockb?)$/i;
+const BOOTSTRAP = path.join(__dirname, 'worktree-bootstrap.sh');
+// The whole run shares one Bash timeout (review-assigned-prs.md), so one hung install can't eat it.
+const INSTALL_TIMEOUT_MS = 180000;
 // Paranoid mode ties mise trust to file content and stops a linked worktree
 // inheriting the main clone's trust — without it a PR's own mise.toml edits
 // load in every pane of the tab. HERDR_REVIEW turns off nvim language servers
@@ -216,12 +230,21 @@ function isDirty(wt) {
   return run('git', ['-C', wt, 'status', '--porcelain']) !== '';
 }
 
-// `worktree remove` deletes gitignored files too, e.g. notes in .claude/plans/. Rebuildable dirs don't count.
-function ignoredWork(wt) {
+// `worktree remove` deletes gitignored files too, e.g. notes in .claude/plans/. Rebuildable dirs,
+// tool scratch space and untouched copies of the main clone's files (bootstrap's env copy) don't count.
+function ignoredWork(wt, clone) {
   return run('git', ['-C', wt, 'ls-files', '--others', '--ignored', '--exclude-standard', '--directory'])
     .split('\n')
     .filter(Boolean)
-    .filter(f => !/(^|\/)(node_modules|\.bundle|vendor|tmp|log|coverage|dist|build|\.next|\.turbo)\/$/.test(f));
+    .filter(f => !/(^|\/)(node_modules|\.bundle|vendor|tmp|log|coverage|dist|build|\.next|\.turbo)\/$/.test(f))
+    .filter(f => !/^(\.yarn|\.pnpm-store|\.claude\/\.cc-writes)\//.test(f))
+    .filter(f => !sameAsClone(wt, clone, f));
+}
+
+function sameAsClone(wt, clone, file) {
+  const theirs = path.join(clone, file);
+  if (file.endsWith('/') || !fs.existsSync(theirs) || !fs.statSync(theirs).isFile()) return false;
+  return fs.readFileSync(path.join(wt, file)).equals(fs.readFileSync(theirs));
 }
 
 function loadHerdr(dryRun) {
@@ -245,11 +268,12 @@ function ensureWorkspace(ctx) {
 
 // cwd survives a tab rename; the label survives both shells cd-ing away. A cwd match
 // counts only beside an agent pane: a bare shell left in the worktree isn't the review tab.
-function findTab(ctx, wt, label) {
+// `base` is labelOf(pr): the Jira key after it comes and goes with the PR title.
+function findTab(ctx, wt, base) {
   const hasAgent = tabId => ctx.panes.some(p => p.tab_id === tabId && p.agent);
   const pane = ctx.panes.find(p => [p.cwd, p.foreground_cwd].some(c => c && within(c, wt)) && hasAgent(p.tab_id));
   if (pane) return pane.tab_id;
-  const tab = ctx.tabs.find(t => t.label === label);
+  const tab = ctx.tabs.find(t => t.label === base || t.label.startsWith(`${base} `));
   return tab ? tab.tab_id : null;
 }
 
@@ -288,6 +312,133 @@ function gateMise(wt, sensitiveChanged) {
     if (sensitiveChanged) run('mise', ['trust', '--ignore', '--quiet', target]);
     else run('mise', ['trust', '--quiet', target], { env: { ...process.env, MISE_PARANOID: '1' } });
   }
+}
+
+// null when an install is safe to attempt, else why not.
+function installGate(wt, gateBase, files, symlinks) {
+  if (symlinks.length) return `PR adds symlinks (${symlinks.join(', ')})`;
+  const config = files.filter(f => matchesAny(f, PM_CONFIG));
+  if (config.length) return `PR changes ${config.join(', ')}`;
+  // mise config can load an env file into the install (NODE_OPTIONS=--require …).
+  const mise = files.filter(f => matchesAny(f, MISE_SENSITIVE));
+  if (mise.length) return `PR changes ${mise.join(', ')}`;
+  // pnpm 10 applies patches even with --ignore-scripts, and doesn't keep their paths inside the package.
+  const patches = files.filter(f => /\.(patch|diff)$/i.test(f) || /(^|\/)patches\//i.test(f));
+  if (patches.length) return `PR changes patch files (${patches.join(', ')})`;
+  // Non-registry resolutions make the install connect wherever the PR says.
+  const added = run('git', ['-C', wt, 'diff', '-U0', gateBase, 'HEAD', '--', 'pnpm-lock.yaml'])
+    .split('\n')
+    .filter(l => l.startsWith('+') && !l.startsWith('+++'));
+  const remote = added.find(l => /\b(tarball|repo|directory):|type: git|http:\/\//.test(l));
+  if (remote) return `PR adds a non-registry resolution to pnpm-lock.yaml (${remote.slice(1).trim()})`;
+
+  const locksAt = rev => run('git', ['-C', wt, 'ls-tree', '--name-only', rev]).split('\n').filter(f => LOCKFILES.test(f)).sort().join(', ');
+  const baseLocks = locksAt(gateBase);
+  if (baseLocks !== locksAt('HEAD')) return `PR changes which lockfiles exist (${baseLocks || 'none'} → ${locksAt('HEAD') || 'none'})`;
+
+  const manifestAt = rev => {
+    const shown = tryRun('git', ['-C', wt, 'show', `${rev}:package.json`]);
+    if (!shown.ok) return {};
+    try {
+      return JSON.parse(shown.out);
+    } catch {
+      return null;
+    }
+  };
+  const [base, head] = [manifestAt(gateBase), manifestAt('HEAD')];
+  if (!base || !head) return 'package.json does not parse';
+  const moved = PM_FIELDS.filter(k => JSON.stringify(base[k]) !== JSON.stringify(head[k]));
+  if (moved.length) return `PR changes package.json ${moved.join(', ')}`;
+  const patched = Object.values((base.pnpm && base.pnpm.patchedDependencies) || {})
+    .map(p => path.posix.normalize(p))
+    .filter(p => files.includes(p));
+  if (patched.length) return `PR changes patch files (${patched.join(', ')})`;
+
+  // yarn berry runs exec: and git dependencies while fetching, which skip-build doesn't stop.
+  if (/yarn\.lock/i.test(baseLocks)) {
+    const deps = files.filter(f => /(^|\/)(package\.json|yarn\.lock)$/i.test(f));
+    if (deps.length) return `yarn repo and PR changes ${deps.join(', ')}`;
+  }
+  return null;
+}
+
+function lastLine(file) {
+  const lines = fs.existsSync(file) ? fs.readFileSync(file, 'utf8').trim().split('\n') : [];
+  return lines.length && lines[lines.length - 1] ? lines[lines.length - 1] : 'no output';
+}
+
+// What an install may find besides the PR's commits. Anything else — a tracked edit, a planted
+// .npmrc — may be what sandboxed code (a PR test run in the tab) left for this unsandboxed install.
+const INSTALL_LEFTOVERS = /^((.*\/)?node_modules\/|\.claude\/\.cc-writes\/|\.yarn\/.*|(.*\/)?\.DS_Store|(tmp|log|coverage|dist|build|\.next|\.turbo)\/)$/;
+
+function unexpectedFiles(wt, clone) {
+  const changed = run('git', ['-C', wt, 'status', '--porcelain']).split('\n').filter(Boolean).map(l => l.slice(3));
+  const ignored = run('git', ['-C', wt, 'ls-files', '--others', '--ignored', '--exclude-standard', '--directory'])
+    .split('\n')
+    .filter(Boolean)
+    .filter(f => !INSTALL_LEFTOVERS.test(f) && !sameAsClone(wt, clone, f));
+  return [...changed, ...ignored];
+}
+
+function bootstrapWorktree(s, ctx, tabId, gateBase, files, symlinks) {
+  // The env copy would follow a committed symlink.
+  if (symlinks.length) {
+    s.notes.push(`deps: not installed, env not copied — PR adds symlinks (${symlinks.join(', ')})`);
+    return;
+  }
+  if (tabId && tabIsWorking(ctx, tabId)) {
+    s.notes.push('deps: not installed — Claude is working in its tab');
+    return;
+  }
+
+  const gitDir = run('git', ['-C', s.wt, 'rev-parse', '--absolute-git-dir']);
+  const log = path.join(gitDir, 'review-bootstrap.log');
+  const done = path.join(gitDir, 'review-bootstrap.head');
+  const head = run('git', ['-C', s.wt, 'rev-parse', 'HEAD']);
+  const has = file => fs.existsSync(path.join(s.wt, file));
+  if (has('node_modules') && fs.existsSync(done) && fs.readFileSync(done, 'utf8').trim() === head) {
+    s.notes.push('deps: installed earlier for this head');
+    return;
+  }
+
+  const unexpected = has('package.json') ? unexpectedFiles(s.wt, s.clone) : [];
+  const gated = unexpected.length
+    ? `worktree has files bootstrap didn't write (${unexpected.slice(0, 3).join(', ')}${unexpected.length > 3 ? ', …' : ''})`
+    : has('package.json') && installGate(s.wt, gateBase, files, symlinks);
+  const install = !gated && has('package.json');
+  const hadModules = has('node_modules');
+  const opts = { cwd: s.wt, env: { ...process.env, MISE_PARANOID: '1' }, timeout: INSTALL_TIMEOUT_MS };
+
+  fs.rmSync(log, { force: true });
+  if (install) process.stderr.write(`  installing  ${s.label}…\n`);
+  const started = Date.now();
+  const result = tryRun(BOOTSTRAP, [install ? '--untrusted' : '--skip-install', '--log', log], opts);
+
+  if (!result.ok) {
+    const why = /ETIMEDOUT/.test(result.err) ? `timed out after ${INSTALL_TIMEOUT_MS / 1000}s` : fs.existsSync(log) ? lastLine(log) : result.err;
+    s.notes.push(`deps: bootstrap failed — ${why}; log ${log}${gated ? ` (install skipped anyway: ${gated})` : ''}`);
+  } else if (gated) {
+    s.notes.push(`deps: not installed — ${gated}`);
+  } else if (!install) {
+    s.notes.push('deps: no package.json — env files copied, nothing installed');
+  } else {
+    fs.writeFileSync(done, `${head}\n`);
+    const pm = has('pnpm-lock.yaml') ? 'pnpm' : 'yarn';
+    s.notes.push(`deps: ${pm}, scripts off, ${Math.round((Date.now() - started) / 1000)}s`);
+    if (tabId && !hadModules) s.notes.push('deps installed under an open nvim — :LspRestart');
+  }
+
+  // A tracked file rewritten here would turn every later update of this PR into `kept`.
+  const dirty = run('git', ['-C', s.wt, 'status', '--porcelain']);
+  if (dirty) s.notes.push(`bootstrap left changes: ${dirty.split('\n').map(l => l.slice(3)).join(', ')}`);
+}
+
+// Title scope first ("feat(MF-6830): …"). Branch fallback wants 2+ digits so "utf-8" isn't a ticket.
+function jiraKey(title, branch) {
+  const inTitle = title.match(/^\w+\(([A-Z][A-Z0-9]+-\d+)\)/) || title.match(/^\[?([A-Z][A-Z0-9]+-\d+)\b/);
+  if (inTitle) return inTitle[1];
+  const inBranch = branch.match(/(?:^|[/_-])([a-z][a-z0-9]+-\d{2,})(?=$|[/_-])/i);
+  return inBranch ? inBranch[1].toUpperCase() : null;
 }
 
 function trunkOf(pr, roster) {
@@ -362,20 +513,21 @@ function worktreeOf(pr) {
 }
 
 function syncPr(pr, ctx, roster, opts) {
-  const s = { pr, label: labelOf(pr), notes: [], title: '', url: '' };
+  const s = { pr, base: labelOf(pr), label: labelOf(pr), notes: [], title: '', url: '' };
   const resolved = resolveClone(pr, roster);
   if (!resolved) return { ...s, status: 'skipped', why: `no known local clone for ${pr.owner}/${pr.repo}` };
   Object.assign(s, resolved, { wt: worktreeOf(pr) });
 
   const view = runJson('gh', [
-    'pr', 'view', String(pr.number), '-R', `${pr.owner}/${pr.repo}`, '--json', 'baseRefName,headRefOid,state,title,url',
+    'pr', 'view', String(pr.number), '-R', `${pr.owner}/${pr.repo}`, '--json', 'baseRefName,headRefName,headRefOid,state,title,url',
   ]);
-  Object.assign(s, { title: view.title, url: view.url });
+  const key = jiraKey(view.title, view.headRefName);
+  Object.assign(s, { title: view.title, url: view.url, label: key ? `${s.base} ${key}` : s.base });
   if (view.state !== 'OPEN') return { ...s, status: 'skipped', why: `PR is ${view.state.toLowerCase()}` };
 
   const registered = registeredWorktrees(s.clone).includes(s.wt);
   if (fs.existsSync(s.wt) && !registered) return { ...s, status: 'skipped', why: `${s.wt} exists but isn't a worktree of ${s.clone}` };
-  const tabId = findTab(ctx, s.wt, s.label);
+  const tabId = findTab(ctx, s.wt, s.base);
   const head = registered ? run('git', ['-C', s.wt, 'rev-parse', 'HEAD']) : null;
 
   let status;
@@ -411,8 +563,15 @@ function syncPr(pr, ctx, roster, opts) {
   if (miseFiles.length || symlinks.length) {
     s.notes.push(`PR changes ${[...miseFiles, ...symlinks].join(', ')} — mise config ignored in this worktree`);
   }
+  if (status !== 'kept') bootstrapWorktree(s, ctx, tabId, gateBase, files, symlinks);
 
   if (tabId) {
+    // Only a label this script wrote; anything else is a rename of mine.
+    const tab = ctx.tabs.find(t => t.tab_id === tabId);
+    if (tab && tab.label === s.base && s.label !== s.base) {
+      const renamed = tryRun('herdr', ['tab', 'rename', tabId, s.label]);
+      if (!renamed.ok) s.notes.push(`tab not renamed to ${s.label}: ${renamed.err}`);
+    }
     if (status === 'updated') s.notes.push('worktree moved under an open tab — :DiffviewRefresh in nvim, re-run the review');
     if (s.claudeFiles.length) {
       s.notes.push(`PR changes ${s.claudeFiles.join(', ')} — read those before (re)starting Claude in this tab`);
@@ -440,7 +599,8 @@ function prune(ctx, dryRun) {
         const state = run('gh', ['pr', 'view', m[1], '--json', 'state', '--jq', '.state'], { cwd: wt });
         if (state === 'OPEN') continue;
         const merged = state === 'MERGED';
-        const ignored = ignoredWork(wt);
+        const clone = path.dirname(run('git', ['-C', wt, 'rev-parse', '--path-format=absolute', '--git-common-dir']));
+        const ignored = ignoredWork(wt, clone);
         const hasLocal = isDirty(wt) || ignored.length > 0;
         if (hasLocal && !merged) {
           const extra = ignored.length ? ` (ignored: ${ignored.slice(0, 3).join(', ')})` : '';
@@ -450,7 +610,6 @@ function prune(ctx, dryRun) {
         if (!dryRun) {
           const tabId = findTab(ctx, wt, label);
           if (tabId) run('herdr', ['tab', 'close', tabId]);
-          const clone = path.dirname(run('git', ['-C', wt, 'rev-parse', '--path-format=absolute', '--git-common-dir']));
           run('git', ['-C', clone, 'worktree', 'remove', ...(hasLocal ? ['--force'] : []), wt]);
         }
         const discarded = hasLocal ? ', local changes discarded' : '';
@@ -484,11 +643,16 @@ async function orderTabs(ctx, prs, dryRun) {
   return waiting.map(t => `${t.label} ${t.since.slice(0, 10)}`).join(', ');
 }
 
+// Titles, paths and log lines are PR-controlled, and a Claude relays this report.
+function printable(text) {
+  return String(text).replace(/[\u0000-\u001f\u007f-\u009f]/g, '?').slice(0, 300);
+}
+
 function printLine(r) {
-  const head = `  ${r.status.padEnd(11)} ${r.label}`;
-  console.log([head, r.title, r.why && `(${r.why})`].filter(Boolean).join('  '));
+  const head = `  ${r.status.padEnd(11)} ${printable(r.label)}`;
+  console.log([head, r.title && printable(r.title), r.why && `(${printable(r.why)})`].filter(Boolean).join('  '));
   if (r.url) console.log(`              ${r.url}`);
-  for (const note of r.notes || []) console.log(`              - ${note}`);
+  for (const note of r.notes || []) console.log(`              - ${printable(note)}`);
 }
 
 async function main() {
@@ -545,4 +709,6 @@ if (require.main === module) {
   });
 }
 
-module.exports = { changedFiles, matchesAny, within, MISE_SENSITIVE, CLAUDE_CONFIG, NO_HOOKS };
+module.exports = {
+  changedFiles, matchesAny, within, installGate, jiraKey, ignoredWork, MISE_SENSITIVE, CLAUDE_CONFIG, PM_CONFIG, NO_HOOKS,
+};
