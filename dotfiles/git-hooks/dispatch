@@ -1,0 +1,43 @@
+#!/bin/sh
+# Every hook name in this directory links here. A global core.hooksPath stops git reading
+# .git/hooks, so each name must hand off to the repo's own hook (git-lfs, pre-commit, etc.).
+name=$(basename "$0")
+is_zero() { case "$1" in *[!0]*) return 1 ;; esac; }
+
+scan() {
+  if ! command -v gitleaks >/dev/null 2>&1; then
+    echo "gitleaks not installed; refusing $name. Install it (brew install gitleaks) or bypass once with --no-verify." >&2
+    exit 1
+  fi
+  gitleaks "$@" --redact --no-banner --log-level warn --verbose --exit-code 3
+  case $? in
+    0) ;;
+    3) echo "gitleaks found a possible secret; $name blocked. Mark a false positive with a 'gitleaks:allow' comment or .gitleaksignore." >&2; exit 1 ;;
+    *) echo "gitleaks could not scan; $name blocked. Fetch first if the remote moved, or bypass once with --no-verify." >&2; exit 1 ;;
+  esac
+}
+
+case "$name" in
+  pre-commit)
+    scan git --pre-commit --staged
+    ;;
+  pre-push)
+    stdin=$(cat)
+    echo "$stdin" | while read -r _ local_sha _ remote_sha; do
+      [ -z "$local_sha" ] || is_zero "$local_sha" && continue
+      if is_zero "$remote_sha"; then
+        scan git --log-opts="$local_sha --not --remotes"
+      else
+        scan git --log-opts="$remote_sha..$local_sha"
+      fi
+    done || exit 1
+    ;;
+esac
+
+repo_hook="$(git rev-parse --git-common-dir)/hooks/$name"
+[ -x "$repo_hook" ] || exit 0
+if [ "$name" = pre-push ]; then
+  echo "$stdin" | "$repo_hook" "$@"
+else
+  exec "$repo_hook" "$@"
+fi

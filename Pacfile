@@ -21,6 +21,7 @@ git
 direnv
 mise
 starship
+gitleaks
 
 # ===== Languages & Runtimes =====
 deno

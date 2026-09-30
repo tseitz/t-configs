@@ -6,6 +6,7 @@ brew "direnv"
 brew "mise"
 brew "starship"
 brew "gh"
+brew "gitleaks"
 
 # ===== Languages & Runtimes =====
 # Most versions managed by mise, but these provide system-level support

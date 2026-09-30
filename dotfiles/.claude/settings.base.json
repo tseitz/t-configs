@@ -111,6 +111,16 @@
       {
         "hooks" : [
           {
+            "command" : "~/.claude/scripts/hooks/jev-guard.js",
+            "timeout" : 20,
+            "type" : "command"
+          }
+        ],
+        "matcher" : "Bash"
+      },
+      {
+        "hooks" : [
+          {
             "command" : "~/.claude/scripts/hooks/direnv-wrap.js",
             "type" : "command"
           }
@@ -245,7 +255,7 @@
   },
   "sandbox" : {
     "autoAllowBashIfSandboxed" : true,
-    "enabled" : true,
+    "enabled" : false,
     "enableWeakerNetworkIsolation" : true,
     "excludedCommands" : [
       "chrome-headless-shell",
@@ -326,6 +336,70 @@
       "WebFetch(domain:github.com)",
       "WebFetch(domain:api.github.com)",
       "mcp__plugin_atlassian_atlassian__getJiraIssue"
+    ],
+    "ask" : [
+      "Bash(git push --force*)",
+      "Bash(git push * --force*)",
+      "Bash(git push -f*)",
+      "Bash(git push * -f*)",
+      "Bash(git push * +*)",
+      "Bash(git push *--no-verify*)",
+      "Bash(git commit *--no-verify*)",
+      "Bash(git commit -n*)",
+      "Bash(git commit * -n*)",
+      "Bash(git -c *)",
+      "Bash(HUSKY=0 *)",
+      "Bash(git reset --hard*)",
+      "Bash(git reset * --hard*)",
+      "Bash(git clean *)",
+      "Bash(git checkout -- *)",
+      "Bash(git checkout .)",
+      "Bash(git restore *)",
+      "Bash(git branch -D *)",
+      "Bash(git stash drop*)",
+      "Bash(git stash clear*)",
+      "Bash(git filter-branch *)",
+      "Bash(git filter-repo *)",
+      "Bash(git config *core.hooksPath*)",
+      "Bash(gh repo create *--public*)",
+      "Bash(gh repo edit *--visibility*)",
+      "Bash(gh repo delete*)",
+      "Bash(gh gist create*)",
+      "Bash(sudo *)",
+      "Bash(sh)",
+      "Bash(bash)",
+      "Bash(zsh)",
+      "Bash(env)",
+      "Bash(printenv*)",
+      "Read(**/.env)",
+      "Read(**/.env.local)",
+      "Read(**/.env.*.local)",
+      "mcp__alpaca__place_stock_order",
+      "mcp__alpaca__place_crypto_order",
+      "mcp__alpaca__place_option_order",
+      "mcp__alpaca__replace_order_by_id",
+      "mcp__alpaca__cancel_order_by_id",
+      "mcp__alpaca__cancel_all_orders",
+      "mcp__alpaca__close_position",
+      "mcp__alpaca__close_all_positions",
+      "mcp__alpaca__exercise_options_position",
+      "mcp__alpaca__do_not_exercise_options_position",
+      "mcp__alpaca__create_locate",
+      "mcp__alpaca__update_account_config",
+      "mcp__claude_ai_Gmail__send_message",
+      "mcp__claude_ai_Gmail__reply",
+      "mcp__claude_ai_Gmail__forward",
+      "mcp__claude_ai_Google_Drive__share_file"
+    ],
+    "deny" : [
+      "Bash(mkfs*)",
+      "Bash(diskutil *erase*)",
+      "Bash(dd * of=/dev/*)",
+      "Read(~/.ssh/**)",
+      "Read(~/.aws/**)",
+      "Read(~/.gnupg/**)",
+      "Read(~/.config/typesafe/**)",
+      "Read(~/.config/gh/hosts.yml)"
     ],
     "defaultMode" : "auto"
   },

@@ -1,21 +1,13 @@
 #!/usr/bin/env node
 'use strict';
 
-const fs = require('fs');
 const os = require('os');
 const path = require('path');
-const { execFileSync } = require('child_process');
+const { readKey, missingKeyReason, workReason, askJev, safeErrorReason, appendLog } = require('../lib/jev');
 
-const ENDPOINT = 'https://api.typesafe.ai/v1/systemone';
-const KEY_FILE = path.join(os.homedir(), '.config', 'typesafe', 'api_key');
 const LOG_FILE = path.join(os.homedir(), '.cache', 'jev-router', 'decisions.jsonl');
-const TIMEOUT_MS = 5000;
 const MAX_PROMPT_CHARS = 12000;
 const MAX_RISK = Number(process.env.JEV_ROUTER_MAX_RISK ?? 0.15);
-const PERSONAL_REMOTE = /[:/]tseitz\//i;
-const WORK_REMOTE = /[:/](NinthDecimal|ThinkNear)\//i;
-const WORK_ROOT = path.join(os.homedir(), 'Code', 'presentation').toLowerCase();
-const PATH_IN_TEXT = /(?<![\w.~$/:-])(?:~|\$HOME)?\/[^\s`'"()<>,;:]+/g;
 
 // Named agents pin their own model and forks ignore one, so only generic briefs are routable.
 const ROUTABLE_TYPES = new Set([undefined, '', 'general-purpose', 'claude']);
@@ -35,75 +27,6 @@ const QUESTION = {
   },
 };
 
-// Printable ASCII only: fetch echoes a bad header value, key included, in its error text.
-function readKey() {
-  let key = process.env.TYPESAFE_API_KEY;
-  if (!key) {
-    try {
-      key = fs.readFileSync(KEY_FILE, 'utf8');
-    } catch {
-      return { key: '' };
-    }
-  }
-  key = key.trim();
-  return /^[\x21-\x7e]+$/.test(key) ? { key } : { key: '', malformed: true };
-}
-
-// Map of remote name -> url, or null outside a repo.
-function remotesOf(dir) {
-  try {
-    const out = execFileSync('git', ['-C', dir, 'config', '--get-regexp', '^remote\\..*\\.url$'], {
-      encoding: 'utf8',
-      stdio: ['ignore', 'pipe', 'ignore'],
-      timeout: 2000,
-    });
-    return Object.fromEntries(
-      out.trim().split('\n').map(line => {
-        const [k, url] = line.split(/\s+/);
-        return [k.replace(/^remote\.|\.url$/g, ''), url];
-      }),
-    );
-  } catch {
-    return null;
-  }
-}
-
-function realOrNearestParent(p) {
-  for (let dir = p; ; dir = path.dirname(dir)) {
-    try {
-      return fs.realpathSync(dir);
-    } catch {
-      if (dir === path.dirname(dir)) return dir;
-    }
-  }
-}
-
-function isWorkPath(p) {
-  const real = realOrNearestParent(p);
-  const underRoot = q => (path.resolve(q) + '/').toLowerCase().startsWith(WORK_ROOT + '/');
-  if (underRoot(p) || underRoot(real)) return true;
-  return Object.values(remotesOf(real) || {}).some(url => WORK_REMOTE.test(url));
-}
-
-function pathsIn(text) {
-  return (text.match(PATH_IN_TEXT) || []).map(p =>
-    p.replace(/^(~|\$HOME)/, os.homedir()),
-  );
-}
-
-// Returns why this brief must not leave the machine, or null when it may.
-// The session must sit in a personal repo (unknown means blocked); a path named in the
-// brief is blocked only when it resolves to work, since new files and non-repo paths are normal.
-function workReason(cwd, text) {
-  if (process.env.T_WORK !== undefined) return 'T_WORK set';
-  if (!cwd) return 'no cwd';
-  if (isWorkPath(cwd)) return 'session in work repo';
-  const remotes = remotesOf(cwd);
-  if (!remotes || !PERSONAL_REMOTE.test(remotes.origin || '')) return 'session not in a personal repo';
-  if (pathsIn(text).some(isWorkPath)) return 'brief names a work path';
-  return null;
-}
-
 // Downshift only when the costlier tiers carry almost no probability.
 function pickModel(p) {
   const opus = p.opus ?? 1;
@@ -113,30 +36,8 @@ function pickModel(p) {
   return null;
 }
 
-async function askJev(key, toolInput) {
-  const res = await fetch(ENDPOINT, {
-    method: 'POST',
-    headers: { Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      model: 'jev-latest',
-      state: { brief: { description: String(toolInput.description || ''), prompt: toolInput.prompt } },
-      questions: { model: QUESTION },
-    }),
-    signal: AbortSignal.timeout(TIMEOUT_MS),
-  });
-  if (!res.ok) throw new Error(`HTTP ${res.status}`);
-  const answer = (await res.json()).answers?.model;
-  if (!answer?.probabilities) throw new Error('response had no model probabilities');
-  return answer;
-}
-
 function log(entry) {
-  try {
-    fs.mkdirSync(path.dirname(LOG_FILE), { recursive: true });
-    fs.appendFileSync(LOG_FILE, JSON.stringify({ at: new Date().toISOString(), ...entry }) + '\n', { mode: 0o600 });
-  } catch (err) {
-    console.error(`[jev-router] could not write ${LOG_FILE}: ${err.message}`);
-  }
+  appendLog(LOG_FILE, 'jev-router', entry);
 }
 
 function emit(output) {
@@ -168,16 +69,14 @@ async function main(raw) {
 
   const { key, malformed } = readKey();
   if (!key) {
-    const why = malformed ? 'TypeSafe key has non-printable characters' : `no TypeSafe key in TYPESAFE_API_KEY or ${KEY_FILE}`;
-    return emit({ systemMessage: `jev-router: ${why}; subagent inherits the session model` });
+    return emit({ systemMessage: `jev-router: ${missingKeyReason(malformed)}; subagent inherits the session model` });
   }
 
   let answer;
   try {
-    answer = await askJev(key, { description, prompt });
+    answer = (await askJev(key, { brief: { description, prompt } }, { model: QUESTION })).model;
   } catch (err) {
-    // Only messages this file wrote are safe to echo; a fetch error can quote the auth header.
-    const reason = err.name === 'Error' ? err.message : [err.name, err.cause?.code].filter(Boolean).join(' ');
+    const reason = safeErrorReason(err);
     log({ description, error: reason });
     return emit({ systemMessage: `jev-router: TypeSafe call failed (${reason}); subagent inherits the session model` });
   }
