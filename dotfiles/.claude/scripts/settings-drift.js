@@ -39,11 +39,20 @@
  * one would look wanted on a personal machine. "The baseline" below therefore
  * means base, plus the work overlay when the marker is present.
  *
+ * WHY SKILL LINKS
+ * Claude Code does not read ~/.agents/skills, so each skill there needs a link
+ * in ~/.claude/skills. A skill pulled from the other machine has no link until
+ * install.sh --links runs, and nothing says so. The check lives here because
+ * hooks is not an additive list: a new SessionStart hook in settings.base.json
+ * would never reach an already set-up machine, while this one already runs.
+ *
  * Usage:
  *   settings-drift.js --hook     JSON for a SessionStart hook; silent if clean
  *   settings-drift.js --check    Human-readable; exit 1 if drift found
  *   settings-drift.js --apply    Append the missing base entries to live
  *   settings-drift.js --seed     Add base top-level keys absent from live
+ *
+ * --hook and --check also report skill-link problems (see WHY SKILL LINKS).
  */
 
 const fs = require("fs");
@@ -169,6 +178,77 @@ function writeLive(live) {
   fs.renameSync(tmp, LIVE_PATH);
 }
 
+/** Skill-link problems, as printable sections. Never throws: a broken
+ *  filesystem must not block a session. Reports nothing until the repo's
+ *  .agents/skills directory exists. */
+function skillLinkProblems() {
+  const out = [];
+  try {
+    const repoAgents = path.join(path.dirname(repoClaudeDir()), ".agents");
+    const repoSkills = path.join(repoAgents, "skills");
+    if (!fs.statSync(repoSkills, { throwIfNoEntry: false })?.isDirectory()) return out;
+
+    const home = os.homedir();
+    const resolves = (p) => {
+      try {
+        fs.realpathSync(p);
+        return true;
+      } catch {
+        return false;
+      }
+    };
+
+    let agentsOk = false;
+    try {
+      agentsOk = fs.realpathSync(path.join(home, ".agents")) === fs.realpathSync(repoAgents);
+    } catch {}
+    if (!agentsOk) {
+      out.push({
+        title: "~/.agents does not point at the repo's dotfiles/.agents",
+        items: [],
+        fix: fs.existsSync(path.join(home, ".agents"))
+          ? "mv ~/.agents ~/.agents.bak && ./install.sh --links"
+          : "./install.sh --links",
+      });
+    }
+
+    const liveSkills = path.join(home, ".claude", "skills");
+    const missing = fs
+      .readdirSync(repoSkills, { withFileTypes: true })
+      .filter((e) => !e.name.startsWith("."))
+      .filter((e) => fs.statSync(path.join(repoSkills, e.name), { throwIfNoEntry: false })?.isDirectory())
+      .map((e) => e.name)
+      .filter((name) => !resolves(path.join(liveSkills, name)));
+    if (missing.length) {
+      out.push({ title: "skills with no link in ~/.claude/skills", items: missing, fix: "./install.sh --links" });
+    }
+
+    let entries = [];
+    try {
+      entries = fs.readdirSync(liveSkills);
+    } catch {}
+    const dangling = entries.filter((name) => {
+      const p = path.join(liveSkills, name);
+      return fs.lstatSync(p, { throwIfNoEntry: false })?.isSymbolicLink() && !resolves(p);
+    });
+    if (dangling.length) {
+      out.push({ title: "dangling links in ~/.claude/skills", items: dangling, fix: "./install.sh --links" });
+    }
+  } catch (err) {
+    out.push({ title: `skill link check failed: ${err.message}`, items: [], fix: null });
+  }
+  return out;
+}
+
+function formatSkillSections(sections, indent) {
+  const lines = [];
+  for (const s of sections) {
+    lines.push(`${indent}${s.title}${s.items.length ? `: ${s.items.join(", ")}` : ""}`);
+    if (s.fix) lines.push(`${indent}  Run ${s.fix}`);
+  }
+  return lines;
+}
+
 function describe(value) {
   if (Array.isArray(value)) return `${value.length} items`;
   if (value && typeof value === "object") return `${Object.keys(value).length} entries`;
@@ -177,13 +257,28 @@ function describe(value) {
 
 function main() {
   const mode = process.argv[2] || "--check";
+  const skillSections = mode === "--hook" || mode === "--check" ? skillLinkProblems() : [];
   let live, base;
   try {
     live = readJson(LIVE_PATH);
     base = readBaseline();
   } catch (err) {
-    // A missing or half-written settings file must never block a session.
+    // A missing or half-written settings file must never block a session, but
+    // it must not hide broken skill links either.
     if (mode === "--check") console.error(`settings-drift: ${err.message}`);
+    if (skillSections.length) {
+      if (mode === "--hook") {
+        process.stdout.write(
+          JSON.stringify({
+            systemMessage: ["skill links:", ...formatSkillSections(skillSections, "  ")].join("\n"),
+          })
+        );
+      } else {
+        console.log("skill links:");
+        for (const l of formatSkillSections(skillSections, "  ")) console.log(l);
+        process.exit(1);
+      }
+    }
     process.exit(0);
   }
 
@@ -206,23 +301,25 @@ function main() {
   }
 
   if (mode === "--hook") {
-    if (drift.length || keyDrift.length || missingKeys.length) {
-      const lines = [...drift, ...keyDrift].map(
-        (d) => `    ${d.path} missing: ${d.missing.join(", ")}`
-      );
-      if (missingKeys.length) {
-        lines.push(`    absent keys: ${missingKeys.join(", ")}`);
-        lines.push("  Run ./install.sh --sync-settings to add them.");
-      }
-      process.stdout.write(
-        JSON.stringify({
-          systemMessage:
-            "settings drift vs t-configs base:\n" +
-            lines.join("\n") +
-            "\n  Run ./install.sh --sync-lists to add them.",
-        })
+    const parts = [];
+    if (drift.length || keyDrift.length) {
+      parts.push(
+        "settings drift vs t-configs base:",
+        ...[...drift, ...keyDrift].map((d) => `    ${d.path} missing: ${d.missing.join(", ")}`),
+        "  Run ./install.sh --sync-lists to add them."
       );
     }
+    if (missingKeys.length) {
+      parts.push(
+        "settings keys absent on this machine:",
+        `    ${missingKeys.join(", ")}`,
+        "  Run ./install.sh --sync-settings to add them."
+      );
+    }
+    if (skillSections.length) {
+      parts.push("skill links:", ...formatSkillSections(skillSections, "    "));
+    }
+    if (parts.length) process.stdout.write(JSON.stringify({ systemMessage: parts.join("\n") }));
     process.exit(0);
   }
 
@@ -252,7 +349,7 @@ function main() {
   }
 
   // --check
-  if (!drift.length && !keyDrift.length && !missingKeys.length) {
+  if (!drift.length && !keyDrift.length && !missingKeys.length && !skillSections.length) {
     console.log("settings: additive lists, plugin keys and base keys all match.");
     process.exit(0);
   }
@@ -267,6 +364,10 @@ function main() {
     console.log("settings keys absent on this machine (base never seeded here):");
     for (const k of missingKeys) console.log(`  ${k} (${describe(base[k])})`);
     console.log("Run ./install.sh --sync-settings to add them.");
+  }
+  if (skillSections.length) {
+    console.log("skill links:");
+    for (const l of formatSkillSections(skillSections, "  ")) console.log(l);
   }
   process.exit(1);
 }

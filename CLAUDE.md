@@ -3,15 +3,29 @@
 My dotfiles, shared across my work and personal machines. Understand how the Claude config
 syncs before editing anything under `~/.claude/`:
 
-- **Symlinked → editing = editing the repo.** `~/.claude/CLAUDE.md`, plus `~/.claude/{skills,
-  rules,agents,commands,scripts,output-styles}` and `statusline-command.sh`, are
+- **Symlinked → editing = editing the repo.** `~/.claude/CLAUDE.md`, plus `~/.claude/{rules,
+  agents,commands,scripts,output-styles}` and `statusline-command.sh`, are
   symlinks into `~/t-configs/dotfiles/.claude/`. (`install.sh` also has call sites for
   `AGENTS.md`, `README.md`, `hooks/` and a few plugin files that aren't in the repo; it
   skips them by design, so re-adding the file revives the link.)
-- **Install third-party skills with `npx skills add <repo> -g -a claude-code --copy`, then
-  commit them.** Without `--copy` the installer writes a relative symlink, and behind the
-  symlinked `~/.claude/skills` it resolves inside this repo and dangles. To update, re-run and
-  commit.
+- **Skills live in `dotfiles/.agents/skills/`, not under `.claude/`.** Own and third-party
+  alike. `~/.agents` is a symlink to `dotfiles/.agents`, so the `npx skills` CLI (which writes
+  to `~/.agents/skills`) writes straight into this repo. `~/.claude/skills` is a real directory
+  of per-skill symlinks into it, made by `install.sh` on every OS. Claude Code does not read
+  `~/.agents/skills` itself, and a whole-directory link would break when npx adds its own
+  links there.
+- **Install third-party skills with `npx skills add <repo> --skill <name> -g -y`** (plain: no
+  `--copy`, no `-a`). It writes into `~/.agents/skills` (= this repo) and makes the Claude link.
+  Then commit `dotfiles/.agents/`. `dotfiles/.agents/.skill-lock.json` is tracked: the CLI
+  writes it and it records each skill's source, so `npx skills update -g` works on both
+  machines. On the other machine: `git pull`, then `./install.sh --links` (links only, add-only,
+  non-interactive). The SessionStart drift hook (`settings-drift.js`) warns about missing or
+  dangling skill links and about `~/.agents` not being linked.
+  - First time on a machine where `~/.agents` is a real directory:
+    `mv ~/.agents ~/.agents.bak && ./install.sh --links`.
+  - Non-goals: tools that read `~/.agents/skills` (Codex, Cursor, ...) see every skill,
+    including Claude-specific ones. Accepted. Gitignored work-only skills are not synced; move
+    them into `dotfiles/.agents/skills/` by hand on each machine.
 - **`settings.json` is NOT symlinked** — it's seeded once from `settings.base.json`,
   then owned by this machine (Claude Code rewrites it atomically; a symlink would break
   that). So:

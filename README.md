@@ -37,6 +37,7 @@ Use `--check` and `--sync` instead of a bare `./install.sh`:
 ```bash
 ./install.sh --check   # report drift, change nothing
 ./install.sh --sync    # non-interactive, add-only: create what's missing
+./install.sh --links   # symlinks only (incl. per-skill links), add-only, non-interactive
 ```
 
 `--check` audits every symlink, lists dangling links and stale `.bak` files, diffs the installed Claude plugins against the wanted list, and runs `brew bundle check`.
@@ -86,16 +87,24 @@ The file sits under `.config/editors/` rather than `.config/Code/` so a second e
 
 ## Agent Skills
 
-Agent skills live in **`dotfiles/.claude/skills/`**, symlinked to `~/.claude/skills`. Add skills as subdirectories with a `SKILL.md` in each. Skills may be grouped in category folders (e.g. `react/`, `frontend/`, `workflow/`). To share them with another tool later, add a `create_symlink` in `install.sh` pointing to the same source.
+Agent skills live in **`dotfiles/.agents/skills/`**, the cross-tool location. `~/.agents` is a symlink to `dotfiles/.agents`, and `~/.claude/skills` is a real directory of per-skill symlinks into it (Claude Code doesn't read `~/.agents/skills` itself). Each skill is a subdirectory with a `SKILL.md`.
+
+**Installing a third-party skill:** the `npx skills` CLI writes into `~/.agents/skills`, i.e. straight into this repo, and creates the Claude link. Then commit `dotfiles/.agents/` (including the tracked `.skill-lock.json`, which lets `npx skills update -g` work on every machine):
+
+```bash
+npx skills add <repo> --skill <name> -g -y
+```
+
+On another machine, `git pull` then `./install.sh --links` to create the new links. Where `~/.agents` is still a real directory, migrate once with `mv ~/.agents ~/.agents.bak && ./install.sh --links`.
 
 **Adding a skill from GitHub:** From the repo root, pass the GitHub "tree" URL for the skill directory. The skill name defaults to the last path segment; you can override it with a second argument:
 
 ```bash
 ./scripts/add-skill-from-github.sh "https://github.com/vercel-labs/agent-skills/tree/main/skills/react-best-practices"
-# → adds dotfiles/.claude/skills/react-best-practices
+# → adds dotfiles/.agents/skills/react-best-practices
 
 ./scripts/add-skill-from-github.sh "https://github.com/anthropics/skills/tree/main/skills/webapp-testing" my-name
-# → adds dotfiles/.claude/skills/my-name
+# → adds dotfiles/.agents/skills/my-name
 ```
 
 The script uses a sparse checkout to fetch only that directory. Run it again with the same URL to update from upstream.
@@ -114,7 +123,8 @@ The script uses a sparse checkout to fetch only that directory. Run it again wit
 | `dotfiles/.hushlogin` | Suppresses macOS "Last login" terminal banner |
 | `dotfiles/.config/nvim/` | Neovim configuration (LazyVim) |
 | `dotfiles/.config/editors/settings.json` | VS Code User settings |
-| `dotfiles/.claude/` | Claude Code config — skills, rules, agents, commands, scripts, output styles, `CLAUDE.md` |
+| `dotfiles/.agents/` | Agent skills (`skills/`, own and third-party) and the tracked `.skill-lock.json`; `~/.agents` links here |
+| `dotfiles/.claude/` | Claude Code config — rules, agents, commands, scripts, output styles, `CLAUDE.md` |
 | `mise.toml` | Default runtimes managed by mise (e.g. Node) |
 | `Brewfile` | Homebrew packages, casks, and dependencies (macOS) |
 | `Brewfile.wsl` | Homebrew formulae for WSL/Linux (no casks) |
@@ -144,16 +154,14 @@ cd ~/t-configs
 (`mise-bin` for `mise`) as satisfied.
 
 **Omarchy** is detected separately (`ID=omarchy`) and is narrower than Arch — it
-gates the two places Omarchy owns config this repo must not take over:
+gates the one place Omarchy owns config this repo must not take over:
 
 - **`~/.config/nvim` is left alone.** Omarchy ships a LazyVim wired into the system
   theme (`omarchy-theme-hotreload`, transparency, `all-themes`). This repo's nvim
   config is near-stock LazyVim, so linking it over the top would trade real desktop
   integration for nothing.
-- **`~/.claude/skills` is linked per skill, not as a directory.** Omarchy symlinks its
-  own `diagnose-crash` and `omarchy` skills into that directory, and a whole-directory
-  link removes both. The cost is that a newly committed skill appears on the next
-  install run rather than instantly.
+
+`~/.claude/skills` is linked per skill on every OS, not as a directory: Omarchy symlinks its own `diagnose-crash` and `omarchy` skills into it, and npx adds links there too, so a whole-directory link would remove or pollute them. The cost is that a newly committed skill appears on the next `./install.sh --links` (or `--sync`) rather than instantly.
 
 `.hushlogin` (a macOS-only file) and the VS Code settings link (when `code` isn't
 installed) are skipped on every non-macOS machine.

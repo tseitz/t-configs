@@ -18,9 +18,10 @@ when the cwd is a git worktree that isn't an open workspace root folder.
 My global Claude config is version-controlled in `~/t-configs` and shared across my
 work and personal machines.
 
-- **Symlinked → editing = editing the repo.** This file, plus `~/.claude/{skills,
-  rules,agents,commands,scripts,output-styles}` and `statusline-command.sh`, are
-  symlinks into `~/t-configs/dotfiles/.claude/`. When I say "update my personal
+- **Symlinked → editing = editing the repo.** This file, plus `~/.claude/{rules,
+  agents,commands,scripts,output-styles}` and `statusline-command.sh`, are
+  symlinks into `~/t-configs/dotfiles/.claude/`. Skills are the exception: they live in
+  `~/t-configs/dotfiles/.agents/skills/` (linked per skill into `~/.claude/skills`). When I say "update my personal
   claude", "update my global rules/instructions", "add a command/agent/skill", etc.,
   just edit the file in place — the change lands in the repo automatically. Then commit
   and push so my other machine picks it up on `git pull`.

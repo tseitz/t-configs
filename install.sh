@@ -13,6 +13,7 @@ set -euo pipefail
 #        ./install.sh --dry-run # list the steps, change nothing
 #        ./install.sh --verbose # also print already-correct symlinks
 #        ./install.sh --sync-settings # add base settings keys this machine lacks
+#        ./install.sh --links   # symlinks only, add-only (no brew/mise/plugins)
 #        ./install.sh --work    # mark this a work machine (once, then sticky)
 #
 # --sync is the "get this machine back in line with my other one" mode. It runs
@@ -20,7 +21,11 @@ set -euo pipefail
 # file or a link to somewhere else already occupies a symlink destination, it
 # reports the drift and moves on instead of backing the file up and replacing it.
 # So it only ever ADDS what's missing. Use a full ./install.sh to take over a
-# destination that already has local content.
+# destination that already has local content. (Removing a dangling or legacy
+# directory *symlink* is still add-only: a symlink holds no content to lose.)
+#
+# --links is --sync restricted to step 6. --sync also runs brew, mise, plugin
+# installs and settings seeding, which is too much to re-link skills.
 #
 # --work writes the dotfiles/.work-machine marker, which makes settings.work.json
 # (work-only plugins and marketplaces) merge over the shared base. Pass it on the
@@ -70,6 +75,7 @@ SYNC_ONLY=false
 CHECK_ONLY=false
 SYNC_LISTS=false
 SYNC_SETTINGS=false
+LINKS_ONLY=false
 VERBOSE=false
 WORK_FLAG=false
 for arg in "$@"; do
@@ -80,6 +86,7 @@ for arg in "$@"; do
   [[ "$arg" == "--check"   || "$arg" == "-c" ]] && CHECK_ONLY=true
   [[ "$arg" == "--sync-lists"                ]] && SYNC_LISTS=true
   [[ "$arg" == "--sync-settings"             ]] && SYNC_SETTINGS=true
+  [[ "$arg" == "--links"                     ]] && { LINKS_ONLY=true; SYNC_ONLY=true; YES_ALL=true; }
   [[ "$arg" == "--work"                      ]] && WORK_FLAG=true
 done
 
@@ -451,7 +458,7 @@ create_symlink() {
 
 # Link each entry of a repo directory rather than the directory itself, for
 # destinations something else also writes into: a whole-directory link would
-# drop the entries Omarchy puts in ~/.claude/skills.
+# swallow what `npx skills` and Omarchy put in ~/.claude/skills.
 link_dir_contents() {
   local src_dir="$1" dest_dir="$2" entry
 
@@ -469,7 +476,33 @@ link_dir_contents() {
 
   for entry in "$src_dir"/*; do
     [ -e "$entry" ] || continue     # unmatched glob when the repo dir is empty
-    create_symlink "$entry" "$dest_dir/$(basename "$entry")"
+    local dest="$dest_dir/$(basename "$entry")"
+    # npx writes relative links that resolve to the same repo dir; exact-target
+    # matching in create_symlink would report each of them as drift.
+    local resolved; resolved="$(realpath "$dest" 2>/dev/null || true)"
+    if [ -L "$dest" ] && [ -n "$resolved" ] && [ "$resolved" = "$(realpath "$entry")" ]; then
+      LINKS_OK=$((LINKS_OK + 1))
+      $VERBOSE && success "ok: $dest"
+      continue
+    fi
+    create_symlink "$entry" "$dest"
+  done
+
+  # Dangling links: a skill deleted from the repo, or a link into an old path.
+  # Only links into this repo or .agents — a dangling Omarchy link may just be
+  # mid-reinstall. Real dirs and live links are never touched.
+  for entry in "$dest_dir"/*; do
+    [ -L "$entry" ] && [ ! -e "$entry" ] || continue
+    case "$(readlink "$entry")" in
+      *"$DOTFILES_DIR"*|*/.agents/skills/*) ;;
+      *) continue ;;
+    esac
+    if $CHECK_ONLY; then
+      warn "dangling: $entry"
+    else
+      rm "$entry"
+      info "removed dangling link: $entry"
+    fi
   done
 }
 
@@ -595,10 +628,14 @@ step_symlinks() {
   ensure_dir "$HOME/.claude"
 
   # Directories (symlink entire dirs)
-  if $IS_OMARCHY; then
-    link_dir_contents "$DOTFILES_DIR/.claude/skills" "$HOME/.claude/skills"
-  else
-    create_symlink "$DOTFILES_DIR/.claude/skills" "$HOME/.claude/skills"
+  # .agents is linked whole: the npx CLI rewrites its lock file atomically, which
+  # would replace a per-file link with a real file.
+  create_symlink "$DOTFILES_DIR/.agents"          "$HOME/.agents"
+  link_dir_contents "$DOTFILES_DIR/.agents/skills" "$HOME/.claude/skills"
+  # Gitignored work skills survive a pull in the old dir, where nothing links them.
+  if [ -d "$DOTFILES_DIR/.claude/skills" ] && [ -n "$(ls -A "$DOTFILES_DIR/.claude/skills")" ]; then
+    warn "skills left in dotfiles/.claude/skills, invisible to Claude — move them to dotfiles/.agents/skills/:"
+    ls -A "$DOTFILES_DIR/.claude/skills" | sed 's/^/         /'
   fi
   create_symlink "$DOTFILES_DIR/.claude/rules"    "$HOME/.claude/rules"
   create_symlink "$DOTFILES_DIR/.claude/agents"   "$HOME/.claude/agents"
@@ -890,6 +927,13 @@ step_local_overrides() {
 # ------------------------------------------
 # Run steps
 # ------------------------------------------
+# --links: symlinks only. step_symlinks prints its own summary.
+if $LINKS_ONLY; then
+  $DRY_RUN && { info "[dry-run] would run step_symlinks"; exit 0; }
+  step_symlinks
+  exit 0
+fi
+
 if $CHECK_ONLY; then
   info "Checking this machine against $REPO_DIR — nothing will be changed."
   if is_work_machine; then
