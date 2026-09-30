@@ -132,7 +132,7 @@ Don't wait for approval of the routes separately — I approved them with the pl
 - Implementer self-reviews before handing back; a single review pass happens at checkpoints or
   at the end (see Review). Reserve the full spec-then-quality two-stage review for
   security-sensitive or architecturally significant tasks.
-- **Validation standard (ported from `/prp:implement`):** verify in levels as appropriate —
+- **Validation standard:** verify in levels as appropriate —
   static/lint → unit → build → integration → edge. Don't claim done before the relevant levels pass.
 
 ### 4b. Findings found mid-task — ASK. Never file one unprompted.
@@ -168,7 +168,7 @@ looks like **once I've agreed to add one**. This rule governs whether it gets ad
   those in the diff means run it, regardless of how small the change looks.
 - **Verify before claiming done.** No "done"/"passing" claims without fresh command output as
   evidence — always.
-- **`/test-coverage`** to confirm 80%+ when coverage matters.
+- **Coverage** — when it matters, run the project's own coverage script and confirm 80%+.
 - Responding to review feedback: verify before implementing, no performative agreement, push
   back when warranted. Incoming PR comments → `receiving-pr-review`.
 
@@ -191,10 +191,9 @@ question the architecture, don't keep patching.
 - **`commit` skill** — branch safety, conventional format, staging. Targeted staging routes
   through `/prp:stage-commit`.
 - **After tests pass, decide what's next** — merge, open a PR, keep the branch, or discard it.
-- **PR creation** — use `/prp:pr` mechanics (template discovery, heredoc-safe bodies). **The body
-  itself follows [pr-descriptions.md](pr-descriptions.md) — high level, no change-by-change
-  enumeration — which overrides `/prp:pr`'s own verbosity and any repo template's prompting for
-  exhaustive detail.**
+- **PR creation** — `gh pr create --body-file`, after checking the repo for a PR template. **The
+  body itself follows [pr-descriptions.md](pr-descriptions.md) — high level, no change-by-change
+  enumeration — which overrides any repo template's prompting for exhaustive detail.**
 - **Comment triage — a required beat before the PR is opened**, done by
   `/post-implementation-reflection` and its Comments lens: sweep the branch diff, the commit
   bodies, and the session, and route each piece of rationale out of the code and onto the PR.

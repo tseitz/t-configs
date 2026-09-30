@@ -9,9 +9,7 @@ paths:
 
 ## Formatting
 
-- **black** for code formatting
-- **isort** for import sorting
-- **ruff** for linting
+- **ruff** for formatting, import sorting and linting (`ruff format`, `ruff check`)
 
 ## Reference
 

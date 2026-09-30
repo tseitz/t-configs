@@ -42,4 +42,4 @@ severity scale:
 
 Name the concrete consequence for each finding. If you can't, it's a nit or it's nothing.
 
-> For reviewing a GitHub PR, use `/pr-review-toolkit:review-pr` instead.
+> Before pushing a branch that will become a PR, use `/pr-review` instead.

@@ -7,8 +7,6 @@ paths:
 ---
 # TypeScript/JavaScript Testing
 
-> This file extends [common/testing.md](../common/testing.md) with TypeScript/JavaScript specific content.
-
 ## Frameworks
 
 - **Unit / Integration**: Vitest (`pnpm test`, `pnpm test:coverage`)
