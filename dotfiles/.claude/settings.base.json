@@ -111,7 +111,7 @@
       {
         "hooks" : [
           {
-            "command" : "jq -c 'if (.tool_input.command | test(\"^\\\\s*(uv|gh|git|gcloud|kubectl|brew|herdr)\\\\s\")) then {} else (.tool_input as $orig | {hookSpecificOutput: {hookEventName: \"PreToolUse\", updatedInput: ($orig | .command = (\"eval \\\"$(direnv export bash 2>\/dev\/null)\\\" && \" + .command))}}) end'",
+            "command" : "~/.claude/scripts/hooks/direnv-wrap.js",
             "type" : "command"
           }
         ],
@@ -249,13 +249,13 @@
     "enableWeakerNetworkIsolation" : true,
     "excludedCommands" : [
       "chrome-headless-shell",
-      "mkdir",
+      "mkdir *",
       "git *",
-      "gcloud",
-      "kubectl",
-      "brew",
-      "gh",
-      "herdr"
+      "gcloud *",
+      "kubectl *",
+      "brew *",
+      "gh *",
+      "herdr *"
     ],
     "filesystem" : {
       "allowWrite" : [
