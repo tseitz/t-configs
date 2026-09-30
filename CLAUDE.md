@@ -8,9 +8,10 @@ syncs before editing anything under `~/.claude/`:
   symlinks into `~/t-configs/dotfiles/.claude/`. (`install.sh` also has call sites for
   `AGENTS.md`, `README.md`, `hooks/` and a few plugin files that aren't in the repo; it
   skips them by design, so re-adding the file revives the link.)
-- **Skills installed by `npx skills` must be absolute symlinks.** `~/.claude/skills` is itself a
-  symlink, so the relative link the installer writes resolves inside this repo and dangles. Point
-  them at `~/.agents/skills/<name>` and gitignore them (see `.gitignore`).
+- **Install third-party skills with `npx skills add <repo> -g -a claude-code --copy`, then
+  commit them.** Without `--copy` the installer writes a relative symlink, and behind the
+  symlinked `~/.claude/skills` it resolves inside this repo and dangles. To update, re-run and
+  commit.
 - **`settings.json` is NOT symlinked** — it's seeded once from `settings.base.json`,
   then owned by this machine (Claude Code rewrites it atomically; a symlink would break
   that). So:
