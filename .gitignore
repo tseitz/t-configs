@@ -29,6 +29,12 @@ dotfiles/.claude/plugins/marketplaces/
 
 # Skills: ignore work-specific skills (may contain company-internal references)
 dotfiles/.claude/skills/work/
+dotfiles/.claude/skills/contract-testing-flywheel
+dotfiles/.claude/skills/drift-testing
+dotfiles/.claude/skills/oas-generator
+dotfiles/.claude/skills/openapi-parser
+dotfiles/.claude/skills/pact-coverage
+dotfiles/.claude/skills/pactflow
 
 # Root-level .claude/ — local runtime state for this repo (settings.local.json,
 # sandbox-friction log, plans, etc.), never shared config. The leading slash anchors this
