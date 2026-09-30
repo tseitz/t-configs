@@ -237,7 +237,7 @@ function ignoredWork(wt, clone) {
     .split('\n')
     .filter(Boolean)
     .filter(f => !/(^|\/)(node_modules|\.bundle|vendor|tmp|log|coverage|dist|build|\.next|\.turbo)\/$/.test(f))
-    .filter(f => !/^(\.yarn|\.pnpm-store|\.claude\/\.cc-writes)\//.test(f))
+    .filter(f => !/^(\.yarn|\.pnpm-store|\.claude\/\.cc-writes|vendor\/bundle)\//.test(f))
     .filter(f => !sameAsClone(wt, clone, f));
 }
 
@@ -369,7 +369,7 @@ function lastLine(file) {
 
 // What an install may find besides the PR's commits. Anything else — a tracked edit, a planted
 // .npmrc — may be what sandboxed code (a PR test run in the tab) left for this unsandboxed install.
-const INSTALL_LEFTOVERS = /^((.*\/)?node_modules\/|\.claude\/\.cc-writes\/|\.yarn\/.*|(.*\/)?\.DS_Store|(tmp|log|coverage|dist|build|\.next|\.turbo)\/)$/;
+const INSTALL_LEFTOVERS = /^((.*\/)?node_modules\/|\.claude\/\.cc-writes\/|\.yarn\/.*|\.bundle\/|vendor\/bundle\/|(.*\/)?\.DS_Store|(tmp|log|coverage|dist|build|\.next|\.turbo)\/)$/;
 
 function unexpectedFiles(wt, clone) {
   const changed = run('git', ['-C', wt, 'status', '--porcelain']).split('\n').filter(Boolean).map(l => l.slice(3));
@@ -476,15 +476,39 @@ function startAgent(name, pane, args) {
   }
 }
 
+// The review Claude runs PR code (tests, rails runner) sandboxed, but my sandbox can write toolchains,
+// dotfiles and other checkouts, which run later unsandboxed. So a tab writes only its worktree and
+// temp. The file lives in the clone's git dir, which the tab can't write.
+function reviewSandbox(s) {
+  const expand = p => canonical(p.replace(/^~(?=\/|$)/, HOME));
+  const allowWrite = ['settings.json', 'settings.local.json']
+    .map(f => path.join(HOME, '.claude', f))
+    .filter(f => fs.existsSync(f))
+    .flatMap(f => {
+      const fsSettings = (JSON.parse(fs.readFileSync(f, 'utf8')).sandbox || {}).filesystem || {};
+      return (fsSettings.allowWrite || []).map(expand);
+    });
+  const others = fs.readdirSync(ROOT)
+    .map(repo => path.join(ROOT, repo))
+    .filter(dir => fs.statSync(dir).isDirectory())
+    .flatMap(dir => fs.readdirSync(dir).map(name => path.join(dir, name)))
+    .filter(p => p !== s.wt);
+  const denyWrite = [...new Set([...allowWrite.filter(p => !within(s.wt, p)), ...others, s.clone, PRESENTATION])];
+  const file = path.join(run('git', ['-C', s.wt, 'rev-parse', '--absolute-git-dir']), 'review-sandbox.json');
+  fs.writeFileSync(file, `${JSON.stringify({ sandbox: { filesystem: { denyWrite } } }, null, 2)}\n`);
+  return file;
+}
+
 function openTab(ctx, s, opts) {
   const workspaceId = ensureWorkspace(ctx);
   const env = [...PANE_ENV, ...(s.work ? ['--env', 'T_WORK_FORCE=1'] : [])];
   const tab = herdr('tab', 'create', '--workspace', workspaceId, '--cwd', s.wt, '--label', s.label, ...env, '--no-focus');
   const nvimPane = tab.root_pane.pane_id;
   run('herdr', ['pane', 'run', nvimPane, `nvim '+DiffviewOpen ${s.mergeBase}'`]);
+  const sandbox = reviewSandbox(s);
 
   if (s.claudeFiles.length) {
-    s.notes.push(`PR changes ${s.claudeFiles.join(', ')} — Claude not started; read those before you start it`);
+    s.notes.push(`PR changes ${s.claudeFiles.join(', ')} — Claude not started; read those, then start it with --settings ${sandbox}`);
     return;
   }
 
@@ -496,7 +520,10 @@ function openTab(ctx, s, opts) {
   if (!waitForIdeLock(s.wt, 20000)) s.notes.push('nvim IDE server not seen — run /ide in the Claude pane');
 
   const name = agentName(s.pr.repo, s.pr.number);
-  startAgent(name, claudePane, ['--ide', '--model', REVIEW_MODEL, '-n', s.label, ...(s.work ? ['--add-dir', PRESENTATION] : [])]);
+  // --add-dir takes several values, so it stays last.
+  startAgent(name, claudePane, [
+    '--ide', '--model', REVIEW_MODEL, '-n', s.label, '--settings', sandbox, ...(s.work ? ['--add-dir', PRESENTATION] : []),
+  ]);
 
   if (opts.review) {
     const started = tryRun('herdr', ['agent', 'prompt', name, REVIEW_PROMPT, '--wait', '--until', 'working', '--timeout', '15000']);
@@ -710,5 +737,5 @@ if (require.main === module) {
 }
 
 module.exports = {
-  changedFiles, matchesAny, within, installGate, jiraKey, ignoredWork, MISE_SENSITIVE, CLAUDE_CONFIG, PM_CONFIG, NO_HOOKS,
+  changedFiles, matchesAny, within, installGate, jiraKey, ignoredWork, reviewSandbox, MISE_SENSITIVE, CLAUDE_CONFIG, PM_CONFIG, NO_HOOKS,
 };

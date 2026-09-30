@@ -30,7 +30,9 @@ fields that pick the package manager, the set of lockfiles, patch files, a non-r
 resolution, or — in a yarn repo — any dependency gets no install. Nor does a worktree holding
 files bootstrap didn't write, since a sandboxed test in the tab could have planted them.
 Otherwise that code would run as me before I've read it. Installs that do run are scripts-off
-(`worktree-bootstrap.sh --untrusted`), once per PR head.
+(`worktree-bootstrap.sh --untrusted`), once per PR head. Each review Claude starts with
+`--settings <git-dir>/review-sandbox.json`, so the PR code it runs can write only its own worktree
+and temp — a tab opened before that existed needs its Claude restarted to get it.
 
 Leave cleanup to `--prune`, which only removes worktrees and tabs of **closed or merged** PRs.
 Submitting a review drops me from the requested list, so "no longer requested" doesn't mean done.

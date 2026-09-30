@@ -97,6 +97,27 @@ if [ ${#copied[@]} -gt 0 ] && command -v mise >/dev/null; then
 fi
 echo
 
+# ── 1b. Gems kept inside the main clone (BUNDLE_PATH: vendor/bundle) ────────
+# Cloned copy-on-write, not pointed at: near-free on APFS, no bundle install (which would run
+# the Gemfile), and nothing done here can reach the main clone's gems.
+if [ -f "$main/.bundle/config" ] && git -C "$main" check-ignore -q .bundle/config \
+  && ! { [ -e "$here/.bundle" ] || [ -L "$here/.bundle" ]; }; then
+  mkdir -p "$here/.bundle"
+  cp "$main/.bundle/config" "$here/.bundle/config"
+  echo "✓ Copied .bundle/config"
+fi
+if grep -qE '^BUNDLE_PATH: "?vendor/bundle"?$' "$here/.bundle/config" 2>/dev/null && [ -d "$main/vendor/bundle" ] \
+  && ! { [ -e "$here/vendor/bundle" ] || [ -L "$here/vendor/bundle" ] || [ -L "$here/vendor" ]; }; then
+  mkdir -p "$here/vendor"
+  if cp -cR "$main/vendor/bundle" "$here/vendor/bundle" 2>/dev/null; then
+    echo "✓ Cloned vendor/bundle from the main worktree"
+  else
+    rm -rf "$here/vendor/bundle"
+    echo "• Couldn't clone vendor/bundle (cp -c needs APFS) — run bundle install yourself."
+  fi
+fi
+echo
+
 # ── 2. Install dependencies ──────────────────────────────────────────────────
 if [ "$skip_install" = true ]; then
   echo "• Skipping dependency install (--skip-install)."
