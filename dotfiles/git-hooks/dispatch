@@ -2,6 +2,8 @@
 # Every hook name in this directory links here. A global core.hooksPath stops git reading
 # .git/hooks, so each name must hand off to the repo's own hook (git-lfs, pre-commit, etc.).
 name=$(basename "$0")
+# GUI apps (Obsidian, etc.) launch with a PATH that lacks Homebrew.
+PATH="/opt/homebrew/bin:/usr/local/bin:$PATH"
 is_zero() { case "$1" in *[!0]*) return 1 ;; esac; }
 
 scan() {
