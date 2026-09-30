@@ -42,7 +42,7 @@ Skipping it does NOT skip rigor. The gate lives in step 2, not here.
 **Run the `pre-implementation-review` skill.** It is the required beat, and it owns the scout,
 the tiering, and the plan critique: bounded scout of the real code first, tier from what the
 scout found (surprises, not guessed size), plan at that tier, then critique it — with a
-fresh-context subagent on anything that scouted FULL, because a plan self-graded by its author
+fresh-context subagent on anything past SHORT, because a plan self-graded by its author
 comes back "looks fine."
 
 **Inside the Matt Pocock chain, the beat is `to-plan` instead** — `/to-spec` → `/to-tickets` →

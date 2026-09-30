@@ -42,19 +42,28 @@ rather than guessing. An expensive scout is itself a surprise — it is the last
 **Size is not the measure. Surprise is.** You cannot judge size before doing the work, and a
 guess made now is made by the same model that is about to do the work.
 
-Count the surprises:
+Sort each surprise by what a miss costs.
+
+**Scope surprises** — more work, but a miss is loud: a test, the compiler or a reviewer finds it.
 
 - More call sites than expected
 - The pattern to mirror doesn't exist, or isn't applied consistently
-- The change crosses a boundary — module, repo, API contract, schema, another service
 - You had to open a file the task never mentioned
-- Existing tests assert behaviour this will change
-- You can't name the verification command
 - **The scout itself wasn't cheap** — that is the task telling you it isn't small
 
-**Zero surprises → SHORT. One or more → FULL.** State which you picked and the surprise that
-decided it, in one line. When torn, go FULL — a wrong SHORT is the failure this skill exists
-to prevent, and a wasted FULL costs one subagent.
+**Risk surprises** — a miss is quiet, or lands outside this repo before anyone sees it.
+
+- The change crosses a boundary — repo, API contract, schema, persisted data, another service
+- Existing tests assert behaviour this will change
+- You can't name the verification command
+- It touches auth, payments, or can lose data
+
+**Zero surprises → SHORT. Scope only → FULL. Any risk surprise → DEEP.** State which you picked
+and the surprise that decided it, in one line.
+
+Torn between SHORT and FULL, go FULL — a wrong SHORT is the failure this skill exists to
+prevent, and a wasted FULL costs one Sonnet subagent. DEEP needs a named risk surprise; a hunch
+is FULL.
 
 ## Step 2 — Plan at that tier
 
@@ -63,7 +72,7 @@ restate it here.
 
 **SHORT** — a few sentences inline: what changes, where, and the verify command. No document.
 
-**FULL** — write `<repo>/.claude/plans/<slug>.md` with these sections:
+**FULL and DEEP** — write `<repo>/.claude/plans/<slug>.md` with these sections:
 
 - **`## Design`** — the approved intent, and the mechanism at code level: which functions, types
   and seams change, and why each call was made.
@@ -93,13 +102,18 @@ directional is good enough.
 
 ## Step 3 — Critique the plan
 
-**SHORT** — answer the questions below inline, briefly.
+**SHORT** — answer the core questions below inline, briefly.
 
-**FULL** — dispatch a **fresh-context subagent** (`Explore`, or a general-purpose agent) and
-give it the plan, the scout findings, and these questions. Do not self-review a FULL plan: the
-model that wrote it will grade it "looks fine," which is the default failure mode, not a result.
+**FULL** — dispatch a **fresh-context `general-purpose` subagent with `model: "sonnet"`**. Give
+it the plan, the scout findings, and the core questions.
 
-The questions, hardest first:
+**DEEP** — the same, with `model: "opus"` and every question.
+
+Always set `model`: unset, the subagent inherits the session's Opus and effort. Not `Explore` —
+it locates code, it doesn't review it. Do not self-review a FULL or DEEP plan: the model that
+wrote it will grade it "looks fine," which is the default failure mode, not a result.
+
+Core questions, hardest first:
 
 - **Claims vs. facts.** Which parts of this plan were verified in the scout, and which are
   assumed? Name every assumption explicitly. This is the highest-value question — most plans
@@ -107,15 +121,18 @@ The questions, hardest first:
 - **Is this the real problem?** Does the plan fix the cause, or the symptom that got reported?
   The recurring shape: patching the display layer when the cause is upstream, or adding a new
   path beside an existing mechanism that already covers the case.
-- **Is the seam right?** If it touches five files, is that because the split between them is
-  wrong and one file would do?
-- **What else changes if this lands?** Callers, contracts, persisted data, permissions,
-  performance, deploy ordering.
 - **How will we know it worked** — and how would we know it silently didn't?
-- **What are we deliberately not doing, and why?**
 - **Are the routes right?** A `delegate` task a cold agent could not finish from the plan alone,
   an `inline` task that matches none of §3's reasons, or two tasks running in parallel that share
   a file.
+
+DEEP adds the structure and blast-radius questions its surprises call for:
+
+- **What else changes if this lands?** Callers, contracts, persisted data, permissions,
+  performance, deploy ordering.
+- **Is the seam right?** If it touches five files, is that because the split between them is
+  wrong and one file would do?
+- **What are we deliberately not doing, and why?**
 
 Every finding cites `file:line` or a specific step of the plan. A question with no citation is
 not a finding — answer "nothing to flag" and move on.
@@ -126,14 +143,15 @@ not a finding — answer "nothing to flag" and move on.
 
 Fold accepted findings into the plan and say what changed.
 
-**On FULL, write this down in the plan's `## Critique` section** — the assumptions Step 3
+**On FULL and DEEP, write this down in the plan's `## Critique` section** — the assumptions Step 3
 named, what was folded in, and what was rejected and why. A rejected finding held only in the
 conversation dies with it, and the next session re-introduces the approach confidently, because
 it looks like an improvement. Recording it is also what marks the gate as run.
 
-**A finding can invalidate the tier, not just the plan.** A SHORT that turns out to cross a
-boundary or change asserted behaviour was mis-tiered — go back to Step 1 and redo it as FULL.
-Folding a tier finding into a SHORT plan keeps the wrong ceremony.
+**A finding can invalidate the tier, not just the plan.** A finding that names a surprise the
+tier didn't count — a SHORT with extra call sites, a FULL that crosses a boundary — means it was
+mis-tiered. Go back to Step 1 and redo it at the tier that surprise calls for. Folding a tier
+finding into the lighter plan keeps the wrong ceremony.
 
 Then build, **in this session**, once I approve. This flow keeps the main thread on Opus and
 spends the cheaper model through subagents — run it per `development-workflow.md` §4. Each
@@ -161,12 +179,13 @@ Resume elsewhere: execute .claude/plans/<slug>.md
 deciding surprise, the plan in a few sentences, the critique questions answered briefly, then
 the handoff. Anything the code could not answer goes at the end as an open question for the user.
 
-**FULL** — the same beats as headed sections: `### Scout` (the five answers, each citing
-`file:line`, plus anything you could not determine, named as such) · `### Tier` · `### Plan`
-(path to the doc and a 3–5 bullet summary) · `### Critique` (one line per question, each a
-finding with a citation or "nothing to flag") · `### Open questions for you` · the handoff block.
+**FULL and DEEP** — the same beats as headed sections: `### Scout` (the five answers, each
+citing `file:line`, plus anything you could not determine, named as such) · `### Tier` ·
+`### Plan` (path to the doc and a 3–5 bullet summary) · `### Critique` (one line per question
+asked, each a finding with a citation or "nothing to flag") · `### Open questions for you` · the
+handoff block.
 
-The FULL response's `### Critique` is what gets written into the plan's own `## Critique`
+The response's `### Critique` is what gets written into the plan's own `## Critique`
 section once you have my call on each finding. Say it here, record it there.
 
 Either way, stop for approval.
@@ -178,8 +197,8 @@ Either way, stop for approval.
   scout across a spec's tickets, and hands off to `/implement`. **Run one or the other, never
   both.** No spec → this skill.
 - **`post-implementation-reflection`** — the other half of the pair. This one checks the plan
-  before the code exists; that one checks the code after. Same depth vocabulary, same
-  cite-or-say-nothing rule.
+  before the code exists; that one checks the code after. Same cite-or-say-nothing
+  rule.
 - **`blueprint`** — for multi-session, multi-PR work. It has its own adversarial review gate;
   don't run both.
 - **`/implement`** — chain-only. It reads a ticket, so it has nothing to read on this path, and
