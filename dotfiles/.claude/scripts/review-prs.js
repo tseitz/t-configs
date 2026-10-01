@@ -63,6 +63,29 @@ const INSTALL_TIMEOUT_MS = 180000;
 // load in every pane of the tab. HERDR_REVIEW turns off nvim language servers
 // that run project JS (personal.lua).
 const PANE_ENV = ['--env', 'MISE_PARANOID=1', '--env', 'HERDR_REVIEW=1'];
+// User settings leave the sandbox off; a review tab runs PR code, so it turns it on here.
+const REVIEW_SANDBOX = {
+  enabled: true,
+  autoAllowBashIfSandboxed: true,
+  enableWeakerNetworkIsolation: true,
+  excludedCommands: ['chrome-headless-shell', 'mkdir *', 'git *', 'gcloud *', 'kubectl *', 'brew *', 'gh *', 'herdr *'],
+  network: {
+    allowedDomains: [
+      'github.com',
+      'api.github.com',
+      'rubygems.org',
+      'index.rubygems.org',
+      'thinknear.jfrog.io',
+      'jfrog-prod-use1-shared-virginia-main.s3.amazonaws.com',
+      'results-receiver.actions.githubusercontent.com',
+      'localhost',
+      '127.0.0.1',
+      '::1',
+    ],
+    allowLocalBinding: true,
+    allowUnixSockets: ['~/.docker/run/docker.sock'],
+  },
+};
 // A repo-relative core.hooksPath (husky's .husky/_) resolves inside the PR's tree.
 const NO_HOOKS = ['-c', 'core.hooksPath=/dev/null'];
 const REVIEW_REQUESTS_QUERY = `query($owner: String!, $repo: String!, $number: Int!) {
@@ -495,7 +518,7 @@ function reviewSandbox(s) {
     .filter(p => p !== s.wt);
   const denyWrite = [...new Set([...allowWrite.filter(p => !within(s.wt, p)), ...others, s.clone, PRESENTATION])];
   const file = path.join(run('git', ['-C', s.wt, 'rev-parse', '--absolute-git-dir']), 'review-sandbox.json');
-  fs.writeFileSync(file, `${JSON.stringify({ sandbox: { filesystem: { denyWrite } } }, null, 2)}\n`);
+  fs.writeFileSync(file, `${JSON.stringify({ sandbox: { ...REVIEW_SANDBOX, filesystem: { denyWrite } } }, null, 2)}\n`);
   return file;
 }
 
@@ -508,13 +531,13 @@ function openTab(ctx, s, opts) {
   const sandbox = reviewSandbox(s);
 
   if (s.claudeFiles.length) {
-    s.notes.push(`PR changes ${s.claudeFiles.join(', ')} — Claude not started; read those, then start it with --settings ${sandbox}`);
+    s.notes.push(`PR changes ${s.claudeFiles.join(', ')} — Claude not started; read those, then start it with REVIEW_SANDBOX_SETTINGS=${sandbox} claude --settings ${sandbox}`);
     return;
   }
 
   const claudePane = herdr(
     'pane', 'split', nvimPane, '--direction', 'right', '--ratio', '0.6', '--cwd', s.wt,
-    ...env, '--env', 'CLAUDE_CODE_ADDITIONAL_DIRECTORIES_CLAUDE_MD=1', '--no-focus',
+    ...env, '--env', 'CLAUDE_CODE_ADDITIONAL_DIRECTORIES_CLAUDE_MD=1', '--env', `REVIEW_SANDBOX_SETTINGS=${sandbox}`, '--no-focus',
   ).pane.pane_id;
 
   if (!waitForIdeLock(s.wt, 20000)) s.notes.push('nvim IDE server not seen — run /ide in the Claude pane');

@@ -63,11 +63,9 @@ const os = require("os");
 // that should apply on every machine. Anything not listed here is treated as
 // legitimately machine-specific and is never compared.
 const ADDITIVE_LISTS = [
-  "sandbox.excludedCommands",
-  "sandbox.network.allowedDomains",
-  "sandbox.network.allowUnixSockets",
-  "sandbox.filesystem.allowWrite",
   "permissions.allow",
+  "permissions.ask",
+  "permissions.deny",
 ];
 
 // The map equivalent of ADDITIVE_LISTS: paths where a base KEY should exist

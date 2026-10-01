@@ -11,6 +11,8 @@ const path = require('path');
 function settingsFiles(projectDir) {
   const home = path.join(os.homedir(), '.claude');
   const files = [path.join(home, 'settings.json'), path.join(home, 'settings.local.json')];
+  // A --settings file is invisible to hooks, so review-prs.js names it in the env.
+  if (process.env.REVIEW_SANDBOX_SETTINGS) files.push(process.env.REVIEW_SANDBOX_SETTINGS);
   if (projectDir) {
     files.push(
       path.join(projectDir, '.claude', 'settings.json'),

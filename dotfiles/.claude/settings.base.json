@@ -15,11 +15,9 @@
     }
   },
   "enabledPlugins" : {
-    "astral@astral-sh" : true,
     "chrome-devtools-mcp@claude-plugins-official" : true,
     "claude-md-management@claude-plugins-official" : false,
     "code-review@claude-plugins-official" : true,
-    "code-simplifier@claude-plugins-official" : false,
     "explanatory-output-style@claude-plugins-official" : false,
     "github@claude-plugins-official" : true,
     "mattpocock-skills@mattpocock" : true,
@@ -38,12 +36,6 @@
     "CLAUDE_CODE_SCROLL_SPEED" : "5"
   },
   "extraKnownMarketplaces" : {
-    "astral-sh" : {
-      "source" : {
-        "repo" : "astral-sh\/claude-code-plugins",
-        "source" : "github"
-      }
-    },
     "mattpocock" : {
       "source" : {
         "repo" : "mattpocock\/skills",
@@ -75,10 +67,6 @@
         "hooks" : [
           {
             "command" : "~\/.claude\/scripts\/hooks\/post-bash-pr-created.js",
-            "type" : "command"
-          },
-          {
-            "command" : "~\/.claude\/scripts\/hooks\/capture-sandbox-friction.sh",
             "type" : "command"
           }
         ],
@@ -260,55 +248,6 @@
         ]
       }
     ]
-  },
-  "sandbox" : {
-    "autoAllowBashIfSandboxed" : true,
-    "enabled" : false,
-    "enableWeakerNetworkIsolation" : true,
-    "excludedCommands" : [
-      "chrome-headless-shell",
-      "mkdir *",
-      "git *",
-      "gcloud *",
-      "kubectl *",
-      "brew *",
-      "gh *",
-      "herdr *"
-    ],
-    "filesystem" : {
-      "allowWrite" : [
-        "~\/.cache",
-        "~\/.matplotlib",
-        "~\/Library\/Caches\/mise",
-        "~\/.docker\/buildx",
-        "~\/.local\/share\/mise",
-        "~\/.local\/state\/mise",
-        "~\/Library\/pnpm",
-        "~\/.bundle",
-        "~\/.npm",
-        "~\/.config\/rclone",
-        "~\/t-configs",
-        "~\/Code\/worktrees"
-      ]
-    },
-    "network" : {
-      "allowedDomains" : [
-        "github.com",
-        "api.github.com",
-        "rubygems.org",
-        "index.rubygems.org",
-        "thinknear.jfrog.io",
-        "jfrog-prod-use1-shared-virginia-main.s3.amazonaws.com",
-        "results-receiver.actions.githubusercontent.com",
-        "localhost",
-        "127.0.0.1",
-        "::1"
-      ],
-      "allowLocalBinding" : true,
-      "allowUnixSockets" : [
-        "~\/.docker\/run\/docker.sock"
-      ]
-    }
   },
   "skillOverrides" : {
     "sentry:sentry-android-sdk" : "off",

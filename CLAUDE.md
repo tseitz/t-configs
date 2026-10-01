@@ -37,9 +37,8 @@ syncs before editing anything under `~/.claude/`:
 - **Editing `settings.base.json` does NOT reach a machine that is already set up.**
   `install.sh` seeds it once and then leaves it alone forever, by design. A `SessionStart`
   hook (`scripts/settings-drift.js`) closes that gap: it warns when the base has entries
-  this machine lacks in the **additive allow-lists** — `sandbox.excludedCommands`,
-  `sandbox.network.allowedDomains`, `sandbox.network.allowUnixSockets`,
-  `sandbox.filesystem.allowWrite`, `permissions.allow`. Run `./install.sh --sync-lists`
+  this machine lacks in the **additive allow-lists** — `permissions.allow`,
+  `permissions.ask`, `permissions.deny`. Run `./install.sh --sync-lists`
   to append them, or `./install.sh --check` to see the report on demand.
   - Only those lists are compared. Everything else (plugins, hooks, output style) differs
     between machines on purpose, so diffing whole files is pure noise.

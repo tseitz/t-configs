@@ -136,10 +136,6 @@ One question: would the next agent session — or you, cold in a month — find 
 **Agent Quality of Life**
 - Did any tool call fail unexpectedly? What did you do instead, and what would the right path have looked like?
 - Were any make/pnpm/npm/script targets missing that would have been useful? What would you have named them?
-- Did sandbox restrictions block you? Read `.claude/sandbox-friction.jsonl` if present — the
-  capture hook logs blocks that are gone from working memory — and your own memory of the session. For anything worth a durable fix, **delegate to the `sandbox-friction` skill** to
-  diagnose the layer and propose the correctly-schemaed settings.json change — don't hand-write
-  sandbox config from here.
 - Was anything in CLAUDE.md (or equivalent) **wrong** (actively misleading to a future agent)? Flag these first — they're the most dangerous. Then note any plain gaps.
 - Did you read 3+ files to answer something that should have had one authoritative source? What would that source look like?
 - Were there any repeated lookups — files, functions, patterns — that suggest a missing convention or shortcut?
