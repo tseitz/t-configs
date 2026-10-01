@@ -104,13 +104,13 @@ directional is good enough.
 
 **SHORT** — answer the core questions below inline, briefly.
 
-**FULL** — dispatch a **fresh-context `general-purpose` subagent with `model: "sonnet"`**. Give
-it the plan, the scout findings, and the core questions.
+**FULL** — dispatch the **`plan-critic` agent with `model: "sonnet"`**. Give it the plan, the
+scout findings, and the core questions.
 
-**DEEP** — the same, with `model: "opus"` and every question.
+**DEEP** — the same, with `model` unset (the agent's own Opus) and every question.
 
-Always set `model`: unset, the subagent inherits the session's Opus and effort. Not `Explore` —
-it locates code, it doesn't review it. Do not self-review a FULL or DEEP plan: the model that
+`plan-critic` pins high effort; `general-purpose` would inherit the session's medium. Not
+`Explore` — it locates code, it doesn't review it. Do not self-review a FULL or DEEP plan: the model that
 wrote it will grade it "looks fine," which is the default failure mode, not a result.
 
 Core questions, hardest first:
