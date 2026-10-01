@@ -82,9 +82,11 @@ async function decide(input) {
   const command = String(input.tool_input?.command ?? '');
   if (!command.trim() || isReadOnly(command)) return emit({});
   if (!Number.isFinite(MAX_RISK)) return ask('JEV_GUARD_MAX_RISK is not a number');
-  if (command.length > MAX_COMMAND_CHARS) return ask(`command over ${MAX_COMMAND_CHARS} chars, not judged`);
-
   const { readKey, missingKeyReason, workReason, askJev, safeErrorReason, appendLog } = require('../lib/jev');
+  if (command.length > MAX_COMMAND_CHARS) {
+    appendLog(LOG_FILE, 'jev-guard', { skipped: `command over ${MAX_COMMAND_CHARS} chars`, chars: command.length });
+    return emit({});
+  }
   const blocked = workReason(input.cwd, command);
   if (blocked) {
     appendLog(LOG_FILE, 'jev-guard', { skipped: blocked });
