@@ -102,7 +102,9 @@ async function decide(input) {
     answer = (await askJev(key, { command: sent, cwd: input.cwd }, { risk: QUESTION })).risk;
   } catch (err) {
     const reason = safeErrorReason(err);
-    appendLog(LOG_FILE, 'jev-guard', { command: sent, error: reason });
+    const outage = /^HTTP 5\d\d$/.test(reason);
+    appendLog(LOG_FILE, 'jev-guard', { command: sent, error: reason, ...(outage && { verdict: 'defer' }) });
+    if (outage) return emit({});
     return ask(`TypeSafe call failed (${reason}); cannot judge`);
   }
 
