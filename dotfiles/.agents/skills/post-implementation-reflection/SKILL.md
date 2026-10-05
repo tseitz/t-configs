@@ -1,6 +1,6 @@
 ---
 name: post-implementation-reflection
-description: After work is implemented, reflects on the changes and then polishes them — comment triage, simplification, cleanup. Scales from a quick pass on a small diff to a full retrospective on a plan. Works on uncommitted changes, the last N commits, or a whole PR branch. Run it yourself with /post-implementation-reflection, or invoke it whenever a change is built and it deserves a lap before review.
+description: After work is implemented, reflects on the changes and then polishes them — comment triage, simplification, cleanup. Scales from a quick pass on a small diff to a full retrospective on a plan; `qol` alone is a retro on the agent's tooling and steering files. Works on uncommitted changes, the last N commits, or a whole PR branch. Run it yourself with /post-implementation-reflection, or invoke it whenever a change is built and it deserves a lap before review.
 memory: user
 ---
 
@@ -54,6 +54,21 @@ Then:
 - Run `git log --oneline -10` to confirm what commits landed
 - Check for a session state doc (HANDOFF.md, CONTEXT.md, or equivalent) and read it
 - Skim the key changed files — reflection is only as good as what you actually re-read
+- **Agent QoL runs on the transcript, not recollection** — failed and costly calls are the first
+  thing compaction drops. It lives at `~/.claude/projects/<slug>/<session-id>.jsonl`, the slug being the cwd
+  with every `/` and `.` turned into `-`: the newest file for this session, or the session the
+  user names. It runs to megabytes, so never read
+  it raw. This ranks tool results by size and flags errors:
+
+  ```bash
+  jq -rs '
+    (map(select(.type=="assistant") | .message.content | arrays | .[] | select(.type=="tool_use") | {(.id): .name}) | add) as $n
+    | .[] | select(.type=="user") | .message.content | arrays | .[] | select(.type=="tool_result")
+    | [(.content|tostring|length), (if .is_error then "ERROR" else "-" end), ($n[.tool_use_id] // "?"), .tool_use_id] | @tsv' \
+    "$transcript" | sort -rn | head -20
+  ```
+
+  Pull a single call's input back out by its id when a row needs explaining.
 
 ### 1. Summarize What Changed
 
@@ -110,8 +125,8 @@ tight: fragments and dropped grammar are fine if the point still lands.
 
 **Never triage cold.** The most valuable of these explain *absences* — why an endpoint was left
 alone, why an obvious refactor was declined, why a file isn't in the diff — and a diff can't show
-what isn't in it. Run this in the session that did the work, or feed it the tickets/cross-repo
-context first. Triaged cold, it degrades into fluent diff narration — the exact noise this is
+what isn't in it. Run this in the session that did the work, or feed it that session's transcript
+and the tickets/cross-repo context first. Triaged cold, it degrades into fluent diff narration — the exact noise this is
 meant to prevent.
 
 If the cuts become PR comments, **draft them, never post unasked.** When approved: push the code
@@ -134,13 +149,32 @@ One question: would the next agent session — or you, cold in a month — find 
 - (Comments are the Comments lens's job — don't re-raise them here.)
 
 **Agent Quality of Life**
-- Did any tool call fail unexpectedly? What did you do instead, and what would the right path have looked like?
-- Were any make/pnpm/npm/script targets missing that would have been useful? What would you have named them?
-- Was anything in CLAUDE.md (or equivalent) **wrong** (actively misleading to a future agent)? Flag these first — they're the most dangerous. Then note any plain gaps.
-- Did you read 3+ files to answer something that should have had one authoritative source? What would that source look like?
-- Were there any repeated lookups — files, functions, patterns — that suggest a missing convention or shortcut?
-- Did you make any judgment calls without clear guidance that could silently go wrong next session? Name the decision and what you assumed.
-- Anything in the dev environment (server startup, test runner, type-check) that felt unnecessarily slow or fragile? Did a flaky or intermittent failure eat time — what was the symptom?
+
+The environment, not the code: what would make the next session on this repo cheaper or less
+wrong. Cite the transcript call or the steering-file line.
+
+- **Steering files** — Was anything in CLAUDE.md (or equivalent) **wrong** (actively misleading to a future agent)? Flag these first — they're the most dangerous. Then plain gaps. Then **no-ops**: an instruction this session's behaviour shows changed nothing. Every session pays for it and nothing comes back. Judge only what this session touched; this is not a full config audit.
+- **Checks** — Did you make a mistake a lint rule, type, test or hook could have caught? Read the repo's own check scripts and CI first: a check that exists but is unwired or silently broken is the finding, not a new one. A repo with no guardrail at all (no pre-commit hook, no CI job running lint/typecheck/test) is a finding in itself.
+- **Navigation** — Did you read 3+ files to answer something that should have had one authoritative source? What would that source look like? Any repeated lookups — files, functions, patterns — that suggest a missing convention or a pointer?
+- **Tool economy** — Did any tool call fail unexpectedly? What did you do instead, and what would the right path have looked like? Which calls top the transcript ranking — a response that should have been filtered or paged, an MCP tool that returns far more than you used?
+- **Scripts** — Were any make/pnpm/npm/script targets missing that would have been useful? What would you have named them?
+- **Information access** — Did you need something you couldn't reach: logs that weren't teed anywhere, a service with no read access, a dashboard only the user can see? Name the access that would have closed it.
+- **Dev environment** — Anything (server startup, test runner, type-check) that felt unnecessarily slow or fragile? Did a flaky or intermittent failure eat time — what was the symptom?
+- **Judgment calls** — Did you make any without clear guidance that could silently go wrong next session? Name the decision and what you assumed.
+
+**Where the fix lands.** Route each finding to the first home on this list that would have
+prevented it:
+
+1. **A check** — anything mechanical: a banned API, an import shape, a file location, a fixed
+   pattern. A lint rule, hook or CI job in whatever the repo already runs. Build the check rather
+   than write the rule.
+2. **Review-time standards** — a judgment call no check can make goes where the reviewer reads it
+   (`team-pr-review`'s topics, the repo's review docs). The reviewer gets a diff and has context
+   to spare; the implementer is the one under context pressure.
+3. **A skill or a doc** — procedure or reference, reached through a pointer.
+4. **CLAUDE.md** — last, and then as a pointer to one of the above, not the content itself.
+
+A fix that adds a paragraph to an always-loaded file usually belongs higher up the list.
 
 **Technical debt**
 - Duplication, dead code, inconsistent patterns with the rest of the codebase
@@ -195,7 +229,7 @@ a memory that's now wrong or missing, say so and offer to update it. Nothing mor
 **Simplicity & navigability:** [finding or "nothing to flag"]
 **Technical debt:** [finding or "nothing to flag"]
 --- FULL only ---
-**Agent QoL:** [friction points, missing scripts, env issues, or "nothing to flag"]
+**Agent QoL:** [finding → where its fix lands (check / review standard / skill or doc / CLAUDE.md pointer), or "nothing to flag"]
 
 ### Follow-up
 Must: ...
