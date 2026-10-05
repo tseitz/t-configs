@@ -518,6 +518,7 @@ step_symlinks() {
   create_symlink "$DOTFILES_DIR/.zshenv"     "$HOME/.zshenv"
   create_symlink "$DOTFILES_DIR/.gitconfig"  "$HOME/.gitconfig"
   create_symlink "$DOTFILES_DIR/.zprofile"   "$HOME/.zprofile"
+  create_symlink "$DOTFILES_DIR/.tmux.conf"  "$HOME/.tmux.conf"
   # .hushlogin only suppresses the macOS login banner — inert clutter elsewhere.
   $IS_MACOS && create_symlink "$DOTFILES_DIR/.hushlogin" "$HOME/.hushlogin"
 
