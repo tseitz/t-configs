@@ -80,7 +80,7 @@ const REVIEW_SANDBOX = {
       'results-receiver.actions.githubusercontent.com',
       'localhost',
       '127.0.0.1',
-      '::1',
+      '[::1]',
     ],
     allowLocalBinding: true,
     allowUnixSockets: ['~/.docker/run/docker.sock'],
