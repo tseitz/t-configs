@@ -35,6 +35,16 @@ vim.keymap.set("n", "<leader>fp", function()
   Snacks.picker.files({ cwd = dir, hidden = true, ignored = true })
 end, { desc = "Find plan" })
 
+-- t-configs is mostly dotfolders (.claude, .config, .agents), which the picker hides by
+-- default. Other repos keep the default.
+local function find_files(root)
+  return function()
+    local cwd = root and LazyVim.root() or vim.fn.getcwd()
+    local in_tconfigs = vim.startswith(cwd, vim.fn.expand("~/t-configs"))
+    Snacks.picker.files({ cwd = cwd, hidden = in_tconfigs })
+  end
+end
+
 -- denols returns hover docs as markdown with ```ts fences. Without this they render as
 -- plain text.
 vim.g.markdown_fenced_languages = { "ts=typescript" }
@@ -60,6 +70,15 @@ if vim.env.HERDR_REVIEW == "1" then
 end
 
 return {
+  {
+    -- Keys live in the spec because LazyVim's own <leader>ff is registered by lazy.nvim after
+    -- this file runs, and would win over a plain vim.keymap.set.
+    "folke/snacks.nvim",
+    keys = {
+      { "<leader>ff", find_files(true), desc = "Find Files (Root Dir)" },
+      { "<leader>fF", find_files(false), desc = "Find Files (cwd)" },
+    },
+  },
   {
     -- Eager on purpose. The LazyVim extra loads this on <leader>a* only, and until it
     -- loads there is no lock file in ~/.claude/ide/ -- so a Claude Code running in a
