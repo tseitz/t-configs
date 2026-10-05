@@ -6,6 +6,9 @@ My PR descriptions have been way too verbose. Correct that. **No template** — 
 of prose that answers *what is changing and why*, plus the key decisions. Aim for something a
 reviewer reads in under a minute before opening the diff.
 
+**This replaces the `mattpocock-skills:pr` skill — don't invoke it.** Its template contradicts this
+one; the parts worth keeping (the visual, before/after evidence, the one-way door) are in here.
+
 ## Rules
 
 - **Describe the change at the level of intent, not implementation.** "Consolidates the two
@@ -22,8 +25,8 @@ reviewer reads in under a minute before opening the diff.
   anchored to specific code — a caveat, a "look at this", a why-not-X — it belongs as an inline
   comment on that line, not in the body. Only genuinely PR-wide context goes in the description.
 - **Don't editorialize the process.** No "updated after review" changelogs, no narrating that you
-  implemented and then reverted something, no evidence dumps of suite output / lint counts /
-  measured baselines. Name the key tests instead (see Shape).
+  implemented and then reverted something, no dumps of suite output / lint counts / measured
+  baselines. One before/after in Evidence is the whole proof budget (see Shape).
 - **Front-load the risk.** A reviewer's attention budget runs out before the body does. The one
   thing that can go wrong goes near the top, not in the fourth paragraph. A body that is correct
   but flat gets skimmed, and skimming means the risky part is the part they miss.
@@ -38,21 +41,30 @@ reviewer reads in under a minute before opening the diff.
 ## Shape
 
 The body answers the four questions a reviewer actually opens a PR with: *what is this and did it
-do what the ticket asked* · *what does merging it ship* · *where do I start reading* · *which tests
-prove it works*.
+do what the ticket asked* · *what does merging it ship* · *where do I start reading* · *what proves
+it works*.
 
 ```
 <lead paragraph — NO heading. What changes and why. 2-4 sentences.>
 
+<optional visual — NO heading. The shape of the change, in one fenced block.>
+
 ## Key decisions
 ## On merge
 ## Where to start
-## Key tests
+## Evidence
 
 <one-line footer: stack position, ticket link. No heading.>
 ```
 
 - **Lead paragraph** — always present, never gets a heading.
+- **Visual** — optional, directly under the lead, which it illustrates. Use one when the change has
+  a shape prose would labour over: a call tree gaining a step, a module split, a request crossing
+  services, a state machine. Smallest view that lands the point — a `diff`-fenced sketch of the
+  before/after shape usually beats a full diagram. Pick the form from the menu in
+  `~/.claude/skills/show-me/SKILL.md`, minus its HTML-file option (a PR body can't host one). Keep
+  only the calls, files and states the point needs. One visual, rarely two; a change with no shape
+  — a config bump, a one-line fix — gets none.
 - **Key decisions** — sits right under the lead because the two read as one piece. The lead
   introduces the change; this section expands only the calls in it a reviewer would push back on
   or have to reverse-engineer. Each point is either settled in the lead, or named there and argued
@@ -61,15 +73,25 @@ prove it works*.
   it ONLY when the answer isn't the boring default (goes live on the next deploy, self-contained,
   nothing to coordinate). Earned by: ships dark behind a flag ·
   needs a flag flip or config change to activate · deploy order matters (contract tests, a stack,
-  a migration) · a caller-visible contract or schema changes · a migration that blocks the deploy.
-  **Never write "None" here** — if there's nothing to say, delete the heading. An empty section is
-  worse than no section, because a heading that's usually empty teaches people to skip it.
+  a migration) · a caller-visible contract or schema changes · a migration that blocks the deploy ·
+  a **one-way door**, anything a revert won't undo (destructive migration or backfill, a contract
+  consumers already picked up, data or notifications sent outside our systems). A one-way door
+  opens the section, named as one, with what the revert leaves behind. Reversible is the default
+  and earns nothing. **Never write "None" here** — if there's nothing to say, delete the heading.
+  An empty section is worse than no section, because a heading that's usually empty teaches people
+  to skip it.
 - **Where to start** — the reading route, told as a short story the reviewer can follow. The file
   to open first and why it's the way in, then where it leads and what each stop adds. Flag the
   stop to slow down on. Two to four stops; any longer and it's the file list again.
-- **Key tests** — the few tests that, if they didn't pass, would mean the whole change doesn't
-  work. Named so the reviewer can open them. Positive or negative cases, whichever carries the
-  core claim. Not a coverage list, not a suite dump.
+- **Evidence** — a before/after proving the lead's core claim, then the key tests.
+  - **Visible change → screenshot pair.** `gh` can't upload images, so leave a visible
+    `Before / after: screenshots to add` line and tell me which two to take.
+  - **Otherwise → the key test, red then green:** the assertion that fails without the change and
+    passes with it, named so the reviewer can open it, sketched as pseudocode when the name alone
+    doesn't say what it pins. Only claim a "before" you ran — revert the fix and re-run it, never
+    infer it.
+  - Then at most two more tests that would sink the change if they failed. Not a coverage list,
+    not a suite dump, no pass counts.
 - **3–4 bullets per section, max.** More than that means you're enumerating again.
 - **Small PRs stay bare.** If the whole thing fits in one paragraph, use no headings at all.
 - Drop any section with nothing real in it. Four headings is the ceiling, not a template — most

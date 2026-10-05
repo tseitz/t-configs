@@ -346,7 +346,8 @@
       "Read(~/.aws/**)",
       "Read(~/.gnupg/**)",
       "Read(~/.config/typesafe/**)",
-      "Read(~/.config/gh/hosts.yml)"
+      "Read(~/.config/gh/hosts.yml)",
+      "Skill(mattpocock-skills:pr)"
     ],
     "defaultMode" : "auto"
   },
