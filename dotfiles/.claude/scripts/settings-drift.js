@@ -52,7 +52,9 @@
  *   settings-drift.js --apply    Append the missing base entries to live
  *   settings-drift.js --seed     Add base top-level keys absent from live
  *
- * --hook and --check also report skill-link problems (see WHY SKILL LINKS).
+ * --hook and --check also report skill-link problems (see WHY SKILL LINKS)
+ * and live hooks whose script was deleted from the repo -- the base dropping a
+ * hook never removes it from a machine that already has it.
  */
 
 const fs = require("fs");
@@ -238,6 +240,41 @@ function skillLinkProblems() {
   return out;
 }
 
+const INTERPRETERS = new Set(["node", "bash", "sh", "zsh", "python3", "python"]);
+
+/** Script paths that live hooks run but that no longer exist. Only a command
+ *  that is a script path, or an interpreter plus one, is checked; inline shell
+ *  is skipped because its first word is not a file. */
+function deadHookScripts(live) {
+  const commands = [];
+  const walk = (v) => {
+    if (Array.isArray(v)) v.forEach(walk);
+    else if (v && typeof v === "object") {
+      if (typeof v.command === "string") commands.push(v.command);
+      Object.values(v).forEach(walk);
+    }
+  };
+  walk(live.hooks);
+
+  const home = os.homedir();
+  const dead = new Set();
+  for (const command of commands) {
+    const words = command.trim().split(/\s+/).map((w) => w.replace(/^["']|["']$/g, ""));
+    const script = INTERPRETERS.has(words[0]) ? words[1] : words[0];
+    if (!script || !/^(~|\$HOME|\$\{HOME\})?\//.test(script)) continue;
+    const resolved = script.replace(/^(~|\$HOME|\$\{HOME\})/, home);
+    if (!fs.existsSync(resolved)) dead.add(script);
+  }
+  return [...dead];
+}
+
+function hookSections(live) {
+  const dead = deadHookScripts(live);
+  return dead.length
+    ? [{ title: `hooks in ${LIVE_PATH} run scripts that do not exist; remove them`, items: dead, fix: null }]
+    : [];
+}
+
 function formatSkillSections(sections, indent) {
   const lines = [];
   for (const s of sections) {
@@ -283,6 +320,7 @@ function main() {
   const drift = findDrift(live, base);
   const keyDrift = findKeyDrift(live, base);
   const missingKeys = findMissingKeys(live, base);
+  const deadHooks = hookSections(live);
 
   if (mode === "--seed") {
     if (!missingKeys.length) {
@@ -317,6 +355,7 @@ function main() {
     if (skillSections.length) {
       parts.push("skill links:", ...formatSkillSections(skillSections, "    "));
     }
+    if (deadHooks.length) parts.push(...formatSkillSections(deadHooks, "  "));
     if (parts.length) process.stdout.write(JSON.stringify({ systemMessage: parts.join("\n") }));
     process.exit(0);
   }
@@ -347,8 +386,8 @@ function main() {
   }
 
   // --check
-  if (!drift.length && !keyDrift.length && !missingKeys.length && !skillSections.length) {
-    console.log("settings: additive lists, plugin keys and base keys all match.");
+  if (!drift.length && !keyDrift.length && !missingKeys.length && !skillSections.length && !deadHooks.length) {
+    console.log("settings: additive lists, plugin keys, base keys and hook scripts all match.");
     process.exit(0);
   }
   if (drift.length || keyDrift.length) {
@@ -367,6 +406,7 @@ function main() {
     console.log("skill links:");
     for (const l of formatSkillSections(skillSections, "  ")) console.log(l);
   }
+  for (const l of formatSkillSections(deadHooks, "")) console.log(l);
   process.exit(1);
 }
 
