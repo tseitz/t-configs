@@ -26,7 +26,7 @@ one; the parts worth keeping (the visual, before/after evidence, the one-way doo
   comment on that line, not in the body. Only genuinely PR-wide context goes in the description.
 - **Don't editorialize the process.** No "updated after review" changelogs, no narrating that you
   implemented and then reverted something, no dumps of suite output / lint counts / measured
-  baselines. One before/after in Evidence is the whole proof budget (see Shape).
+  baselines. The Before / after section is the whole proof budget (see Shape).
 - **Front-load the risk.** A reviewer's attention budget runs out before the body does. The one
   thing that can go wrong goes near the top, not in the fourth paragraph. A body that is correct
   but flat gets skimmed, and skimming means the risky part is the part they miss.
@@ -41,18 +41,18 @@ one; the parts worth keeping (the visual, before/after evidence, the one-way doo
 ## Shape
 
 The body answers the four questions a reviewer actually opens a PR with: *what is this and did it
-do what the ticket asked* · *what does merging it ship* · *where do I start reading* · *what proves
-it works*.
+do what the ticket asked* · *what does merging it ship* · *where do I start reading* · *what will I
+see change, and what proves it*.
 
 ```
 <lead paragraph — NO heading. What changes and why. 2-4 sentences.>
 
-<optional visual — NO heading. The shape of the change, in one fenced block.>
+<optional visual — NO heading. The shape of the code change, in one fenced block.>
 
 ## Key decisions
 ## On merge
 ## Where to start
-## Evidence
+## Before / after
 
 <one-line footer: stack position, ticket link. No heading.>
 ```
@@ -64,7 +64,8 @@ it works*.
   before/after shape usually beats a full diagram. Pick the form from the menu in
   `~/.claude/skills/show-me/SKILL.md`, minus its HTML-file option (a PR body can't host one). Keep
   only the calls, files and states the point needs. One visual, rarely two; a change with no shape
-  — a config bump, a one-line fix — gets none.
+  — a config bump, a one-line fix — gets none. It shows how the code is arranged; what someone
+  sees change goes in Before / after.
 - **Key decisions** — sits right under the lead because the two read as one piece. The lead
   introduces the change; this section expands only the calls in it a reviewer would push back on
   or have to reverse-engineer. Each point is either settled in the lead, or named there and argued
@@ -83,15 +84,26 @@ it works*.
 - **Where to start** — the reading route, told as a short story the reviewer can follow. The file
   to open first and why it's the way in, then where it leads and what each stop adds. Flag the
   stop to slow down on. Two to four stops; any longer and it's the file list again.
-- **Evidence** — a before/after proving the lead's core claim, then the key tests.
+- **Before / after** — what changes for someone outside the code, then the test that pins it. A
+  reviewer should know what's different once this ships without opening the diff. Pick the form
+  by what changes:
   - **Visible change → screenshot pair.** `gh` can't upload images, so leave a visible
     `Before / after: screenshots to add` line and tell me which two to take.
-  - **Otherwise → the key test, red then green:** the assertion that fails without the change and
-    passes with it, named so the reviewer can open it, sketched as pseudocode when the name alone
-    doesn't say what it pins. Only claim a "before" you ran — revert the fix and re-run it, never
-    infer it.
-  - Then at most two more tests that would sink the change if they failed. Not a coverage list,
-    not a suite dump, no pass counts.
+  - **One output changes → that output, before and after,** in a `diff`-fenced block: the log
+    line, API response, span attribute or CLI output a person would actually look at. Captured
+    output beats a mock; a mock keeps the real field names, trims what doesn't change, and says
+    it's a mock.
+  - **Several places change → a table,** one row per place someone would look (a log line, a
+    Sentry event, a trace span), never per file: *where · before · after*. Fits anything that
+    changes what's exposed or allowed — a leak, a permission, a contract. Exempt from the 3–4 cap,
+    since each row is a separate place to check; past ~6 rows, group them.
+  - Every "before" traces to captured output or the old code. A guess doesn't go in.
+  - **Then the proof, red then green:** the assertion that fails without the change and passes
+    with it, named so the reviewer can open it, sketched as pseudocode when the name alone doesn't
+    say what it pins. Only claim a red you ran — revert the fix and re-run it, never infer it. At
+    most two more checks that would sink the change if they failed; a manual check gets one line
+    saying what it showed, not the steps you took. Not a coverage list, not a suite dump, no pass
+    counts.
 - **3–4 bullets per section, max.** More than that means you're enumerating again.
 - **Small PRs stay bare.** If the whole thing fits in one paragraph, use no headings at all.
 - Drop any section with nothing real in it. Four headings is the ceiling, not a template — most
