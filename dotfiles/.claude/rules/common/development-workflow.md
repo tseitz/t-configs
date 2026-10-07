@@ -69,8 +69,9 @@ The plan's own shape, once either skill calls for one:
     because you're trading reasoning for determinism and won't be in the loop to correct.
   - Each task carries a short **"considerations / open questions"** so reflection is built in.
   - Each task carries a **route line**: `Route: delegate | inline · Files: <paths> · After:
-    <task ids or —>`. The route is set by step 3's rule and checked in the critique. `Files`
-    and `After` are what make parallel dispatch safe, so they are not optional.
+    <task ids or —>`, plus an optional `· Effort: low | medium | high`. The route is set by
+    step 3's rule and checked in the critique. `Files` and `After` are what make parallel
+    dispatch safe, so they are not optional.
 - **Port from PRP:** include a **"Patterns to Mirror"** section — real snippets from the
   codebase the implementer should match. This is the antidote to over-prescriptive plans:
   point at the pattern, let them reason.
@@ -92,12 +93,17 @@ Everything else is `delegate`. The critiqued plan is the brief: a subagent gets 
 prompt, CLAUDE.md and the plan, nothing from our conversation. A task that fails that test
 without matching a bullet above means the plan is missing something — fix the plan.
 
-**Which model a delegated task gets:**
+**Which model and effort a delegated task gets:**
 
-- **Personal repo** → a `general-purpose` agent with `model` unset. The Jev router hook picks
-  Haiku or Sonnet, and inherits the session model when unsure. Named agents and forks pin their
-  own model, so the router never sees them.
-- **Work repo** → the router is off there by design, so pass `model: "sonnet"` explicitly.
+- **Personal repo** → a `general-purpose` agent with `model` and `effort` unset. The Jev router
+  hook picks Haiku or Sonnet and `low` or `medium` effort, and inherits the session's when
+  unsure. It fills only the fields the call left unset, and never raises either one. Named
+  agents and forks pin their own model, so the router never sees them.
+- **Work repo** → the router is off there by design, so pass `model: "sonnet"` explicitly, and
+  `effort` when the plan's route line sets one.
+- **Effort is yours to set** on the Agent call when the route line names it — this doc is the
+  instruction the Agent tool asks for. Set it only to override the router: `low` for a
+  mechanical task, `high` for a delegated one that still needs real reasoning.
 - **Haiku** only for genuinely mechanical fan-out — porting N call sites to a known signature.
 - **Fable** only when reasoning depth is the actual bottleneck — a novel architectural problem,
   not merely a hard one.
@@ -213,7 +219,8 @@ question the architecture, don't keep patching.
 
 - **Effort is a separate knob** (`low`→`max`) and a large cost/latency lever on its own.
   **Default `medium` on Opus 5.5 and Sonnet 5.5, `high` elsewhere**, set in `settings.base.json`
-  (`modelSettings` per model, `effortLevel` as the fallback). Move it per task, not per session.
+  (`modelSettings` per model, `effortLevel` as the fallback). Move it per task, not per session:
+  for a subagent, through the Agent tool's `effort` parameter (see step 3).
 - **Subagents do NOT default to cheap** — a generic one inherits the session model. Downshifting
   is deliberate, and gated on the plan being prescriptive enough to hand over.
 - **Named agents route themselves.** Every agent in `~/.claude/agents/` pins a model, so invoking

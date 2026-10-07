@@ -12,7 +12,7 @@ const MAX_RISK = Number(process.env.JEV_ROUTER_MAX_RISK ?? 0.15);
 // Named agents pin their own model and forks ignore one, so only generic briefs are routable.
 const ROUTABLE_TYPES = new Set([undefined, '', 'general-purpose', 'claude']);
 
-const QUESTION = {
+const MODEL_QUESTION = {
   type: 'choice',
   instructions:
     'A lead engineer is handing the task in `brief.prompt` to a subagent that sees only that text. ' +
@@ -27,14 +27,32 @@ const QUESTION = {
   },
 };
 
-// Downshift only when the costlier tiers carry almost no probability.
-function pickModel(p) {
-  const opus = p.opus ?? 1;
-  const sonnet = p.sonnet ?? 1;
-  if (sonnet + opus < MAX_RISK) return 'haiku';
-  if (opus < MAX_RISK) return 'sonnet';
+const EFFORT_QUESTION = {
+  type: 'choice',
+  instructions:
+    'A lead engineer is handing the task in `brief.prompt` to a subagent that sees only that text. ' +
+    'Pick the least thinking effort the subagent needs to do it well, judged by how much reasoning the brief leaves unresolved, not by how big the task is.',
+  criteria: {
+    low: 'Nothing to work out: apply a stated change, run commands and report, or look something up with an exact target.',
+    medium: 'Some working out inside clear bounds: follow a named pattern, fix a focused bug, or search with a clear goal.',
+    high: 'Real reasoning left open: design, review, tradeoffs, an unclear goal, or a subtle bug.',
+  },
+};
+
+// Downshift only when the costlier tiers carry almost no probability. Never picks the top tier,
+// so a route can only lower cost against what the subagent would inherit.
+function downshift(p, [cheap, mid, top]) {
+  const topP = p[top] ?? 1;
+  const midP = p[mid] ?? 1;
+  if (midP + topP < MAX_RISK) return cheap;
+  if (topP < MAX_RISK) return mid;
   return null;
 }
+
+const ROUTES = {
+  model: { question: MODEL_QUESTION, tiers: ['haiku', 'sonnet', 'opus'] },
+  effort: { question: EFFORT_QUESTION, tiers: ['low', 'medium', 'high'] },
+};
 
 function log(entry) {
   appendLog(LOG_FILE, 'jev-router', entry);
@@ -44,14 +62,16 @@ function emit(output) {
   process.stdout.write(JSON.stringify(output));
 }
 
-function formatOdds(p) {
-  return ['haiku', 'sonnet', 'opus'].map(m => `${m} ${Math.round((p[m] ?? 0) * 100)}%`).join(', ');
+function formatOdds(p, tiers) {
+  return tiers.map(t => `${t} ${Math.round((p[t] ?? 0) * 100)}%`).join(', ');
 }
 
 async function main(raw) {
   const input = JSON.parse(raw);
   const toolInput = input.tool_input || {};
-  if (toolInput.model || !ROUTABLE_TYPES.has(toolInput.subagent_type)) return emit({});
+  if (!ROUTABLE_TYPES.has(toolInput.subagent_type)) return emit({});
+  const open = Object.keys(ROUTES).filter(name => !toolInput[name]);
+  if (!open.length) return emit({});
 
   const description = String(toolInput.description || '');
   const prompt = String(toolInput.prompt || '');
@@ -69,28 +89,36 @@ async function main(raw) {
 
   const { key, malformed } = readKey();
   if (!key) {
-    return emit({ systemMessage: `jev-router: ${missingKeyReason(malformed)}; subagent inherits the session model` });
+    return emit({ systemMessage: `jev-router: ${missingKeyReason(malformed)}; subagent inherits the session settings` });
   }
 
-  let answer;
+  let answers;
   try {
-    answer = (await askJev(key, { brief: { description, prompt } }, { model: QUESTION })).model;
+    const questions = Object.fromEntries(open.map(name => [name, ROUTES[name].question]));
+    answers = await askJev(key, { brief: { description, prompt } }, questions);
   } catch (err) {
     const reason = safeErrorReason(err);
     log({ description, error: reason });
-    return emit({ systemMessage: `jev-router: TypeSafe call failed (${reason}); subagent inherits the session model` });
+    return emit({ systemMessage: `jev-router: TypeSafe call failed (${reason}); subagent inherits the session settings` });
   }
 
-  const { probabilities } = answer;
-  const applied = pickModel(probabilities);
-  log({ description, choice: answer.choice, confidence: answer.confidence, probabilities, applied });
+  const updates = {};
+  const parts = [];
+  for (const name of open) {
+    const { choice, confidence, probabilities } = answers[name];
+    const { tiers } = ROUTES[name];
+    const applied = downshift(probabilities, tiers);
+    log({ description, route: name, choice, confidence, probabilities, applied });
+    if (applied) updates[name] = applied;
+    parts.push(`${name} ${formatOdds(probabilities, tiers)} → ${applied ?? 'inherit'}`);
+  }
 
-  const odds = `jev-router: ${formatOdds(probabilities)}`;
-  if (!applied) return emit({ systemMessage: `${odds} → inherits session model` });
+  const systemMessage = `jev-router: ${parts.join(' · ')}`;
+  if (!Object.keys(updates).length) return emit({ systemMessage });
 
   emit({
-    systemMessage: `${odds} → ${applied}`,
-    hookSpecificOutput: { hookEventName: 'PreToolUse', updatedInput: { ...toolInput, model: applied } },
+    systemMessage,
+    hookSpecificOutput: { hookEventName: 'PreToolUse', updatedInput: { ...toolInput, ...updates } },
   });
 }
 
@@ -98,5 +126,5 @@ let raw = '';
 process.stdin.setEncoding('utf8');
 process.stdin.on('data', chunk => (raw += chunk));
 process.stdin.on('end', () =>
-  main(raw).catch(err => emit({ systemMessage: `jev-router: ${err.name}; subagent inherits the session model` })),
+  main(raw).catch(err => emit({ systemMessage: `jev-router: ${err.name}; subagent inherits the session settings` })),
 );
