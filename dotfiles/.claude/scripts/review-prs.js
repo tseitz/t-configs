@@ -40,7 +40,18 @@ const OTHER_CLONES = { 'alight-analytics/gaia': path.join(HOME, 'Code', 'gaia') 
 const IDE_LOCK_DIR = path.join(HOME, '.claude', 'ide');
 const WORKSPACE_LABEL = 'presentation-review';
 const REVIEW_PROMPT = '/team-pr-review:team-pr-review';
-const REVIEW_MODEL = 'opus';
+const INSTALLED_PLUGINS = path.join(HOME, '.claude', 'plugins', 'installed_plugins.json');
+const REVIEW_PLUGIN = 'team-pr-review@presentation-skills';
+// Read from the installed plugin, not PRESENTATION: the skill reads that copy, and the
+// workspace checkout can sit on any branch.
+const RISK_PATHS = path.join('skills', 'team-pr-review', 'references', 'risk-paths.txt');
+const LIGHT_MAX = { lines: 60, files: 4 };
+const HEAVY_MIN = { lines: 400, files: 20 };
+const TIER_ARGS = {
+  light: ['--model', 'sonnet', '--effort', 'medium'],
+  standard: ['--model', 'opus', '--effort', 'medium'],
+  heavy: ['--model', 'opus', '--effort', 'high'],
+};
 // Case-insensitive: macOS resolves .Claude/ and MISE.toml to the real names.
 const MISE_CONFIG = /(^|\/)(\.?mise(\.local)?\.toml|\.config\/mise(\.local)?\.toml|\.?config\/mise\/config(\.local)?\.toml|\.?mise\/config(\.local)?\.toml)$/i;
 // mise config can load .env files (`_.file`), so an unchanged mise.toml still runs a PR-edited one.
@@ -327,6 +338,44 @@ function changedFiles(wt, gateBase) {
   return { files, symlinks };
 }
 
+// A blank line would compile to a match-everything RegExp.
+function parseRiskPatterns(text) {
+  return text.split('\n').map(l => l.trim()).filter(l => l && !l.startsWith('#')).map(l => new RegExp(l, 'i'));
+}
+
+function loadRiskPatterns() {
+  try {
+    const [install] = JSON.parse(fs.readFileSync(INSTALLED_PLUGINS, 'utf8')).plugins[REVIEW_PLUGIN] || [];
+    if (!install) return { err: `${REVIEW_PLUGIN} not installed` };
+    return { patterns: parseRiskPatterns(fs.readFileSync(path.join(install.installPath, RISK_PATHS), 'utf8')) };
+  } catch (err) {
+    return { err: errorText(err) };
+  }
+}
+
+function diffSize(wt, base) {
+  const rows = run('git', ['-C', wt, 'diff', '--numstat', '-z', '--no-renames', base, 'HEAD']).split('\0').filter(Boolean);
+  let lines = 0;
+  const files = rows.map(row => {
+    const [added, deleted, ...name] = row.split('\t');
+    const file = name.join('\t');
+    // Binary files report "-".
+    lines += (Number(added) || 0) + (Number(deleted) || 0);
+    return file;
+  });
+  return { files, lines };
+}
+
+// No patterns means the risk check couldn't run, so it can't vouch for a lighter tier.
+function reviewTier({ files, lines }, patterns) {
+  if (!patterns) return { tier: 'heavy', why: 'risk patterns unavailable' };
+  const risky = files.find(f => matchesAny(f, patterns));
+  if (risky) return { tier: 'heavy', why: risky };
+  if (lines > HEAVY_MIN.lines || files.length > HEAVY_MIN.files) return { tier: 'heavy', why: `${lines} lines, ${files.length} files` };
+  if (lines <= LIGHT_MAX.lines && files.length <= LIGHT_MAX.files) return { tier: 'light', why: `${lines} lines, ${files.length} files` };
+  return { tier: 'standard', why: `${lines} lines, ${files.length} files` };
+}
+
 function gateMise(wt, sensitiveChanged) {
   const configs = run('git', ['-C', wt, 'ls-files']).split('\n').filter(f => MISE_CONFIG.test(f));
   for (const file of configs) {
@@ -531,7 +580,7 @@ function openTab(ctx, s, opts) {
   const sandbox = reviewSandbox(s);
 
   if (s.claudeFiles.length) {
-    s.notes.push(`PR changes ${s.claudeFiles.join(', ')} — Claude not started; read those, then start it with REVIEW_SANDBOX_SETTINGS=${sandbox} claude --settings ${sandbox}`);
+    s.notes.push(`PR changes ${s.claudeFiles.join(', ')} — Claude not started; read those, then start it with REVIEW_SANDBOX_SETTINGS=${sandbox} claude ${TIER_ARGS[s.tier].join(' ')} --settings ${sandbox}`);
     return;
   }
 
@@ -545,7 +594,7 @@ function openTab(ctx, s, opts) {
   const name = agentName(s.pr.repo, s.pr.number);
   // --add-dir takes several values, so it stays last.
   startAgent(name, claudePane, [
-    '--ide', '--model', REVIEW_MODEL, '-n', s.label, '--settings', sandbox, ...(s.work ? ['--add-dir', PRESENTATION] : []),
+    '--ide', ...TIER_ARGS[s.tier], '-n', s.label, '--settings', sandbox, ...(s.work ? ['--add-dir', PRESENTATION] : []),
   ]);
 
   if (opts.review) {
@@ -606,6 +655,11 @@ function syncPr(pr, ctx, roster, opts) {
   // gates compare against trunk, so a child can't inherit its parent's unreviewed config.
   s.mergeBase = run('git', ['-C', s.wt, 'merge-base', `origin/${view.baseRefName}`, 'HEAD']);
   const gateBase = run('git', ['-C', s.wt, 'merge-base', `origin/${trunk}`, 'HEAD']);
+  const risk = loadRiskPatterns();
+  if (risk.err) s.notes.push(`risk patterns unavailable (${risk.err}) — sized as heavy`);
+  const { tier, why: tierWhy } = reviewTier(diffSize(s.wt, s.mergeBase), risk.patterns);
+  s.tier = tier;
+  s.notes.push(`tier: ${tier} (${tierWhy})${tabId ? ' — open tab keeps its running Claude' : ''}`);
   const { files, symlinks } = changedFiles(s.wt, gateBase);
   const miseFiles = files.filter(f => matchesAny(f, MISE_SENSITIVE));
   s.claudeFiles = [...files.filter(f => matchesAny(f, CLAUDE_CONFIG)), ...symlinks.map(f => `${f} (symlink)`)];
@@ -760,5 +814,5 @@ if (require.main === module) {
 }
 
 module.exports = {
-  changedFiles, matchesAny, within, installGate, jiraKey, ignoredWork, reviewSandbox, MISE_SENSITIVE, CLAUDE_CONFIG, PM_CONFIG, NO_HOOKS,
+  changedFiles, matchesAny, within, parseRiskPatterns, reviewTier, installGate, jiraKey, ignoredWork, reviewSandbox, MISE_SENSITIVE, CLAUDE_CONFIG, PM_CONFIG, NO_HOOKS,
 };
