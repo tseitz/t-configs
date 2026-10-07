@@ -3,11 +3,23 @@ const assert = require('node:assert');
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
-const { parseRiskPatterns, reviewTier } = require('./review-prs');
+const { parseRiskPatterns, reviewPluginRoot, reviewTier } = require('./review-prs');
 
-const installed = path.join(os.homedir(), '.claude', 'plugins', 'installed_plugins.json');
-const [install] = JSON.parse(fs.readFileSync(installed, 'utf8')).plugins['team-pr-review@presentation-skills'] || [];
-const realFile = install && path.join(install.installPath, 'skills', 'team-pr-review', 'references', 'risk-paths.txt');
+const pluginsDir = path.join(os.homedir(), '.claude', 'plugins');
+const realRoot = (() => { try { return reviewPluginRoot(); } catch { return null; } })();
+const realFile = realRoot && path.join(realRoot, 'skills', 'team-pr-review', 'references', 'risk-paths.txt');
+
+function fakeRead(marketSource) {
+  const files = {
+    [path.join(pluginsDir, 'installed_plugins.json')]: { plugins: { 'team-pr-review@presentation-skills': [{ installPath: '/cache/team-pr-review/1.0.0' }] } },
+    [path.join(pluginsDir, 'known_marketplaces.json')]: { 'presentation-skills': { source: marketSource } },
+    '/ws/.claude-plugin/marketplace.json': { plugins: [{ name: 'team-pr-review', source: './plugins/team-pr-review' }] },
+  };
+  return file => {
+    if (!(file in files)) throw new Error(`unexpected read ${file}`);
+    return files[file];
+  };
+}
 const patterns = parseRiskPatterns('# comment\n\n(^|/)db/migrate/\n(^|/|_)(auth|sso|oauth|oidc)(/|_|\\.|$)\n');
 
 test('blank and comment lines never become patterns', () => {
@@ -34,6 +46,14 @@ test('size sets the tier when no path is risky', () => {
 
 test('no patterns means heavy', () => {
   assert.deepStrictEqual(reviewTier({ files: ['README.md'], lines: 1 }, undefined), { tier: 'heavy', why: 'risk patterns unavailable' });
+});
+
+test('a directory marketplace resolves to its live folder, not the install snapshot', () => {
+  assert.strictEqual(reviewPluginRoot(fakeRead({ source: 'directory', path: '/ws' })), '/ws/plugins/team-pr-review');
+});
+
+test('any other marketplace resolves to installPath', () => {
+  assert.strictEqual(reviewPluginRoot(fakeRead({ source: 'github', repo: 'o/r' })), '/cache/team-pr-review/1.0.0');
 });
 
 test('installed risk-paths.txt parses and has no match-everything line', { skip: !realFile || !fs.existsSync(realFile) }, () => {

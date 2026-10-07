@@ -41,9 +41,8 @@ const IDE_LOCK_DIR = path.join(HOME, '.claude', 'ide');
 const WORKSPACE_LABEL = 'presentation-review';
 const REVIEW_PROMPT = '/team-pr-review:team-pr-review';
 const INSTALLED_PLUGINS = path.join(HOME, '.claude', 'plugins', 'installed_plugins.json');
+const KNOWN_MARKETPLACES = path.join(HOME, '.claude', 'plugins', 'known_marketplaces.json');
 const REVIEW_PLUGIN = 'team-pr-review@presentation-skills';
-// Read from the installed plugin, not PRESENTATION: the skill reads that copy, and the
-// workspace checkout can sit on any branch.
 const RISK_PATHS = path.join('skills', 'team-pr-review', 'references', 'risk-paths.txt');
 const LIGHT_MAX = { lines: 60, files: 4 };
 const HEAVY_MIN = { lines: 400, files: 20 };
@@ -343,11 +342,25 @@ function parseRiskPatterns(text) {
   return text.split('\n').map(l => l.trim()).filter(l => l && !l.startsWith('#')).map(l => new RegExp(l, 'i'));
 }
 
+const readJson = file => JSON.parse(fs.readFileSync(file, 'utf8'));
+
+// Where sessions load the skill from, so the launcher sizes a PR with the same patterns the
+// skill will. A directory marketplace is read live; installPath is only the last update's snapshot.
+function reviewPluginRoot(read = readJson) {
+  const [install] = read(INSTALLED_PLUGINS).plugins[REVIEW_PLUGIN] || [];
+  if (!install) throw new Error(`${REVIEW_PLUGIN} not installed`);
+  const [name, market] = REVIEW_PLUGIN.split('@');
+  const { source } = read(KNOWN_MARKETPLACES)[market] || {};
+  if (source && source.source === 'directory') {
+    const entry = read(path.join(source.path, '.claude-plugin', 'marketplace.json')).plugins.find(p => p.name === name);
+    if (entry && typeof entry.source === 'string') return path.resolve(source.path, entry.source);
+  }
+  return install.installPath;
+}
+
 function loadRiskPatterns() {
   try {
-    const [install] = JSON.parse(fs.readFileSync(INSTALLED_PLUGINS, 'utf8')).plugins[REVIEW_PLUGIN] || [];
-    if (!install) return { err: `${REVIEW_PLUGIN} not installed` };
-    return { patterns: parseRiskPatterns(fs.readFileSync(path.join(install.installPath, RISK_PATHS), 'utf8')) };
+    return { patterns: parseRiskPatterns(fs.readFileSync(path.join(reviewPluginRoot(), RISK_PATHS), 'utf8')) };
   } catch (err) {
     return { err: errorText(err) };
   }
@@ -814,5 +827,5 @@ if (require.main === module) {
 }
 
 module.exports = {
-  changedFiles, matchesAny, within, parseRiskPatterns, reviewTier, installGate, jiraKey, ignoredWork, reviewSandbox, MISE_SENSITIVE, CLAUDE_CONFIG, PM_CONFIG, NO_HOOKS,
+  changedFiles, matchesAny, within, parseRiskPatterns, reviewPluginRoot, reviewTier, installGate, jiraKey, ignoredWork, reviewSandbox, MISE_SENSITIVE, CLAUDE_CONFIG, PM_CONFIG, NO_HOOKS,
 };
