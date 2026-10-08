@@ -40,14 +40,8 @@ const OTHER_CLONES = { 'alight-analytics/gaia': path.join(HOME, 'Code', 'gaia') 
 const IDE_LOCK_DIR = path.join(HOME, '.claude', 'ide');
 const WORKSPACE_LABEL = 'presentation-review';
 const REVIEW_PROMPT = '/team-pr-review:team-pr-review';
-const INSTALLED_PLUGINS = path.join(HOME, '.claude', 'plugins', 'installed_plugins.json');
-const KNOWN_MARKETPLACES = path.join(HOME, '.claude', 'plugins', 'known_marketplaces.json');
-const REVIEW_PLUGIN = 'team-pr-review@presentation-skills';
-const RISK_PATHS = path.join('skills', 'team-pr-review', 'references', 'risk-paths.txt');
-const LIGHT_MAX = { lines: 60, files: 4 };
 const HEAVY_MIN = { lines: 400, files: 20 };
 const TIER_ARGS = {
-  light: ['--model', 'sonnet', '--effort', 'medium'],
   standard: ['--model', 'opus', '--effort', 'medium'],
   heavy: ['--model', 'opus', '--effort', 'high'],
 };
@@ -337,35 +331,6 @@ function changedFiles(wt, gateBase) {
   return { files, symlinks };
 }
 
-// A blank line would compile to a match-everything RegExp.
-function parseRiskPatterns(text) {
-  return text.split('\n').map(l => l.trim()).filter(l => l && !l.startsWith('#')).map(l => new RegExp(l, 'i'));
-}
-
-const readJson = file => JSON.parse(fs.readFileSync(file, 'utf8'));
-
-// Where sessions load the skill from, so the launcher sizes a PR with the same patterns the
-// skill will. A directory marketplace is read live; installPath is only the last update's snapshot.
-function reviewPluginRoot(read = readJson) {
-  const [install] = read(INSTALLED_PLUGINS).plugins[REVIEW_PLUGIN] || [];
-  if (!install) throw new Error(`${REVIEW_PLUGIN} not installed`);
-  const [name, market] = REVIEW_PLUGIN.split('@');
-  const { source } = read(KNOWN_MARKETPLACES)[market] || {};
-  if (source && source.source === 'directory') {
-    const entry = read(path.join(source.path, '.claude-plugin', 'marketplace.json')).plugins.find(p => p.name === name);
-    if (entry && typeof entry.source === 'string') return path.resolve(source.path, entry.source);
-  }
-  return install.installPath;
-}
-
-function loadRiskPatterns() {
-  try {
-    return { patterns: parseRiskPatterns(fs.readFileSync(path.join(reviewPluginRoot(), RISK_PATHS), 'utf8')) };
-  } catch (err) {
-    return { err: errorText(err) };
-  }
-}
-
 function diffSize(wt, base) {
   const rows = run('git', ['-C', wt, 'diff', '--numstat', '-z', '--no-renames', base, 'HEAD']).split('\0').filter(Boolean);
   let lines = 0;
@@ -379,14 +344,11 @@ function diffSize(wt, base) {
   return { files, lines };
 }
 
-// No patterns means the risk check couldn't run, so it can't vouch for a lighter tier.
-function reviewTier({ files, lines }, patterns) {
-  if (!patterns) return { tier: 'heavy', why: 'risk patterns unavailable' };
-  const risky = files.find(f => matchesAny(f, patterns));
-  if (risky) return { tier: 'heavy', why: risky };
-  if (lines > HEAVY_MIN.lines || files.length > HEAVY_MIN.files) return { tier: 'heavy', why: `${lines} lines, ${files.length} files` };
-  if (lines <= LIGHT_MAX.lines && files.length <= LIGHT_MAX.files) return { tier: 'light', why: `${lines} lines, ${files.length} files` };
-  return { tier: 'standard', why: `${lines} lines, ${files.length} files` };
+// Size only. Whether a change is risky takes reading what it does, which the skill does itself.
+function reviewTier({ files, lines }) {
+  const why = `${lines} lines, ${files.length} files`;
+  if (lines > HEAVY_MIN.lines || files.length > HEAVY_MIN.files) return { tier: 'heavy', why };
+  return { tier: 'standard', why };
 }
 
 function gateMise(wt, sensitiveChanged) {
@@ -668,9 +630,7 @@ function syncPr(pr, ctx, roster, opts) {
   // gates compare against trunk, so a child can't inherit its parent's unreviewed config.
   s.mergeBase = run('git', ['-C', s.wt, 'merge-base', `origin/${view.baseRefName}`, 'HEAD']);
   const gateBase = run('git', ['-C', s.wt, 'merge-base', `origin/${trunk}`, 'HEAD']);
-  const risk = loadRiskPatterns();
-  if (risk.err) s.notes.push(`risk patterns unavailable (${risk.err}) — sized as heavy`);
-  const { tier, why: tierWhy } = reviewTier(diffSize(s.wt, s.mergeBase), risk.patterns);
+  const { tier, why: tierWhy } = reviewTier(diffSize(s.wt, s.mergeBase));
   s.tier = tier;
   s.notes.push(`tier: ${tier} (${tierWhy})${tabId ? ' — open tab keeps its running Claude' : ''}`);
   const { files, symlinks } = changedFiles(s.wt, gateBase);
@@ -827,5 +787,5 @@ if (require.main === module) {
 }
 
 module.exports = {
-  changedFiles, matchesAny, within, parseRiskPatterns, reviewPluginRoot, reviewTier, installGate, jiraKey, ignoredWork, reviewSandbox, MISE_SENSITIVE, CLAUDE_CONFIG, PM_CONFIG, NO_HOOKS,
+  changedFiles, matchesAny, within, reviewTier, installGate, jiraKey, ignoredWork, reviewSandbox, MISE_SENSITIVE, CLAUDE_CONFIG, PM_CONFIG, NO_HOOKS,
 };
