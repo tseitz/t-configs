@@ -161,14 +161,13 @@ looks like **once I've agreed to add one**. This rule governs whether it gets ad
 - **`/code-review`** on the diff (it has real teeth — gates commits via the pre-commit hook).
   One pass for most work. Escalate to the full two-stage / specialized-agent sweep only for
   security, auth, payments, or architectural changes.
-- **`/pr-review`** before pushing anything that will become a PR — the deep read against the
-  team's recurring topics, plus the behaviour-change ledger. Local only; it never posts. **I invoke
-  this one, not you:** it carries `disable-model-invocation: true`, so say the transition has
-  arrived and stop. Don't paraphrase the review inline as a substitute — a hand-rolled imitation
-  looks like the real thing and silently skips the topics table.
-  - Not to be confused with the `team-pr-review` plugin from `presentation-skills`, which is the
-    team-published version of the same idea and *is* model-invocable. `/pr-review` is my copy and
-    the one this workflow means.
+- **Work repos: `/team-pr-review`** before pushing anything that will become a PR — the
+  tests-first read against the team's distilled review topics. Local only; it never posts. **Run
+  it yourself** when a PR is next, without waiting to be asked. Don't paraphrase it inline as a
+  substitute — a hand-rolled imitation looks like the real thing and silently skips the topics.
+  It ships in the `presentation-skills` work plugin, so it only exists on a work machine.
+- **Personal repos: `/code-review` is the whole gate.** I commit straight to `main` there, so
+  there's no PR stage for a deeper pass to sit in.
 - **`security-reviewer` is not optional** for auth/authz, user input handling, database queries,
   file system operations, external API calls, crypto, or anything touching payments. Any one of
   those in the diff means run it, regardless of how small the change looks.
@@ -203,8 +202,7 @@ question the architecture, don't keep patching.
 - **Comment triage — a required beat before the PR is opened**, done by
   `/post-implementation-reflection` and its Comments lens: sweep the branch diff, the commit
   bodies, and the session, and route each piece of rationale out of the code and onto the PR.
-  **Invoke it yourself** — unlike `/pr-review` above, this one is model-invocable. Run it when a
-  change is built and a PR is next, without waiting to be asked. It has to happen in the session
+  **Invoke it yourself** when a change is built and a PR is next, without waiting to be asked. It has to happen in the session
   that did the work: triaged cold it degrades into diff narration, so the trigger is that
   context still being live, not the PR being ready.
 
