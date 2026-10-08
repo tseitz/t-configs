@@ -39,6 +39,7 @@ dotfiles/.agents/skills/oas-generator
 dotfiles/.agents/skills/openapi-parser
 dotfiles/.agents/skills/pact-coverage
 dotfiles/.agents/skills/pactflow
+dotfiles/.agents/skills/my-voice
 
 # Root-level .claude/ — local runtime state for this repo (settings.local.json,
 # plans, etc.), never shared config. The leading slash anchors this
