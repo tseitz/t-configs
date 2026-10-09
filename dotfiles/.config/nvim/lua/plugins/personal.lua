@@ -37,11 +37,19 @@ end, { desc = "Find plan" })
 
 -- t-configs is mostly dotfolders (.claude, .config, .agents), which the picker hides by
 -- default. Other repos keep the default.
+--
+-- Gitignored files are shown (logs, manifests, local output are worth finding), minus the
+-- dependency and cache folders that would bury everything else. <A-i> still toggles them.
+local IGNORED_BUT_NOISY = {
+  "node_modules", ".venv", "venv", "__pycache__", ".git", "dist", "build", "coverage",
+  ".next", ".turbo", ".cache", "*chrome_profile*", "runs",
+}
+
 local function find_files(root)
   return function()
     local cwd = root and LazyVim.root() or vim.fn.getcwd()
     local in_tconfigs = vim.startswith(cwd, vim.fn.expand("~/t-configs"))
-    Snacks.picker.files({ cwd = cwd, hidden = in_tconfigs })
+    Snacks.picker.files({ cwd = cwd, hidden = in_tconfigs, ignored = true, exclude = IGNORED_BUT_NOISY })
   end
 end
 
