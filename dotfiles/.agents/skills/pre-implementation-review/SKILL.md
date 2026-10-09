@@ -33,6 +33,11 @@ measuring instrument for every decision below. Answer these from the code, citin
    consistently, or does each caller do it differently?
 4. **What command will prove this worked?** Name it exactly.
 5. **What do existing tests already assert** about the behaviour you're about to change?
+6. **Working from a ticket? Which of its claims still hold?** Check each fact it states — a
+   file, a behaviour, a count — against the base branch, and mark it holds or drifted. A
+   ticket is read as instructions, so a drifted claim steers the plan unless it's caught here.
+   A decision or scope item that no longer fits the code is mine to settle, not yours to
+   re-decide — put it to me.
 
 If you cannot answer these in a handful of reads, stop reading and record it as an unknown
 rather than guessing. An expensive scout is itself a surprise — it is the last item in Step 1.
@@ -49,6 +54,7 @@ Sort each surprise by what a miss costs.
 - More call sites than expected
 - The pattern to mirror doesn't exist, or isn't applied consistently
 - You had to open a file the task never mentioned
+- A ticket claim has drifted
 - **The scout itself wasn't cheap** — that is the task telling you it isn't small
 
 **Risk surprises** — a miss is quiet, or lands outside this repo before anyone sees it.
