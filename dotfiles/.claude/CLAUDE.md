@@ -6,6 +6,14 @@ NEVER force push (`git push --force`, `--force-with-lease`, or `-f`) without ask
 me first. Present the branch and the reason, and wait for my explicit confirmation
 before running it — even on a branch I own.
 
+## Friction log
+
+Maintain `~/code/friction.md`, one global log shared by all my Claude sessions, of anything
+that cost real time: a tool that failed mysteriously, a workaround, a wrong turn from a stale
+doc. When you lose time to one mid-session, append one line: `date · symptom · fix · project`.
+Check this file first when tooling fails in a way that looks environmental. Append only what
+slowed work and would recur; don't log one-off typos. Never put secrets in it.
+
 ## Clickable file references
 
 When citing a file location as a clickable link (`path:line`), always use the
