@@ -901,6 +901,8 @@ step_claude_plugins() {
     fi
   done <<< "$wanted"
   success "Claude plugins processed"
+  node "$DOTFILES_DIR/.claude/scripts/pin-test-browser.js" \
+    || warn "could not pin browser MCP plugins to Chrome for Testing"
 }
 
 # ------------------------------------------

@@ -161,6 +161,15 @@
             "type" : "command"
           }
         ]
+      },
+      {
+        "hooks" : [
+          {
+            "command" : "node \"$HOME\/.claude\/scripts\/pin-test-browser.js\" --hook || true",
+            "timeout" : 10,
+            "type" : "command"
+          }
+        ]
       }
     ],
     "Stop" : [
