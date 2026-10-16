@@ -67,29 +67,6 @@ const INSTALL_TIMEOUT_MS = 180000;
 // load in every pane of the tab. HERDR_REVIEW turns off nvim language servers
 // that run project JS (personal.lua).
 const PANE_ENV = ['--env', 'MISE_PARANOID=1', '--env', 'HERDR_REVIEW=1'];
-// User settings leave the sandbox off; a review tab runs PR code, so it turns it on here.
-const REVIEW_SANDBOX = {
-  enabled: true,
-  autoAllowBashIfSandboxed: true,
-  enableWeakerNetworkIsolation: true,
-  excludedCommands: ['chrome-headless-shell', 'mkdir *', 'git *', 'gcloud *', 'kubectl *', 'brew *', 'gh *', 'herdr *'],
-  network: {
-    allowedDomains: [
-      'github.com',
-      'api.github.com',
-      'rubygems.org',
-      'index.rubygems.org',
-      'thinknear.jfrog.io',
-      'jfrog-prod-use1-shared-virginia-main.s3.amazonaws.com',
-      'results-receiver.actions.githubusercontent.com',
-      'localhost',
-      '127.0.0.1',
-      '[::1]',
-    ],
-    allowLocalBinding: true,
-    allowUnixSockets: ['~/.docker/run/docker.sock'],
-  },
-};
 // A repo-relative core.hooksPath (husky's .husky/_) resolves inside the PR's tree.
 const NO_HOOKS = ['-c', 'core.hooksPath=/dev/null'];
 const REVIEW_REQUESTS_QUERY = `query($owner: String!, $repo: String!, $number: Int!) {
@@ -415,7 +392,7 @@ function lastLine(file) {
 }
 
 // What an install may find besides the PR's commits. Anything else — a tracked edit, a planted
-// .npmrc — may be what sandboxed code (a PR test run in the tab) left for this unsandboxed install.
+// .npmrc — may be what PR code (a test run in the tab) left for this install.
 const INSTALL_LEFTOVERS = /^((.*\/)?node_modules\/|\.claude\/\.cc-writes\/|\.yarn\/.*|\.bundle\/|vendor\/bundle\/|(.*\/)?\.DS_Store|(tmp|log|coverage|dist|build|\.next|\.turbo)\/)$/;
 
 function unexpectedFiles(wt, clone) {
@@ -523,26 +500,12 @@ function startAgent(name, pane, args) {
   }
 }
 
-// The review Claude runs PR code (tests, rails runner) sandboxed, but my sandbox can write toolchains,
-// dotfiles and other checkouts, which run later unsandboxed. So a tab writes only its worktree and
-// temp. The file lives in the clone's git dir, which the tab can't write.
-function reviewSandbox(s) {
-  const expand = p => canonical(p.replace(/^~(?=\/|$)/, HOME));
-  const allowWrite = ['settings.json', 'settings.local.json']
-    .map(f => path.join(HOME, '.claude', f))
-    .filter(f => fs.existsSync(f))
-    .flatMap(f => {
-      const fsSettings = (JSON.parse(fs.readFileSync(f, 'utf8')).sandbox || {}).filesystem || {};
-      return (fsSettings.allowWrite || []).map(expand);
-    });
-  const others = fs.readdirSync(ROOT)
-    .map(repo => path.join(ROOT, repo))
-    .filter(dir => fs.statSync(dir).isDirectory())
-    .flatMap(dir => fs.readdirSync(dir).map(name => path.join(dir, name)))
-    .filter(p => p !== s.wt);
-  const denyWrite = [...new Set([...allowWrite.filter(p => !within(s.wt, p)), ...others, s.clone, PRESENTATION])];
-  const file = path.join(run('git', ['-C', s.wt, 'rev-parse', '--absolute-git-dir']), 'review-sandbox.json');
-  fs.writeFileSync(file, `${JSON.stringify({ sandbox: { ...REVIEW_SANDBOX, filesystem: { denyWrite } } }, null, 2)}\n`);
+function reviewSettings(s) {
+  const file = path.join(run('git', ['-C', s.wt, 'rev-parse', '--absolute-git-dir']), 'review-settings.json');
+  // A new worktree path re-asks to approve .mcp.json servers, and that dialog eats the review prompt.
+  const mcpJson = path.join(s.wt, '.mcp.json');
+  const projectMcp = fs.existsSync(mcpJson) ? Object.keys(JSON.parse(fs.readFileSync(mcpJson, 'utf8')).mcpServers || {}) : [];
+  fs.writeFileSync(file, `${JSON.stringify({ disabledMcpjsonServers: projectMcp }, null, 2)}\n`);
   return file;
 }
 
@@ -552,16 +515,16 @@ function openTab(ctx, s, opts) {
   const tab = herdr('tab', 'create', '--workspace', workspaceId, '--cwd', s.wt, '--label', s.label, ...env, '--no-focus');
   const nvimPane = tab.root_pane.pane_id;
   run('herdr', ['pane', 'run', nvimPane, `nvim '+DiffviewOpen ${s.mergeBase}'`]);
-  const sandbox = reviewSandbox(s);
+  const settings = reviewSettings(s);
 
   if (s.claudeFiles.length) {
-    s.notes.push(`PR changes ${s.claudeFiles.join(', ')} — Claude not started; read those, then start it with REVIEW_SANDBOX_SETTINGS=${sandbox} claude ${TIER_ARGS[s.tier].join(' ')} --settings ${sandbox}`);
+    s.notes.push(`PR changes ${s.claudeFiles.join(', ')} — Claude not started; read those, then start it with claude ${TIER_ARGS[s.tier].join(' ')} --settings ${settings}`);
     return;
   }
 
   const claudePane = herdr(
     'pane', 'split', nvimPane, '--direction', 'right', '--ratio', '0.6', '--cwd', s.wt,
-    ...env, '--env', 'CLAUDE_CODE_ADDITIONAL_DIRECTORIES_CLAUDE_MD=1', '--env', `REVIEW_SANDBOX_SETTINGS=${sandbox}`, '--no-focus',
+    ...env, '--env', 'CLAUDE_CODE_ADDITIONAL_DIRECTORIES_CLAUDE_MD=1', '--no-focus',
   ).pane.pane_id;
 
   if (!waitForIdeLock(s.wt, 20000)) s.notes.push('nvim IDE server not seen — run /ide in the Claude pane');
@@ -569,7 +532,7 @@ function openTab(ctx, s, opts) {
   const name = agentName(s.pr.repo, s.pr.number);
   // --add-dir takes several values, so it stays last.
   startAgent(name, claudePane, [
-    '--ide', ...TIER_ARGS[s.tier], '-n', s.label, '--settings', sandbox, ...(s.work ? ['--add-dir', PRESENTATION] : []),
+    '--ide', ...TIER_ARGS[s.tier], '-n', s.label, '--settings', settings, ...(s.work ? ['--add-dir', PRESENTATION] : []),
   ]);
 
   if (opts.review) {
@@ -787,5 +750,5 @@ if (require.main === module) {
 }
 
 module.exports = {
-  changedFiles, matchesAny, within, reviewTier, installGate, jiraKey, ignoredWork, reviewSandbox, MISE_SENSITIVE, CLAUDE_CONFIG, PM_CONFIG, NO_HOOKS,
+  changedFiles, matchesAny, within, reviewTier, installGate, jiraKey, ignoredWork, reviewSettings, MISE_SENSITIVE, CLAUDE_CONFIG, PM_CONFIG, NO_HOOKS,
 };
