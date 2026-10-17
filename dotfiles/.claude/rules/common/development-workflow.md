@@ -196,7 +196,7 @@ question the architecture, don't keep patching.
 - **`commit` skill** — branch safety, conventional format, staging. Targeted staging routes
   through `/prp:stage-commit`.
 - **After tests pass, decide what's next** — merge, open a PR, keep the branch, or discard it.
-- **PR creation** — `gh pr create --body-file`, after checking the repo for a PR template. **The
+- **PR creation** — `gh pr create --draft --body-file`, after checking the repo for a PR template. **The
   body itself follows [pr-descriptions.md](pr-descriptions.md) — high level, no change-by-change
   enumeration — which overrides any repo template's prompting for exhaustive detail.**
 - **Comment triage — a required beat before the PR is opened**, done by

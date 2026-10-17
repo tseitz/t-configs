@@ -6,6 +6,20 @@ NEVER force push (`git push --force`, `--force-with-lease`, or `-f`) without ask
 me first. Present the branch and the reason, and wait for my explicit confirmation
 before running it — even on a branch I own.
 
+A plain `git push` needs no approval. On personal repos, push after every commit; on work
+repos, push feature branches freely.
+
+## Anything that notifies people — ask first
+
+A push is silent; these are not. Get my explicit OK before any of them:
+
+- opening a PR that isn't a draft — always `gh pr create --draft`; never mark one ready for review
+- requesting reviewers, assigning anyone, or @-mentioning someone
+- posting a PR or issue comment, review or reply
+- sending anything on my behalf: Slack, email, Jira or Notion comments, calendar invites
+
+Drafting the text for me to send is always fine.
+
 ## Friction log
 
 Maintain `~/code/friction.md`, one global log shared by all my Claude sessions, of anything
