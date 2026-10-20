@@ -27,6 +27,7 @@
  * ~/code/worktrees, gh keychain).
  */
 
+const crypto = require('crypto');
 const fs = require('fs');
 const net = require('net');
 const os = require('os');
@@ -360,8 +361,8 @@ function installGate(wt, gateBase, files, symlinks) {
   const baseLocks = locksAt(gateBase);
   if (baseLocks !== locksAt('HEAD')) return `PR changes which lockfiles exist (${baseLocks || 'none'} → ${locksAt('HEAD') || 'none'})`;
 
-  const manifestAt = rev => {
-    const shown = tryRun('git', ['-C', wt, 'show', `${rev}:package.json`]);
+  const manifestAt = (rev, file = 'package.json') => {
+    const shown = tryRun('git', ['-C', wt, 'show', `${rev}:${file}`]);
     if (!shown.ok) return {};
     try {
       return JSON.parse(shown.out);
@@ -378,12 +379,87 @@ function installGate(wt, gateBase, files, symlinks) {
     .filter(p => files.includes(p));
   if (patched.length) return `PR changes patch files (${patched.join(', ')})`;
 
+  for (const lock of ['package-lock.json', 'npm-shrinkwrap.json']) {
+    if (!tryRun('git', ['-C', wt, 'cat-file', '-e', `HEAD:${lock}`]).ok) continue;
+    const [baseLock, headLock] = [manifestAt(gateBase, lock), manifestAt('HEAD', lock)];
+    if (!baseLock || !headLock) return `${lock} does not parse`;
+    const bad = npmLockProblems(baseLock, headLock);
+    for (const file of files.filter(f => /(^|\/)package\.json$/i.test(f))) {
+      const [was, now] = [manifestAt(gateBase, file), manifestAt('HEAD', file)];
+      if (!was || !now) return `${file} does not parse`;
+      bad.push(...offRegistrySpecs(was, now).map(spec => `${file}: ${spec}`));
+    }
+    if (bad.length) return `PR adds non-registry npm dependencies (${bad.slice(0, 3).join(', ')}${bad.length > 3 ? ', …' : ''})`;
+  }
+
   // yarn berry runs exec: and git dependencies while fetching, which skip-build doesn't stop.
   if (/yarn\.lock/i.test(baseLocks)) {
     const deps = files.filter(f => /(^|\/)(package\.json|yarn\.lock)$/i.test(f));
     if (deps.length) return `yarn repo and PR changes ${deps.join(', ')}`;
   }
   return null;
+}
+
+const SEMVER = /^\d+\.\d+\.\d+(-[0-9A-Za-z.-]+)?(\+[0-9A-Za-z.-]+)?$/;
+const DEP_FIELDS = ['dependencies', 'devDependencies', 'optionalDependencies', 'peerDependencies'];
+
+function containedPath(p) {
+  return typeof p === 'string' && p !== '' && !/[:\\]|^\/|(^|\/)\.\.(\/|$)/.test(p);
+}
+
+// A range, a dist-tag, or npm:<name>[@<range>]. Anything else (git, tarball URL, user/repo, file:) fetches off-registry.
+function registrySpec(spec) {
+  if (typeof spec !== 'string') return false;
+  const alias = /^npm:(?:@[\w.-]+\/)?[\w.-]+(?:@(.*))?$/.exec(spec);
+  return /^[\w.^~<>=|*+ -]*$/.test(alias ? alias[1] || '' : spec);
+}
+
+// Every dependency spec a PR adds or changes in one package.json.
+function offRegistrySpecs(base, head) {
+  const bad = [];
+  for (const field of DEP_FIELDS) {
+    const [was, now] = [base[field] || {}, head[field] || {}];
+    if (typeof now !== 'object' || Array.isArray(now)) bad.push(`${field} is not a map`);
+    else for (const [name, spec] of Object.entries(now)) if (was[name] !== spec && !registrySpec(spec)) bad.push(`${name}@${spec}`);
+  }
+  const walk = (was, now, at) => {
+    for (const [key, value] of Object.entries(now)) {
+      const before = was && typeof was === 'object' ? was[key] : undefined;
+      if (value && typeof value === 'object') walk(before, value, `${at}${key} > `);
+      // "$name" points overrides at the root's own spec for name, which the loop above checks.
+      else if (value !== before && !registrySpec(value) && !/^\$\S+$/.test(value)) bad.push(`overrides ${at}${key}@${value}`);
+    }
+  };
+  if (head.overrides && typeof head.overrides === 'object') walk(base.overrides, head.overrides, '');
+  return bad;
+}
+
+// Parsed, not diffed line by line: JSON can split or escape a "resolved" any way it likes.
+function npmLockProblems(baseLock, headLock) {
+  if (!headLock.packages || typeof headLock.packages !== 'object') return ['lockfile has no packages map'];
+  const basePackages = (baseLock && baseLock.packages) || {};
+  const hosts = new Set(['registry.npmjs.org']);
+  for (const entry of Object.values(basePackages)) {
+    const https = /^https:\/\/([^/]+)\//.exec((entry && entry.resolved) || '');
+    if (https) hosts.add(https[1]);
+  }
+  const bad = [];
+  for (const [key, entry] of Object.entries(headLock.packages)) {
+    const before = basePackages[key];
+    if (key === '' || JSON.stringify(before) === JSON.stringify(entry)) continue;
+    if (!entry || typeof entry !== 'object') bad.push(key);
+    else if (!key.includes('node_modules/')) {
+      if (!containedPath(key)) bad.push(key); // a workspace folder
+    } else if (entry.link) {
+      if (!containedPath(entry.resolved)) bad.push(`${key} → ${entry.resolved}`);
+    } else if (!SEMVER.test(entry.version)) bad.push(`${key}@${entry.version}`);
+    else if (entry.hasShrinkwrap && !(before && before.hasShrinkwrap)) bad.push(`${key} (hasShrinkwrap)`);
+    else if (!entry.inBundle) {
+      const https = /^https:\/\/([^/]+)\//.exec(typeof entry.resolved === 'string' ? entry.resolved : '');
+      if (!https || !hosts.has(https[1])) bad.push(`${key} → ${entry.resolved}`);
+    }
+  }
+  return bad;
 }
 
 function lastLine(file) {
@@ -395,13 +471,30 @@ function lastLine(file) {
 // .npmrc — may be what PR code (a test run in the tab) left for this install.
 const INSTALL_LEFTOVERS = /^((.*\/)?node_modules\/|\.claude\/\.cc-writes\/|\.yarn\/.*|\.bundle\/|vendor\/bundle\/|(.*\/)?\.DS_Store|(tmp|log|coverage|dist|build|\.next|\.turbo)\/)$/;
 
-function unexpectedFiles(wt, clone) {
-  const changed = run('git', ['-C', wt, 'status', '--porcelain']).split('\n').filter(Boolean).map(l => l.slice(3));
-  const ignored = run('git', ['-C', wt, 'ls-files', '--others', '--ignored', '--exclude-standard', '--directory'])
+function ignoredExtras(wt) {
+  return run('git', ['-C', wt, 'ls-files', '--others', '--ignored', '--exclude-standard', '--directory'])
     .split('\n')
     .filter(Boolean)
-    .filter(f => !INSTALL_LEFTOVERS.test(f) && !sameAsClone(wt, clone, f));
+    .filter(f => !INSTALL_LEFTOVERS.test(f));
+}
+
+function fileHash(wt, file) {
+  const full = path.join(wt, file);
+  if (file.endsWith('/') || !fs.statSync(full).isFile()) return null;
+  return crypto.createHash('sha256').update(fs.readFileSync(full)).digest('hex');
+}
+
+// `copies` remembers bootstrap's env copies, which stop matching the clone once I edit the clone's.
+function unexpectedFiles(wt, clone, copies) {
+  const changed = run('git', ['-C', wt, 'status', '--porcelain']).split('\n').filter(Boolean).map(l => l.slice(3));
+  const ignored = ignoredExtras(wt).filter(f => !sameAsClone(wt, clone, f) && !(copies[f] && copies[f] === fileHash(wt, f)));
   return [...changed, ...ignored];
+}
+
+function recordCopies(wt, clone, copiesFile, copies) {
+  const now = { ...copies };
+  for (const f of ignoredExtras(wt)) if (sameAsClone(wt, clone, f)) now[f] = fileHash(wt, f);
+  fs.writeFileSync(copiesFile, `${JSON.stringify(now, null, 2)}\n`);
 }
 
 function bootstrapWorktree(s, ctx, tabId, gateBase, files, symlinks) {
@@ -418,6 +511,8 @@ function bootstrapWorktree(s, ctx, tabId, gateBase, files, symlinks) {
   const gitDir = run('git', ['-C', s.wt, 'rev-parse', '--absolute-git-dir']);
   const log = path.join(gitDir, 'review-bootstrap.log');
   const done = path.join(gitDir, 'review-bootstrap.head');
+  const copiesFile = path.join(gitDir, 'review-bootstrap.copies.json');
+  const copies = fs.existsSync(copiesFile) ? JSON.parse(fs.readFileSync(copiesFile, 'utf8')) : {};
   const head = run('git', ['-C', s.wt, 'rev-parse', 'HEAD']);
   const has = file => fs.existsSync(path.join(s.wt, file));
   if (has('node_modules') && fs.existsSync(done) && fs.readFileSync(done, 'utf8').trim() === head) {
@@ -425,7 +520,7 @@ function bootstrapWorktree(s, ctx, tabId, gateBase, files, symlinks) {
     return;
   }
 
-  const unexpected = has('package.json') ? unexpectedFiles(s.wt, s.clone) : [];
+  const unexpected = has('package.json') ? unexpectedFiles(s.wt, s.clone, copies) : [];
   const gated = unexpected.length
     ? `worktree has files bootstrap didn't write (${unexpected.slice(0, 3).join(', ')}${unexpected.length > 3 ? ', …' : ''})`
     : has('package.json') && installGate(s.wt, gateBase, files, symlinks);
@@ -437,6 +532,7 @@ function bootstrapWorktree(s, ctx, tabId, gateBase, files, symlinks) {
   if (install) process.stderr.write(`  installing  ${s.label}…\n`);
   const started = Date.now();
   const result = tryRun(BOOTSTRAP, [install ? '--untrusted' : '--skip-install', '--log', log], opts);
+  recordCopies(s.wt, s.clone, copiesFile, copies);
 
   if (!result.ok) {
     const why = /ETIMEDOUT/.test(result.err) ? `timed out after ${INSTALL_TIMEOUT_MS / 1000}s` : fs.existsSync(log) ? lastLine(log) : result.err;
@@ -447,7 +543,7 @@ function bootstrapWorktree(s, ctx, tabId, gateBase, files, symlinks) {
     s.notes.push('deps: no package.json — env files copied, nothing installed');
   } else {
     fs.writeFileSync(done, `${head}\n`);
-    const pm = has('pnpm-lock.yaml') ? 'pnpm' : 'yarn';
+    const pm = has('pnpm-lock.yaml') ? 'pnpm' : has('yarn.lock') ? 'yarn' : 'npm';
     s.notes.push(`deps: ${pm}, scripts off, ${Math.round((Date.now() - started) / 1000)}s`);
     if (tabId && !hadModules) s.notes.push('deps installed under an open nvim — :LspRestart');
   }
@@ -490,11 +586,14 @@ function waitForIdeLock(wt, timeoutMs) {
 }
 
 // agent start needs the pane at its shell prompt; a fresh pane's zsh may still be loading.
+// false: Claude launched in the pane but never reported ready, e.g. it is sitting on a dialog.
 function startAgent(name, pane, args) {
   const deadline = Date.now() + 15000;
   for (;;) {
     const attempt = tryRun('herdr', ['agent', 'start', name, '--kind', 'claude', '--pane', pane, '--', ...args]);
-    if (attempt.ok) return;
+    if (attempt.ok) return true;
+    // A failed attempt can still register the name, so the retry collides with its own agent.
+    if (/agent_name_taken/.test(attempt.err) && attempt.err.includes(`pane_id=${pane} `)) return false;
     if (Date.now() > deadline) throw new Error(`claude didn't start: ${attempt.err}`);
     sleep(1000);
   }
@@ -531,9 +630,14 @@ function openTab(ctx, s, opts) {
 
   const name = agentName(s.pr.repo, s.pr.number);
   // --add-dir takes several values, so it stays last.
-  startAgent(name, claudePane, [
+  const ready = startAgent(name, claudePane, [
     '--ide', ...TIER_ARGS[s.tier], '-n', s.label, '--settings', settings, ...(s.work ? ['--add-dir', PRESENTATION] : []),
   ]);
+  if (!ready) {
+    // Typing the prompt now could answer whatever dialog it is waiting on.
+    s.notes.push(`Claude started but not ready — check its pane${opts.review ? `, then run ${REVIEW_PROMPT}` : ''}`);
+    return;
+  }
 
   if (opts.review) {
     const started = tryRun('herdr', ['agent', 'prompt', name, REVIEW_PROMPT, '--wait', '--until', 'working', '--timeout', '15000']);
@@ -750,5 +854,5 @@ if (require.main === module) {
 }
 
 module.exports = {
-  changedFiles, matchesAny, within, reviewTier, installGate, jiraKey, ignoredWork, reviewSettings, MISE_SENSITIVE, CLAUDE_CONFIG, PM_CONFIG, NO_HOOKS,
+  npmLockProblems, offRegistrySpecs, changedFiles, matchesAny, within, reviewTier, installGate, jiraKey, ignoredWork, reviewSettings, MISE_SENSITIVE, CLAUDE_CONFIG, PM_CONFIG, NO_HOOKS,
 };

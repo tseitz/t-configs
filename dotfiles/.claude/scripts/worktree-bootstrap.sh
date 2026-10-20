@@ -181,12 +181,14 @@ elif [ -f yarn.lock ]; then
     [ "$untrusted" = true ] && flags+=(--mode=skip-build)
   fi
   run yarn install "${flags[@]}"
-elif [ -f package.json ] && [ "$untrusted" = true ]; then
-  echo "✗ --untrusted supports pnpm and yarn only — not installing." >&2
-  exit 1
-elif [ -f package-lock.json ]; then
+elif [ -f package-lock.json ] || [ -f npm-shrinkwrap.json ]; then
   echo "Installing dependencies with npm…"
-  run npm ci
+  flags=(--no-audit --no-fund)
+  [ "$untrusted" = true ] && flags+=(--ignore-scripts)
+  run npm ci "${flags[@]}"
+elif [ -f package.json ] && [ "$untrusted" = true ]; then
+  echo "✗ --untrusted needs a lockfile — not installing." >&2
+  exit 1
 elif [ -f package.json ]; then
   echo "Installing dependencies with npm (no lockfile)…"
   run npm install
