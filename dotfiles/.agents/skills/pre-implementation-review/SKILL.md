@@ -38,6 +38,10 @@ measuring instrument for every decision below. Answer these from the code, citin
    ticket is read as instructions, so a drifted claim steers the plan unless it's caught here.
    A decision or scope item that no longer fits the code is mine to settle, not yours to
    re-decide — put it to me.
+7. **Is anything upstream still open that could change the approach?** A linked spike, a
+   "blocked by", or a sibling ticket rethinking the same data path or design. Writing it
+   down as out of scope is not the same as asking. If one is open, put it to me as a
+   decision — build now, or wait for it — before planning around it.
 
 If you cannot answer these in a handful of reads, stop reading and record it as an unknown
 rather than guessing. An expensive scout is itself a surprise — it is the last item in Step 1.
@@ -181,11 +185,11 @@ Resume elsewhere: execute .claude/plans/<slug>.md
 
 ## Output Format
 
-**SHORT** — prose, not a form. The scout's five answers with their citations, the tier and its
+**SHORT** — prose, not a form. The scout's answers with their citations, the tier and its
 deciding surprise, the plan in a few sentences, the critique questions answered briefly, then
 the handoff. Anything the code could not answer goes at the end as an open question for the user.
 
-**FULL and DEEP** — the same beats as headed sections: `### Scout` (the five answers, each
+**FULL and DEEP** — the same beats as headed sections: `### Scout` (the answers, each
 citing `file:line`, plus anything you could not determine, named as such) · `### Tier` ·
 `### Plan` (path to the doc and a 3–5 bullet summary) · `### Critique` (one line per question
 asked, each a finding with a citation or "nothing to flag") · `### Open questions for you` · the
