@@ -24,6 +24,8 @@ rejected. Read the plan, honour its rejected findings, and build.
 
 ## Step 0 — Scout. Always. Bounded.
 
+Note the time now — the `time-estimate` entry opened in Step 4 starts here, so scouting counts.
+
 **Do not skip this to save time, and do not let it become research.** The scout is the
 measuring instrument for every decision below. Answer these from the code, citing `file:line`:
 
@@ -170,12 +172,16 @@ needs that lives only in this conversation has to be in the doc before you stop.
 
 SHORT has no task list: build it inline.
 
+**Every tier: open a `time-estimate` entry** (that skill's Open section) and put the range in the
+handoff. Rejected plan → drop it.
+
 `.claude/plans/` is gitignored and nothing will find the plan unless the invocation names it,
 so print the path and the split:
 
 ```
 Plan: .claude/plans/<slug>.md
 Build: here on approval — delegate <ids>, inline <ids>
+Estimate: <id> — session p50 <n>, p90 <n> (+ ship on work repos)
 Resume elsewhere: execute .claude/plans/<slug>.md
 ```
 

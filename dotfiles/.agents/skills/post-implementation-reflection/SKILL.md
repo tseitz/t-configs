@@ -212,6 +212,9 @@ absent or has pre-authorized cleanup, proceed with Must items only and note what
 Suggestion, not a rule: if the reflection turned up a doc (CLAUDE.md, README, architecture doc) or
 a memory that's now wrong or missing, say so and offer to update it. Nothing more required.
 
+**Required:** if a `time-estimate` entry is open for this work, close it — the `time-estimate`
+skill's Close section. An entry left open is a guess with no actual, and teaches nothing.
+
 ---
 
 ## Output Format

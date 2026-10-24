@@ -4,3 +4,6 @@ dotfiles/.zshrc-env-vars.example text eol=lf
 dotfiles/.zshrc-local.example text eol=lf
 dotfiles/.zshrc-local.example.wsl text eol=lf
 dotfiles/.zshrc text eol=lf
+
+# Append-only event log written from two machines; keep both sides on merge
+dotfiles/.claude/estimates.jsonl merge=union

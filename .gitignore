@@ -52,3 +52,5 @@ dotfiles/.agents/skills/my-voice
 
 # hypr/*.bak.* — omarchy's own edit-time backups, timestamped and per-machine
 dotfiles/.config/hypr/*.bak.*
+# Work time-estimate log — repo names and PR numbers stay off this public repo.
+dotfiles/.claude/estimates.work.jsonl
