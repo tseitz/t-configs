@@ -74,6 +74,10 @@ git commit -F - <<'EOF'
 EOF
 ```
 
+**Several commits in a row: one `git commit` per tool call, never chained with `;`.** A commit a
+hook rejects leaves its files staged, so the next commit sweeps them in under the wrong message.
+Check the exit code; on failure, fix and retry that commit before staging the next.
+
 ## Principles
 
 - Each commit should be a single, stable change
