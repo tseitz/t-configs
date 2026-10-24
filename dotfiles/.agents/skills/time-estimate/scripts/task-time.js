@@ -53,10 +53,13 @@ function measureOne(entries, since, until, idleMs) {
   let idleDropped = 0;
   let humanTurns = 0;
   let lastTurnEnd = null;
+  let openTurnStart = null;
+  let lastSeen = null;
   for (const { e, t } of timed) {
     if (isTurnEnd(e)) {
       agentMs += Number(e.durationMs) || 0;
       lastTurnEnd = t;
+      openTurnStart = null;
     } else if (isHumanTurn(e)) {
       humanTurns++;
       if (lastTurnEnd !== null) {
@@ -65,8 +68,14 @@ function measureOne(entries, since, until, idleMs) {
         else humanMs += gap;
       }
       lastTurnEnd = null;
+      openTurnStart = t;
+    } else if (e.type === 'user' || e.type === 'assistant') {
+      if (openTurnStart === null) openTurnStart = t;
+      lastSeen = t;
     }
   }
+  // Close usually runs inside the last turn, which has no turn_duration yet.
+  if (openTurnStart !== null && lastSeen !== null && lastSeen > openTurnStart) agentMs += lastSeen - openTurnStart;
   return { agentMs, humanMs, idleDropped, humanTurns };
 }
 

@@ -124,3 +124,18 @@ test('findTranscript searches every project slug', () => {
   assert.throws(() => findTranscript('../../x', dir), /bad session id/);
   fs.rmSync(dir, { recursive: true });
 });
+
+test('a turn still running at until counts as agent time up to its last entry', () => {
+  const assistant = min => ({ type: 'assistant', timestamp: at(min) });
+  const entries = [human(0), assistant(1), turnEnd(2, 2), human(5), assistant(6), assistant(9)];
+  const r = measure(entries, { since: at(0), until: at(10) });
+  assert.strictEqual(r.agent, 6);
+  assert.strictEqual(r.human, 3);
+});
+
+test('a background-notification turn starts at its first entry, not the previous turn end', () => {
+  const assistant = min => ({ type: 'assistant', timestamp: at(min) });
+  const notice = min => ({ type: 'user', origin: { kind: 'task-notification' }, timestamp: at(min) });
+  const entries = [human(0), turnEnd(1, 1), notice(20), assistant(22)];
+  assert.strictEqual(measure(entries, { since: at(0), until: at(30) }).agent, 3);
+});
