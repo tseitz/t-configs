@@ -1,0 +1,4 @@
+[tools]
+node = "latest"
+python = "3.12.13"
+"npm:netlify-cli" = { version = "27.14.2", trust_policy_excludes = ["@netlify/serverless-functions-api@2.24.0", "@netlify/serverless-functions-api@2.25.0"] }

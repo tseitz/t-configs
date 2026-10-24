@@ -351,10 +351,13 @@ step_omz_plugins() {
 # ------------------------------------------
 step_mise() {
   if command -v mise &>/dev/null; then
-    info "Installing default runtimes via mise (Node from mise.toml)..."
+    info "Installing default runtimes via mise (global config from the repo)..."
+    # Linked here as well as in step 6: this step runs first, and installing before
+    # the link exists would skip every global tool on a fresh machine.
+    ensure_dir "$HOME/.config/mise"
+    create_symlink "$DOTFILES_DIR/.config/mise/config.toml" "$HOME/.config/mise/config.toml"
     (cd "$REPO_DIR" && mise install)
-    mise use -g node@latest
-    success "mise runtimes installed (Node available by default)"
+    success "mise runtimes installed"
   else
     warn "mise not found, skipping runtime install (run install.sh again after opening a new terminal)"
   fi
@@ -577,6 +580,11 @@ step_symlinks() {
   # rest of ~/.config/herdr — the sockets, logs and session.json beside it are machine state.
   ensure_dir "$HOME/.config/herdr"
   create_symlink "$DOTFILES_DIR/.config/herdr/config.toml" "$HOME/.config/herdr/config.toml"
+
+  # mise writes `mise use -g` through the link rather than replacing it, so the repo can
+  # own the whole global config, same as herdr.
+  ensure_dir "$HOME/.config/mise"
+  create_symlink "$DOTFILES_DIR/.config/mise/config.toml" "$HOME/.config/mise/config.toml"
 
   # VS Code User settings. The file lives under .config/editors/ rather than
   # .config/Code/ so a second editor can share it without moving the source.

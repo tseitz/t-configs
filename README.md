@@ -15,7 +15,7 @@ The install script is idempotent — safe to run multiple times. It will:
 1. Install [Homebrew](https://brew.sh) (if not already installed) — skipped on Arch
 2. Install all packages from the `Brewfile` (`Pacfile` via pacman on Arch)
 3. Install [oh-my-zsh](https://ohmyz.sh) with custom plugins (the prompt is starship, not an oh-my-zsh theme)
-4. Install default runtimes via [mise](https://mise.jdx.dev) (Node, etc. from `mise.toml`)
+4. Install default runtimes via [mise](https://mise.jdx.dev) (global tools from `dotfiles/.config/mise/config.toml`)
 5. Symlink dotfiles to their expected locations
 6. Install every Claude Code plugin marked `true` in `enabledPlugins` (see below)
 7. Create `.zshrc-env-vars` (private secrets) and `.zshrc-local` (machine-specific overrides) from example templates
