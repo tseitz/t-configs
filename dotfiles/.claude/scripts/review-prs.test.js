@@ -49,3 +49,55 @@ test('package.json specs a PR adds must come from the registry', () => {
     assert.strictEqual(offRegistrySpecs(base, { overrides: { y: { x: spec } } }).length, 1, `overrides ${spec}`);
   }
 });
+
+test('pnpm lock gate passes trunk registries and in-repo links, flags every other fetch', () => {
+  const { pnpmLockProblems } = require('./review-prs');
+  const jfrog = v => ({ resolution: { integrity: 'sha512-x', tarball: `https://thinknear.jfrog.io/x/-/x-${v}.tgz` } });
+  const base = {
+    lockfileVersion: '9.0',
+    importers: { '.': { dependencies: { a: { specifier: '^1', version: '1.0.0' } } } },
+    packages: { 'a@1.0.0': { resolution: { integrity: 'sha512-a' } }, '@inmarket/x@1.0.0': jfrog('1.0.0') },
+  };
+  const head = (packages, deps = {}) => pnpmLockProblems(base, {
+    ...base,
+    importers: { '.': { dependencies: { ...base.importers['.'].dependencies, ...deps } }, 'packages/web': {} },
+    packages: { ...base.packages, ...packages },
+  });
+
+  assert.deepStrictEqual(head(
+    { 'a@1.1.0': { resolution: { integrity: 'sha512-b' } }, '@inmarket/x@2.0.0': jfrog('2.0.0') },
+    { a: { specifier: '^1', version: '1.1.0(react@18.0.0)' }, shared: { specifier: 'workspace:*', version: 'link:packages/shared' } },
+  ), []);
+
+  for (const resolution of [
+    { type: 'git', repo: 'https://github.com/evil/b', commit: 'abc' },
+    { integrity: 'sha512-x', tarball: 'https://evil.example/b.tgz' },
+    { tarball: 'http://registry.npmjs.org/b/-/b-1.0.0.tgz' },
+    { directory: '../outside', type: 'directory' },
+    { type: 'binary', url: 'https://evil.example/node.tgz' },
+    undefined,
+  ]) {
+    assert.strictEqual(head({ 'b@1.0.0': { resolution } }).length, 1, JSON.stringify(resolution));
+  }
+  for (const version of ['link:../outside', 'file:../b', 'https://evil.example/b.tgz']) {
+    assert.strictEqual(head({}, { b: { specifier: version, version } }).length, 1, version);
+  }
+  assert.strictEqual(pnpmLockProblems(base, { lockfileVersion: '6.0' }).length, 1);
+});
+
+test('pnpm lockfile parses like pnpm reads it, or not at all', () => {
+  const { parseYamlLock } = require('./review-prs');
+  const quoted = parseYamlLock("lockfileVersion: '9.0'\npackages:\n  b@1.0.0:\n    \"resolution\": {\"tarball\": https://evil.example/b.tgz}\n");
+  assert.strictEqual(quoted.packages['b@1.0.0'].resolution.tarball, 'https://evil.example/b.tgz');
+  for (const yaml of [
+    "x: &r {tarball: https://evil.example/b.tgz}\npackages:\n  b@1.0.0:\n    resolution: *r\n",
+    "packages:\n  b@1.0.0:\n    resolution:\n      <<: {tarball: https://evil.example/b.tgz}\n",
+    "packages:\n  b@1.0.0:\n    resolution: !custom {integrity: x}\n",
+    "? [packages]\n: b@1.0.0:\n    resolution: {tarball: https://evil.example/b.tgz}\n",
+    "packages:\n  ? {b: 1}\n  : resolution: {integrity: x}\n",
+  ]) {
+    assert.throws(() => parseYamlLock(yaml), /anchors/, yaml);
+  }
+  assert.throws(() => parseYamlLock('~\n'), /not a map/);
+  assert.throws(() => parseYamlLock("a: 1\n---\nlockfileVersion: '9.0'\n"), /more than one/);
+});

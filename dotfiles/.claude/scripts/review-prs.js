@@ -350,13 +350,6 @@ function installGate(wt, gateBase, files, symlinks) {
   // pnpm 10 applies patches even with --ignore-scripts, and doesn't keep their paths inside the package.
   const patches = files.filter(f => /\.(patch|diff)$/i.test(f) || /(^|\/)patches\//i.test(f));
   if (patches.length) return `PR changes patch files (${patches.join(', ')})`;
-  // Non-registry resolutions make the install connect wherever the PR says.
-  const added = run('git', ['-C', wt, 'diff', '-U0', gateBase, 'HEAD', '--', 'pnpm-lock.yaml'])
-    .split('\n')
-    .filter(l => l.startsWith('+') && !l.startsWith('+++'));
-  const remote = added.find(l => /\b(tarball|repo|directory):|type: git|http:\/\//.test(l));
-  if (remote) return `PR adds a non-registry resolution to pnpm-lock.yaml (${remote.slice(1).trim()})`;
-
   const locksAt = rev => run('git', ['-C', wt, 'ls-tree', '--name-only', rev]).split('\n').filter(f => LOCKFILES.test(f)).sort().join(', ');
   const baseLocks = locksAt(gateBase);
   if (baseLocks !== locksAt('HEAD')) return `PR changes which lockfiles exist (${baseLocks || 'none'} → ${locksAt('HEAD') || 'none'})`;
@@ -379,18 +372,32 @@ function installGate(wt, gateBase, files, symlinks) {
     .filter(p => files.includes(p));
   if (patched.length) return `PR changes patch files (${patched.join(', ')})`;
 
-  for (const lock of ['package-lock.json', 'npm-shrinkwrap.json']) {
-    if (!tryRun('git', ['-C', wt, 'cat-file', '-e', `HEAD:${lock}`]).ok) continue;
-    const [baseLock, headLock] = [manifestAt(gateBase, lock), manifestAt('HEAD', lock)];
-    if (!baseLock || !headLock) return `${lock} does not parse`;
-    const bad = npmLockProblems(baseLock, headLock);
+  // Non-registry resolutions make the install connect wherever the PR says.
+  const showAt = (rev, file) => tryRun('git', ['-C', wt, 'show', `${rev}:${file}`], { maxBuffer: LOCK_MAX_BYTES });
+  const bad = [];
+  let checked = false;
+  for (const lock of ['package-lock.json', 'npm-shrinkwrap.json', 'pnpm-lock.yaml']) {
+    const head = showAt('HEAD', lock);
+    if (!head.ok) continue;
+    checked = true;
+    const base = showAt(gateBase, lock);
+    let parsed;
+    try {
+      const parse = lock.endsWith('.yaml') ? parseYamlLock : JSON.parse;
+      parsed = [base.ok ? parse(base.out) : {}, parse(head.out)];
+    } catch (err) {
+      return `${lock} does not parse: ${errorText(err)}`;
+    }
+    bad.push(...(lock.endsWith('.yaml') ? pnpmLockProblems : npmLockProblems)(...parsed).map(p => `${lock}: ${p}`));
+  }
+  if (checked) {
     for (const file of files.filter(f => /(^|\/)package\.json$/i.test(f))) {
       const [was, now] = [manifestAt(gateBase, file), manifestAt('HEAD', file)];
       if (!was || !now) return `${file} does not parse`;
       bad.push(...offRegistrySpecs(was, now).map(spec => `${file}: ${spec}`));
     }
-    if (bad.length) return `PR adds non-registry npm dependencies (${bad.slice(0, 3).join(', ')}${bad.length > 3 ? ', …' : ''})`;
   }
+  if (bad.length) return `PR adds non-registry dependencies (${bad.slice(0, 3).join(', ')}${bad.length > 3 ? ', …' : ''})`;
 
   // yarn berry runs exec: and git dependencies while fetching, which skip-build doesn't stop.
   if (/yarn\.lock/i.test(baseLocks)) {
@@ -410,6 +417,8 @@ function containedPath(p) {
 // A range, a dist-tag, or npm:<name>[@<range>]. Anything else (git, tarball URL, user/repo, file:) fetches off-registry.
 function registrySpec(spec) {
   if (typeof spec !== 'string') return false;
+  // pnpm: a workspace package by range, or a version from pnpm-workspace.yaml, which is gated whole.
+  if (/^workspace:[\w.^~<>=|*+ -]*$/.test(spec) || /^catalog:[\w.-]*$/.test(spec)) return true;
   const alias = /^npm:(?:@[\w.-]+\/)?[\w.-]+(?:@(.*))?$/.exec(spec);
   return /^[\w.^~<>=|*+ -]*$/.test(alias ? alias[1] || '' : spec);
 }
@@ -431,6 +440,61 @@ function offRegistrySpecs(base, head) {
     }
   };
   if (head.overrides && typeof head.overrides === 'object') walk(base.overrides, head.overrides, '');
+  return bad;
+}
+
+const LOCK_MAX_BYTES = 256 * 1024 * 1024;
+
+function parseYamlLock(text) {
+  const yq = expr => run('yq', ['-p=yaml', expr], { input: text, stdio: ['pipe', 'pipe', 'pipe'], maxBuffer: LOCK_MAX_BYTES });
+  // pnpm never writes these, and yq and pnpm's own YAML parser need not agree on what they mean:
+  // pnpm reads `? [packages]` as the key "packages", yq as "".
+  const odd = yq('[.. | select(anchor != "" or kind == "alias" or key == "<<" or (tag | test("^!!(str|int|float|bool|null|map|seq)$") | not))] + '
+    + '[.. | select(kind == "map") | keys[] | select(kind != "scalar" or tag != "!!str")] | length');
+  if (odd.includes('\n')) throw new Error('has more than one YAML document');
+  if (odd !== '0') throw new Error('uses YAML anchors, aliases, merge keys, custom tags or non-string keys');
+  const lock = JSON.parse(run('yq', ['-p=yaml', '-o=json', '.'], { input: text, stdio: ['pipe', 'pipe', 'pipe'], maxBuffer: LOCK_MAX_BYTES }));
+  if (!lock || typeof lock !== 'object' || Array.isArray(lock)) throw new Error('is not a map');
+  return lock;
+}
+
+function httpsHost(url) {
+  const https = /^https:\/\/([^/]+)\//.exec(typeof url === 'string' ? url : '');
+  return https && https[1];
+}
+
+// pnpm lockfile v9: what to fetch is in packages.*.resolution; link: paths are in importers.
+function pnpmLockProblems(baseLock, headLock) {
+  if (!/^9\./.test(String(headLock.lockfileVersion))) return [`lockfileVersion ${headLock.lockfileVersion}`];
+  const [basePackages, baseImporters] = [baseLock.packages || {}, baseLock.importers || {}];
+  const hosts = new Set(['registry.npmjs.org']);
+  for (const entry of Object.values(basePackages)) {
+    const host = httpsHost(entry && entry.resolution && entry.resolution.tarball);
+    if (host) hosts.add(host);
+  }
+  const bad = [];
+  for (const [key, entry] of Object.entries(headLock.packages || {})) {
+    if (JSON.stringify(basePackages[key]) === JSON.stringify(entry)) continue;
+    const resolution = entry && entry.resolution;
+    const extra = resolution && typeof resolution === 'object' ? Object.keys(resolution).filter(k => k !== 'integrity' && k !== 'tarball') : ['none'];
+    if (extra.length) bad.push(`${key} (resolution ${extra.join(', ')})`);
+    else if ('tarball' in resolution && !hosts.has(httpsHost(resolution.tarball))) bad.push(`${key} → ${resolution.tarball}`);
+  }
+  for (const [importer, deps] of Object.entries(headLock.importers || {})) {
+    if (!containedPath(importer)) {
+      bad.push(`importer ${importer}`);
+      continue;
+    }
+    for (const field of ['dependencies', 'devDependencies', 'optionalDependencies']) {
+      for (const [name, dep] of Object.entries((deps && deps[field]) || {})) {
+        const was = ((baseImporters[importer] || {})[field] || {})[name];
+        const version = dep && dep.version;
+        if (JSON.stringify(was) === JSON.stringify(dep) || (typeof version === 'string' && /^\d/.test(version))) continue;
+        const link = typeof version === 'string' && /^link:(.*)$/.exec(version);
+        if (!link || !containedPath(path.posix.normalize(path.posix.join(importer, link[1])))) bad.push(`${importer} ${name}@${version}`);
+      }
+    }
+  }
   return bad;
 }
 
@@ -854,5 +918,5 @@ if (require.main === module) {
 }
 
 module.exports = {
-  npmLockProblems, offRegistrySpecs, changedFiles, matchesAny, within, reviewTier, installGate, jiraKey, ignoredWork, reviewSettings, MISE_SENSITIVE, CLAUDE_CONFIG, PM_CONFIG, NO_HOOKS,
+  npmLockProblems, pnpmLockProblems, parseYamlLock, offRegistrySpecs, changedFiles, matchesAny, within, reviewTier, installGate, jiraKey, ignoredWork, reviewSettings, MISE_SENSITIVE, CLAUDE_CONFIG, PM_CONFIG, NO_HOOKS,
 };
