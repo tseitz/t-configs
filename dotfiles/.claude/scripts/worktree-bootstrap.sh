@@ -13,7 +13,7 @@
 # Usage:
 #   ~/.claude/scripts/worktree-bootstrap.sh                 # from inside a new worktree
 #   ~/.claude/scripts/worktree-bootstrap.sh --skip-install  # copy env files only
-#   ~/.claude/scripts/worktree-bootstrap.sh --untrusted     # someone else's unread code: no install-time code runs
+#   ~/.claude/scripts/worktree-bootstrap.sh --untrusted     # someone else's unread code: no install-time code runs, no mise trust
 #   ~/.claude/scripts/worktree-bootstrap.sh --log <file>    # all output to <file>
 #
 # --untrusted is review-prs.js's whole safety envelope: loosen it and PR code runs at install.
@@ -85,15 +85,28 @@ else
   echo "• No gitignored env files to copy (already present or none)."
 fi
 
-# Paranoid mise leaves a copied config untrusted, and every shell here then errors on it.
-if [ ${#copied[@]} -gt 0 ] && command -v mise >/dev/null; then
-  for f in "${copied[@]}"; do
-    case "$f" in
-      mise.local.toml | .mise.local.toml | mise.*.local.toml | .mise.*.local.toml)
-        mise trust --quiet "$here/$f"
-        echo "✓ Trusted $f" ;;
-    esac
+# Paranoid mise trusts nothing in a new worktree, then refuses one file per command.
+# Copied local configs are mine, so they're trusted even for --untrusted.
+# Not `mise trust --all`: it also walks parent dirs, which sandboxed code can write.
+if command -v mise >/dev/null; then
+  candidates=()
+  for f in ${copied[@]+"${copied[@]}"}; do
+    case "$f" in mise.local.toml | .mise.local.toml | mise.*.local.toml | .mise.*.local.toml) candidates+=("$f") ;; esac
   done
+  if [ "$untrusted" = false ]; then
+    # Same set as review-prs.js's MISE_CONFIG + MISE_VERSION_FILE; a miss fails closed.
+    tracked="$(git ls-files)"
+    while IFS= read -r f; do
+      case "$f" in
+        mise.toml | .mise.toml | mise.local.toml | .mise.local.toml | */mise.toml | */.mise.toml | */mise.local.toml | */.mise.local.toml \
+          | .config/mise.toml | */.config/mise.toml | .config/mise/config.toml | */.config/mise/config.toml | .mise/config.toml | */.mise/config.toml \
+          | .tool-versions | */.tool-versions | .ruby-version | */.ruby-version | Gemfile | */Gemfile)
+          candidates+=("$f") ;;
+      esac
+    done <<<"$tracked"
+  fi
+  for f in ${candidates[@]+"${candidates[@]}"}; do mise trust --quiet "$here/$f"; done
+  [ ${#candidates[@]} -gt 0 ] && echo "✓ mise-trusted: ${candidates[*]}"
 fi
 echo
 

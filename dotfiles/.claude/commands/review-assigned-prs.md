@@ -25,7 +25,8 @@ Relay the report as-is, then call out anything that needs me: `failed`/`kept`/`s
 notes saying Claude wasn't started, mise config was ignored, or `deps:` weren't installed. Those
 are deliberate: a PR that adds a symlink, or changes (vs trunk) `.claude/`, `.mcp.json` or
 `CLAUDE.md`, gets no auto-started Claude; one that changes mise config, `mise.lock` or a `.env*`
-file gets its mise config ignored; one that changes package-manager config, the package.json
+file gets its mise config ignored, and a changed or locally edited `.ruby-version`, `Gemfile` or
+`.tool-versions` is ignored on its own (note: `mise ignores …`); one that changes package-manager config, the package.json
 fields that pick the package manager, the set of lockfiles, patch files, a non-registry lockfile
 resolution, or — in a yarn repo — any dependency gets no install. Nor does a worktree holding
 files bootstrap didn't write, since a test run in the tab could have planted them.

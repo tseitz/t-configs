@@ -101,3 +101,9 @@ test('pnpm lockfile parses like pnpm reads it, or not at all', () => {
   assert.throws(() => parseYamlLock('~\n'), /not a map/);
   assert.throws(() => parseYamlLock("a: 1\n---\nlockfileVersion: '9.0'\n"), /more than one/);
 });
+
+test('mise version files match at any depth, lookalikes do not', () => {
+  const { MISE_VERSION_FILE } = require('./review-prs');
+  for (const f of ['.ruby-version', 'Gemfile', 'api/.tool-versions', '.Ruby-Version']) assert.ok(MISE_VERSION_FILE.test(f), f);
+  for (const f of ['Gemfile.lock', 'x.ruby-version', 'docs/Gemfile.md', '.nvmrc']) assert.ok(!MISE_VERSION_FILE.test(f), f);
+});

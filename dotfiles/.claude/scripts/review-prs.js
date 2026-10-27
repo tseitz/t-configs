@@ -50,6 +50,8 @@ const TIER_ARGS = {
 const MISE_CONFIG = /(^|\/)(\.?mise(\.local)?\.toml|\.config\/mise(\.local)?\.toml|\.?config\/mise\/config(\.local)?\.toml|\.?mise\/config(\.local)?\.toml)$/i;
 // mise config can load .env files (`_.file`), so an unchanged mise.toml still runs a PR-edited one.
 // mise.lock carries the download URL for each tool.
+// Paranoid mode wants trust for these too; a version can be `path:<dir>`, running whatever is there.
+const MISE_VERSION_FILE = /(^|\/)(\.tool-versions|\.ruby-version|Gemfile)$/i;
 const MISE_SENSITIVE = [MISE_CONFIG, /(^|\/)\.env[^/]*$/i, /(^|\/)\.?mise(\.local)?\.lock$/i];
 const CLAUDE_CONFIG = [/(^|\/)\.claude(\/|$)/i, /(^|\/)\.mcp\.json$/i, /(^|\/)CLAUDE(\.local)?\.md$/i];
 // Each lets a PR choose what an install runs or where it fetches from; any change skips the install.
@@ -329,14 +331,20 @@ function reviewTier({ files, lines }) {
   return { tier: 'standard', why };
 }
 
-function gateMise(wt, sensitiveChanged) {
-  const configs = run('git', ['-C', wt, 'ls-files']).split('\n').filter(f => MISE_CONFIG.test(f));
-  for (const file of configs) {
+function gateMise(wt, sensitiveChanged, changed) {
+  const tracked = run('git', ['-C', wt, 'ls-files']).split('\n');
+  const ignored = [];
+  for (const file of tracked.filter(f => MISE_CONFIG.test(f) || MISE_VERSION_FILE.test(f))) {
     const target = path.join(wt, file);
+    // Trust hashes the working copy, not HEAD: a test run in the tab can rewrite a tracked file.
+    const dirty = run('git', ['-C', wt, 'status', '--porcelain', '--', file]) !== '';
+    const ignore = sensitiveChanged || dirty || (MISE_VERSION_FILE.test(file) && changed.includes(file));
     // --ignore also beats the trust a normal-mode shell would inherit from the main clone.
-    if (sensitiveChanged) run('mise', ['trust', '--ignore', '--quiet', target]);
+    if (ignore) run('mise', ['trust', '--ignore', '--quiet', target]);
     else run('mise', ['trust', '--quiet', target], { env: { ...process.env, MISE_PARANOID: '1' } });
+    if (ignore && !sensitiveChanged) ignored.push(dirty ? `${file} (edited in worktree)` : file);
   }
+  return ignored;
 }
 
 // null when an install is safe to attempt, else why not.
@@ -595,7 +603,7 @@ function bootstrapWorktree(s, ctx, tabId, gateBase, files, symlinks) {
   fs.rmSync(log, { force: true });
   if (install) process.stderr.write(`  installing  ${s.label}…\n`);
   const started = Date.now();
-  const result = tryRun(BOOTSTRAP, [install ? '--untrusted' : '--skip-install', '--log', log], opts);
+  const result = tryRun(BOOTSTRAP, ['--untrusted', ...(install ? [] : ['--skip-install']), '--log', log], opts);
   recordCopies(s.wt, s.clone, copiesFile, copies);
 
   if (!result.ok) {
@@ -767,9 +775,11 @@ function syncPr(pr, ctx, roster, opts) {
   const { files, symlinks } = changedFiles(s.wt, gateBase);
   const miseFiles = files.filter(f => matchesAny(f, MISE_SENSITIVE));
   s.claudeFiles = [...files.filter(f => matchesAny(f, CLAUDE_CONFIG)), ...symlinks.map(f => `${f} (symlink)`)];
-  gateMise(s.wt, miseFiles.length > 0 || symlinks.length > 0);
+  const ignoredVersions = gateMise(s.wt, miseFiles.length > 0 || symlinks.length > 0, files);
   if (miseFiles.length || symlinks.length) {
     s.notes.push(`PR changes ${[...miseFiles, ...symlinks].join(', ')} — mise config ignored in this worktree`);
+  } else if (ignoredVersions.length) {
+    s.notes.push(`mise ignores ${ignoredVersions.join(', ')} in this worktree`);
   }
   if (status !== 'kept') bootstrapWorktree(s, ctx, tabId, gateBase, files, symlinks);
 
@@ -918,5 +928,5 @@ if (require.main === module) {
 }
 
 module.exports = {
-  npmLockProblems, pnpmLockProblems, parseYamlLock, offRegistrySpecs, changedFiles, matchesAny, within, reviewTier, installGate, jiraKey, ignoredWork, reviewSettings, MISE_SENSITIVE, CLAUDE_CONFIG, PM_CONFIG, NO_HOOKS,
+  npmLockProblems, pnpmLockProblems, parseYamlLock, offRegistrySpecs, changedFiles, matchesAny, within, reviewTier, installGate, jiraKey, ignoredWork, reviewSettings, MISE_SENSITIVE, MISE_VERSION_FILE, CLAUDE_CONFIG, PM_CONFIG, NO_HOOKS,
 };
