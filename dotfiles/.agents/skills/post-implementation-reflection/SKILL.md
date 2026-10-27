@@ -133,7 +133,9 @@ If the cuts become PR comments, **draft them, never post unasked.** When approve
 cuts *first* (comments anchor to line numbers in the PR head, so posting before the trim lands
 every anchor outdated), post as **one review** rather than N comments, check the line for existing
 comments including your own from earlier rounds, and verify each anchor falls inside a changed
-hunk or it won't attach.
+hunk or it won't attach. A comment in a still-**pending** review 404s on
+`pulls/comments/{id}`: read it via `pulls/{n}/reviews/{review_id}/comments`, edit it with GraphQL
+`updatePullRequestReviewComment` (body) or `updatePullRequestReview` (summary).
 
 **Simplicity & navigability**
 

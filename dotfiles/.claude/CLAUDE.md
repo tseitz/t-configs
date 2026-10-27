@@ -28,6 +28,14 @@ doc. When you lose time to one mid-session, append one line: `date · symptom ·
 Check this file first when tooling fails in a way that looks environmental. Append only what
 slowed work and would recur; don't log one-off typos. Never put secrets in it.
 
+## Tooling traps
+
+- **The Bash tool runs zsh, not bash.** Unquoted `$var` is not word-split (`set -- $p` passes
+  one arg), unmatched globs error (`no matches found`), and a word starting `=` expands as a
+  command path. Pass args explicitly, quote globs, or wrap the snippet in `bash -c`.
+- **Jira reads go through `acli` first** (`jira-with-acli` skill). The Atlassian MCP can hang
+  for many minutes with no response; use it only for what `acli` can't do.
+
 ## Clickable file references
 
 When citing a file location as a clickable link (`path:line`), always use the

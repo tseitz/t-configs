@@ -283,16 +283,18 @@ steps.
 workspace, so each gets its own panes, editor and agent:
 
 ```bash
-herdr worktree create --branch <name> [--base <ref>]   # creates it and opens the workspace
-herdr worktree open --branch <name>                    # an existing one
+herdr worktree create --cwd <repo> --branch <name> [--base <ref>]   # creates it and opens the workspace
+herdr worktree open --cwd <repo> --branch <name>                    # an existing one
 herdr worktree list
 herdr worktree remove --workspace <id>
 ```
 
-No `--path` needed: `[worktrees] directory` in `~/.config/herdr/config.toml` is set to
-`~/code/worktrees` and Herdr appends `<repo-name>/<branch>` itself. Note that key is a single
-global base resolved against `$HOME` — it cannot be made repo-relative, which is why the
-convention above is central rather than in-repo.
+Always pass `--cwd`: without it Herdr resolves the repo from the *active workspace*, and fails
+with `not_git_worktree` when that isn't the repo. No `--path` needed: `[worktrees] directory` in
+`~/.config/herdr/config.toml` is set to `~/code/worktrees` and Herdr appends
+`<repo-name>/<branch>` itself. Note that key is a single global base resolved against `$HOME` —
+it cannot be made repo-relative, which is why the convention above is central rather than
+in-repo.
 
 **Exception — PR reviews.** `~/code/worktrees/<repo>/pr-<n>` belongs to
 `~/.claude/scripts/review-prs.js` (`/review-assigned-prs`): detached worktrees, one *tab* each in
