@@ -2,3 +2,9 @@
 node = "latest"
 python = "3.12.13"
 "npm:netlify-cli" = { version = "27.14.2", trust_policy_excludes = ["@netlify/serverless-functions-api@2.24.0", "@netlify/serverless-functions-api@2.25.0"] }
+
+[settings]
+# Trust is bound to file content, and a git worktree no longer inherits its main
+# clone's trust — otherwise another branch's mise.toml edits load unasked.
+paranoid = true
+idiomatic_version_file_enable_tools = ["ruby"]
