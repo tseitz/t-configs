@@ -129,6 +129,23 @@ if grep -qE '^BUNDLE_PATH: "?vendor/bundle"?$' "$here/.bundle/config" 2>/dev/nul
     echo "• Couldn't clone vendor/bundle (cp -c needs APFS) — run bundle install yourself."
   fi
 fi
+
+# ── 1c. Rails asset build output (app/assets/builds) ────────────────────────
+# Gitignored, so a new worktree has none and anything that reads it (mailer specs) fails.
+if [ -d "$main/app/assets/builds" ] \
+  && ! { [ -L "$here/app" ] || [ -L "$here/app/assets" ] || [ -L "$here/app/assets/builds" ]; }; then
+  built=()
+  for f in "$main"/app/assets/builds/*; do
+    name="${f##*/}"
+    [ -L "$f" ] && continue
+    git -C "$main" check-ignore -q "app/assets/builds/$name" || continue
+    { [ -e "$here/app/assets/builds/$name" ] || [ -L "$here/app/assets/builds/$name" ]; } && continue
+    mkdir -p "$here/app/assets/builds"
+    cp -R "$f" "$here/app/assets/builds/$name"
+    built+=("$name")
+  done
+  [ ${#built[@]} -gt 0 ] && echo "✓ Copied app/assets/builds: ${built[*]}"
+fi
 echo
 
 # ── 2. Install dependencies ──────────────────────────────────────────────────
