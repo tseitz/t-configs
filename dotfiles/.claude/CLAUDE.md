@@ -45,7 +45,10 @@ slowed work and would recur; don't log one-off typos. Never put secrets in it.
 - **`gh api pulls/comments/{id}` 404s for a comment in a pending review.** Read it through
   `pulls/N/reviews/{review_id}/comments`; edit it with GraphQL `updatePullRequestReviewComment`.
 - **CircleCI goes through the `circleci` CLI** (already authenticated; project comes from the git
-  remote): `circleci run list -B` → `run get <id>` → `job output get <job> --step-num N --condensed`.
+  remote): `circleci run list -B` → `run get <id>` → `job get <job-uuid>` (its Steps table has
+  the `#`) → `job output get <job-uuid> --step-num N --condensed`. Two traps: the job *number* in
+  a `gh pr checks` URL is rejected (UUIDs only), and `-B` prints `No runs found.` on a detached
+  HEAD (review worktrees) — pass `-b <branch>` instead. Step numbers are like `109`, not `1..n`.
 - **Jira reads go through `acli` first** (`jira-with-acli` skill). The Atlassian MCP can hang
   for many minutes with no response; use it only for what `acli` can't do.
 
