@@ -28,7 +28,6 @@ dotfiles/.claude/plugins/data/
 dotfiles/.claude/plugins/marketplaces/
 
 # Skills: ignore work-specific skills (may contain company-internal references)
-dotfiles/.agents/skills/circleci-logs
 dotfiles/.agents/skills/confluence-with-acli
 dotfiles/.agents/skills/jira-with-acli
 dotfiles/.agents/skills/migrate-oxfmt

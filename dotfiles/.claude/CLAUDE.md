@@ -44,6 +44,8 @@ slowed work and would recur; don't log one-off typos. Never put secrets in it.
   `COMPOSE_BAKE=false` no longer helps. Don't export it globally.
 - **`gh api pulls/comments/{id}` 404s for a comment in a pending review.** Read it through
   `pulls/N/reviews/{review_id}/comments`; edit it with GraphQL `updatePullRequestReviewComment`.
+- **CircleCI goes through the `circleci` CLI** (already authenticated; project comes from the git
+  remote): `circleci run list -B` → `run get <id>` → `job output get <job> --step-num N --condensed`.
 - **Jira reads go through `acli` first** (`jira-with-acli` skill). The Atlassian MCP can hang
   for many minutes with no response; use it only for what `acli` can't do.
 
