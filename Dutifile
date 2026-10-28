@@ -1,0 +1,13 @@
+# Default app per file type, applied by install.sh step 11 via `duti`.
+# Use UTIs, not .ext: some extension lines report success but don't stick (seen with .csv).
+# Find a file's UTI: `mdls -name kMDItemContentType <file>`. .toml has none, so it can't be set here.
+com.microsoft.VSCode	net.daringfireball.markdown	all
+com.microsoft.VSCode	public.comma-separated-values-text	all
+com.microsoft.VSCode	public.tab-separated-values-text	all
+com.microsoft.VSCode	public.plain-text	all
+com.microsoft.VSCode	com.apple.log	all
+com.microsoft.VSCode	public.json	all
+com.microsoft.VSCode	public.yaml	all
+com.microsoft.VSCode	public.xml	all
+com.microsoft.VSCode	public.shell-script	all
+com.microsoft.VSCode	public.source-code	all

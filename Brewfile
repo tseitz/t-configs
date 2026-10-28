@@ -8,6 +8,7 @@ brew "starship"
 brew "gh"
 brew "gitleaks"
 brew "yq"
+brew "duti"
 
 # ===== Editor (LazyVim) =====
 brew "ripgrep"

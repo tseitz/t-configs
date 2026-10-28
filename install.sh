@@ -936,6 +936,16 @@ step_local_overrides() {
 }
 
 # ------------------------------------------
+# 11. Default apps per file type (macOS)
+# ------------------------------------------
+step_default_apps() {
+  $IS_MACOS || { success "not macOS — skipping default apps"; return 0; }
+  command -v duti &>/dev/null || { warn "duti not installed — run step 2 first"; return 1; }
+  duti "$REPO_DIR/Dutifile"
+  success "default apps applied from Dutifile"
+}
+
+# ------------------------------------------
 # Run steps
 # ------------------------------------------
 # --links: symlinks only. step_symlinks prints its own summary.
@@ -985,6 +995,7 @@ run_step "7. Set zsh as the login shell"   step_login_shell
 run_step "8. Set up private env vars"      step_env_vars
 run_step "9. Install Claude Code plugins"  step_claude_plugins
 run_step "10. Machine-local overrides"     step_local_overrides
+run_step "11. Default apps per file type"  step_default_apps
 
 # ------------------------------------------
 # Done!
