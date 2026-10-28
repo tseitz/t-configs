@@ -33,6 +33,17 @@ slowed work and would recur; don't log one-off typos. Never put secrets in it.
 - **The Bash tool runs zsh, not bash.** Unquoted `$var` is not word-split (`set -- $p` passes
   one arg), unmatched globs error (`no matches found`), and a word starting `=` expands as a
   command path. Pass args explicitly, quote globs, or wrap the snippet in `bash -c`.
+  `$var:x` applies a history modifier (`$R:rspack.js` → `$R:r` + `spack.js`), so write `${R}:path`.
+- **mise runs in paranoid mode: trust is tied to file content.** Re-trust after editing
+  `mise.toml` or switching to a branch that changes it. `mise trust` takes one path per call
+  and version files (`Gemfile`, `.ruby-version`) count, so loop:
+  `for f in mise.toml Gemfile .ruby-version; do mise trust "$PWD/$f"; done`. Not `--all`: it
+  also trusts parent dirs.
+- **Docker build fails with `additional privileges requested: --allow=fs.read=…`** (Compose
+  bake entitlements). Prefix that one command with `BUILDX_BAKE_ENTITLEMENTS_FS=0`;
+  `COMPOSE_BAKE=false` no longer helps. Don't export it globally.
+- **`gh api pulls/comments/{id}` 404s for a comment in a pending review.** Read it through
+  `pulls/N/reviews/{review_id}/comments`; edit it with GraphQL `updatePullRequestReviewComment`.
 - **Jira reads go through `acli` first** (`jira-with-acli` skill). The Atlassian MCP can hang
   for many minutes with no response; use it only for what `acli` can't do.
 

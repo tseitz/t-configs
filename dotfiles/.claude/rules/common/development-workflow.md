@@ -283,8 +283,8 @@ steps.
 workspace, so each gets its own panes, editor and agent:
 
 ```bash
-herdr worktree create --cwd <repo> --branch <name> [--base <ref>]   # creates it and opens the workspace
-herdr worktree open --cwd <repo> --branch <name>                    # an existing one
+herdr worktree create --cwd <repo> --branch <name> [--base <ref>]   # new worktree; the branch may already exist
+herdr worktree open --cwd <repo> --branch <name>                    # only a worktree that already exists
 herdr worktree list
 herdr worktree remove --workspace <id>
 ```
@@ -292,7 +292,7 @@ herdr worktree remove --workspace <id>
 Always pass `--cwd`: without it Herdr resolves the repo from the *active workspace*, and fails
 with `not_git_worktree` when that isn't the repo. No `--path` needed: `[worktrees] directory` in
 `~/.config/herdr/config.toml` is set to `~/code/worktrees` and Herdr appends
-`<repo-name>/<branch>` itself. Note that key is a single global base resolved against `$HOME` —
+`<repo-name>/<branch>` itself, slugified (`chore/MF-1` → `chore-mf-1`). Note that key is a single global base resolved against `$HOME` —
 it cannot be made repo-relative, which is why the convention above is central rather than
 in-repo.
 
