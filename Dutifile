@@ -1,6 +1,8 @@
 # Default app per file type, applied by install.sh step 11 via `duti`.
 # Use UTIs, not .ext: some extension lines report success but don't stick (seen with .csv).
 # Find a file's UTI: `mdls -name kMDItemContentType <file>`. .toml has none, so it can't be set here.
+# dyn.* = UTI macOS derives from an extension nothing declares; stable across machines. Order: tsx jsx cjs go rs lua scss sql.
+# Each change pops a macOS approval prompt; a missed one fails silently, so re-run and check with `duti -x <ext>`.
 com.microsoft.VSCode	net.daringfireball.markdown	all
 com.microsoft.VSCode	public.comma-separated-values-text	all
 com.microsoft.VSCode	public.tab-separated-values-text	all
@@ -11,3 +13,17 @@ com.microsoft.VSCode	public.yaml	all
 com.microsoft.VSCode	public.xml	all
 com.microsoft.VSCode	public.shell-script	all
 com.microsoft.VSCode	public.source-code	all
+com.microsoft.VSCode	public.mpeg-2-transport-stream	all
+com.microsoft.VSCode	com.netscape.javascript-source	all
+com.microsoft.VSCode	public.python-script	all
+com.microsoft.VSCode	public.ruby-script	all
+com.microsoft.VSCode	public.zsh-script	all
+com.microsoft.VSCode	public.css	all
+com.microsoft.VSCode	dyn.ah62d4rv4ge81k652	all
+com.microsoft.VSCode	dyn.ah62d4rv4ge80y652	all
+com.microsoft.VSCode	dyn.ah62d4rv4ge80g4xx	all
+com.microsoft.VSCode	dyn.ah62d4rv4ge80s52	all
+com.microsoft.VSCode	dyn.ah62d4rv4ge81e62	all
+com.microsoft.VSCode	dyn.ah62d4rv4ge8027pb	all
+com.microsoft.VSCode	dyn.ah62d4rv4ge81g25xsq	all
+com.microsoft.VSCode	dyn.ah62d4rv4ge81g6pq	all
