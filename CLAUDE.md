@@ -36,12 +36,18 @@ syncs before editing anything under `~/.claude/`:
   - Never assume editing `~/.claude/settings.json` syncs — it does not.
 - **Editing `settings.base.json` does NOT reach a machine that is already set up.**
   `install.sh` seeds it once and then leaves it alone forever, by design. A `SessionStart`
-  hook (`scripts/settings-drift.js`) closes that gap: it warns when the base has entries
-  this machine lacks in the **additive allow-lists** — `permissions.allow`,
-  `permissions.ask`, `permissions.deny`. Run `./install.sh --sync-lists`
-  to append them, or `./install.sh --check` to see the report on demand.
-  - Only those lists are compared. Everything else (plugins, hooks, output style) differs
-    between machines on purpose, so diffing whole files is pure noise.
+  hook (`scripts/settings-drift.js`) closes that gap: it warns when the base has **additive
+  entries** this machine lacks — `permissions.{allow,ask,deny}` entries, `enabledPlugins`
+  and `extraKnownMarketplaces` keys, and hook commands per event. Run
+  `./install.sh --sync-lists` to append them, or `./install.sh --check` to see the report on
+  demand.
+  - Only additive entries are compared. Values (model, output style, a plugin toggled off)
+    differ between machines on purpose, so diffing whole files is pure noise.
+  - **The goal is that anything able to drift between machines gets a warning there.** The
+    hook also reports unpushed, uncommitted or unpulled t-configs commits, and the warnings
+    from `install.sh --check` (links, packages, installed plugins, leftovers). Those are slow,
+    so they run detached and the *next* session shows the result, with its age. New sync
+    mechanism → add its check to `install.sh --check` and the hook picks it up.
   - The check is **one-directional**: base → machine. Something you add locally still has
     to be copied into `settings.base.json` by hand to reach your other machine.
   - `dotfiles/.claude/settings.json` is a gitignored local snapshot written by two hooks.

@@ -11,12 +11,12 @@
  * session: "git *" sat in the base for weeks while one machine kept failing
  * to push, because the sandbox had no exclusion for it.
  *
- * WHY ONLY LISTS
- * Most differences between live and base are deliberate -- machines run
- * different plugins, hooks, and output styles. Comparing whole files is all
- * noise. The paths below are different: they are ADDITIVE allow-lists, where
- * a base entry is a decision that should hold everywhere. Comparing only
- * these gives a signal with no false alarms.
+ * WHY ONLY ADDITIVE ENTRIES
+ * Values differ between machines on purpose (model, output style, a plugin
+ * toggled off). Comparing whole files is all noise. What is compared is
+ * ADDITIVE: an allow-list entry, a plugin key, a hook command. A base entry
+ * there is a decision that should hold everywhere; a machine-only extra is
+ * never reported.
  *
  * This never edits anything unless you pass --apply. Machine-owned means
  * machine-owned.
@@ -43,8 +43,13 @@
  * Claude Code does not read ~/.agents/skills, so each skill there needs a link
  * in ~/.claude/skills. A skill pulled from the other machine has no link until
  * install.sh --links runs, and nothing says so. The check lives here because
- * hooks is not an additive list: a new SessionStart hook in settings.base.json
- * would never reach an already set-up machine, while this one already runs.
+ * this hook already runs on every machine.
+ *
+ * WHY HOOKS BY COMMAND
+ * A hook added to the base never reached a set-up machine: one ran
+ * without jev-guard. A hook is identified by its command string, so editing a
+ * base hook's command reads as a new hook, and the old one lingers until
+ * removed by hand.
  *
  * Usage:
  *   settings-drift.js --hook     JSON for a SessionStart hook; silent if clean
@@ -54,12 +59,15 @@
  *
  * --hook and --check also report skill-link problems (see WHY SKILL LINKS)
  * and live hooks whose script was deleted from the repo -- the base dropping a
- * hook never removes it from a machine that already has it.
+ * hook never removes it from a machine that already has it. --hook adds the
+ * slow checks in lib/drift-background.js: t-configs commits not yet pushed or
+ * pulled, and the warnings from a background `install.sh --check`.
  */
 
 const fs = require("fs");
 const path = require("path");
 const os = require("os");
+const { repoSyncSections, installCheckSections } = require("./lib/drift-background");
 
 // Dotted paths whose arrays are additive: an entry in the base is a decision
 // that should apply on every machine. Anything not listed here is treated as
@@ -168,6 +176,41 @@ function findKeyDrift(live, base) {
     if (missing.length) drift.push({ path: dotted, missing });
   }
   return drift;
+}
+
+const hookKey = (hook) => hook.command ?? JSON.stringify(hook);
+
+/** Base hooks whose command no live hook of the same event runs. */
+function findHookDrift(live, base) {
+  const drift = [];
+  for (const [event, groups] of Object.entries(base.hooks || {})) {
+    const have = new Set(
+      (live.hooks?.[event] || []).flatMap((g) => (g.hooks || []).map(hookKey))
+    );
+    const entries = groups.flatMap((g) =>
+      (g.hooks || []).filter((h) => !have.has(hookKey(h))).map((hook) => ({ matcher: g.matcher, hook }))
+    );
+    if (entries.length) drift.push({ path: `hooks.${event}`, missing: entries.map((e) => hookKey(e.hook)), entries });
+  }
+  return drift;
+}
+
+/** Add each missing hook to the live group with the same matcher, or a new group. */
+function applyHookDrift(live, hookDrift) {
+  for (const { path: dotted, entries } of hookDrift) {
+    const event = dotted.slice("hooks.".length);
+    live.hooks = live.hooks || {};
+    const groups = (live.hooks[event] = live.hooks[event] || []);
+    for (const { matcher, hook } of entries) {
+      let group = groups.find((g) => g.matcher === matcher);
+      if (!group) {
+        group = matcher === undefined ? { hooks: [] } : { matcher, hooks: [] };
+        groups.push(group);
+      }
+      group.hooks = [...(group.hooks || []), hook];
+    }
+  }
+  return live;
 }
 
 /** Write via a temp file and rename so a crash cannot leave a partial
@@ -319,6 +362,8 @@ function main() {
 
   const drift = findDrift(live, base);
   const keyDrift = findKeyDrift(live, base);
+  // A whole absent `hooks` key is --seed's to report, like findKeyDrift's maps.
+  const hookDrift = "hooks" in live ? findHookDrift(live, base) : [];
   const missingKeys = findMissingKeys(live, base);
   const deadHooks = hookSections(live);
 
@@ -338,10 +383,10 @@ function main() {
 
   if (mode === "--hook") {
     const parts = [];
-    if (drift.length || keyDrift.length) {
+    if (drift.length || keyDrift.length || hookDrift.length) {
       parts.push(
         "settings drift vs t-configs base:",
-        ...[...drift, ...keyDrift].map((d) => `    ${d.path} missing: ${d.missing.join(", ")}`),
+        ...[...drift, ...keyDrift, ...hookDrift].map((d) => `    ${d.path} missing: ${d.missing.join(", ")}`),
         "  Run ./install.sh --sync-lists to add them."
       );
     }
@@ -356,12 +401,15 @@ function main() {
       parts.push("skill links:", ...formatSkillSections(skillSections, "    "));
     }
     if (deadHooks.length) parts.push(...formatSkillSections(deadHooks, "  "));
+    const repoDir = path.dirname(path.dirname(repoClaudeDir()));
+    const slow = [...repoSyncSections(repoDir), ...installCheckSections(repoDir)];
+    if (slow.length) parts.push("machine sync:", ...formatSkillSections(slow, "    "));
     if (parts.length) process.stdout.write(JSON.stringify({ systemMessage: parts.join("\n") }));
     process.exit(0);
   }
 
   if (mode === "--apply") {
-    if (!drift.length && !keyDrift.length) {
+    if (!drift.length && !keyDrift.length && !hookDrift.length) {
       console.log("settings already in sync with the baseline additive entries.");
       process.exit(0);
     }
@@ -378,21 +426,21 @@ function main() {
       setPath(live, d.path, current);
       console.log(`  ${d.path} += ${d.missing.join(", ")}`);
     }
-    // Write via a temp file and rename so a crash cannot leave a partial
-    // settings.json behind -- Claude Code reads this file constantly.
+    applyHookDrift(live, hookDrift);
+    for (const d of hookDrift) console.log(`  ${d.path} += ${d.missing.join(", ")}`);
     writeLive(live);
     console.log(`Updated ${LIVE_PATH}`);
     process.exit(0);
   }
 
   // --check
-  if (!drift.length && !keyDrift.length && !missingKeys.length && !skillSections.length && !deadHooks.length) {
-    console.log("settings: additive lists, plugin keys, base keys and hook scripts all match.");
+  if (!drift.length && !keyDrift.length && !hookDrift.length && !missingKeys.length && !skillSections.length && !deadHooks.length) {
+    console.log("settings: additive lists, plugin keys, hooks, base keys and hook scripts all match.");
     process.exit(0);
   }
-  if (drift.length || keyDrift.length) {
+  if (drift.length || keyDrift.length || hookDrift.length) {
     console.log("settings drift vs t-configs baseline:");
-    for (const d of [...drift, ...keyDrift]) {
+    for (const d of [...drift, ...keyDrift, ...hookDrift]) {
       console.log(`  ${d.path} missing: ${d.missing.join(", ")}`);
     }
     console.log("Run ./install.sh --sync-lists to add them.");
@@ -410,4 +458,6 @@ function main() {
   process.exit(1);
 }
 
-main();
+if (require.main === module) main();
+
+module.exports = { findHookDrift, applyHookDrift };
