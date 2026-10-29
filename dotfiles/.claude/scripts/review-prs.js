@@ -244,7 +244,7 @@ function ignoredWork(wt, clone) {
     .split('\n')
     .filter(Boolean)
     .filter(f => !/(^|\/)(node_modules|\.bundle|vendor|tmp|log|coverage|dist|build|\.next|\.turbo)\/$/.test(f))
-    .filter(f => !/^(\.yarn|\.pnpm-store|\.claude\/\.cc-writes|vendor\/bundle)\//.test(f))
+    .filter(f => !/^(\.yarn|\.pnpm-store|\.husky\/_|\.claude\/\.cc-writes|vendor\/bundle)\//.test(f))
     .filter(f => !sameAsClone(wt, clone, f));
 }
 
