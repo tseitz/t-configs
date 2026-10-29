@@ -129,3 +129,55 @@ test('generated husky hooks are not local work, other ignored files are', () => 
   assert.deepStrictEqual(ignoredWork(wt, path.join(wt, 'no-clone')), ['notes/']);
   fs.rmSync(wt, { recursive: true, force: true });
 });
+
+test('triage output maps to a tier only when every field is valid', () => {
+  const { parseTriage, TIER_ARGS } = require('./review-prs');
+  const envelope = structured_output => JSON.stringify({ type: 'result', is_error: false, structured_output });
+
+  for (const tier of ['light', 'standard', 'heavy']) {
+    const parsed = parseTriage(envelope({ tier, xhigh: false, why: 'x' }));
+    assert.strictEqual(parsed.tier, tier);
+    assert.ok(TIER_ARGS[parsed.tier]);
+  }
+  assert.strictEqual(parseTriage(envelope({ tier: 'heavy', xhigh: true, why: 'x' })).tier, 'heavy-xhigh');
+  assert.strictEqual(parseTriage(envelope({ tier: 'light', xhigh: true, why: 'x' })).tier, 'light');
+  assert.ok(TIER_ARGS['heavy-xhigh']);
+
+  const long = parseTriage(envelope({ tier: 'light', xhigh: false, why: `a\nb ${'c'.repeat(200)}` })).why;
+  assert.ok(long.length <= 80 && !long.includes('\n'));
+
+  for (const bad of [
+    'not json',
+    JSON.stringify({ is_error: true, result: 'API Error' }),
+    JSON.stringify({ is_error: false }),
+    envelope({ tier: 'huge', xhigh: false, why: 'x' }),
+    envelope({ tier: 'light', why: 'x' }),
+    envelope({ tier: 'light', xhigh: false }),
+  ]) assert.throws(() => parseTriage(bad));
+});
+
+test('triage rules come from the skill, and missing markers fail rather than send no rules', () => {
+  const { triageRules } = require('./review-prs');
+  const skill = [
+    '## Step 3', '**Size the review** from that list.', 'Heavy when…', '## Step 4 — Derive',
+    '## Step 7 — Sweep', 'intro', '**Heavy tier:** dispatch', '- **Access scope** — x', '- **Performance** — y', 'Each class ends somewhere.', '## Step 8',
+  ].join('\n');
+  const rules = triageRules(skill);
+  assert.match(rules, /Size the review[\s\S]*Heavy when/);
+  assert.match(rules, /Access scope[\s\S]*Performance/);
+  assert.doesNotMatch(rules, /Step 4|dispatch|Each class ends|Step 8/);
+
+  assert.throws(() => triageRules(skill.replace('**Size the review**', 'Size the review')), /sizing/);
+  assert.throws(() => triageRules(skill.replace('## Step 4', '## Step four')), /sizing/);
+  assert.throws(() => triageRules(skill.replace('Each class ends', 'Every class ends')), /Step 7/);
+  assert.throws(() => triageRules(skill.replace(/- \*\*/g, '* ')), /Step 7/);
+});
+
+test('triage raises the size tier but only lowers a small diff', () => {
+  const { floorTier } = require('./review-prs');
+  assert.strictEqual(floorTier('light', 'standard'), 'light');
+  assert.strictEqual(floorTier('heavy-xhigh', 'standard'), 'heavy-xhigh');
+  assert.strictEqual(floorTier('light', 'heavy'), 'heavy');
+  assert.strictEqual(floorTier('standard', 'heavy'), 'heavy');
+  assert.strictEqual(floorTier('heavy-xhigh', 'heavy'), 'heavy-xhigh');
+});
