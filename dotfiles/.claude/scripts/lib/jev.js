@@ -11,6 +11,8 @@ const TIMEOUT_MS = 5000;
 const PERSONAL_REMOTE = /[:/]tseitz\//i;
 const WORK_REMOTE = /[:/](NinthDecimal|ThinkNear)\//i;
 const WORK_ROOT = path.join(os.homedir(), 'Code', 'presentation').toLowerCase();
+// Whole work laptop, not just work paths: TypeSafe retention is unbounded off enterprise terms.
+const WORK_MARKER = path.join(fs.realpathSync(__dirname), '..', '..', '..', '.work-machine');
 const PATH_IN_TEXT = /(?<![\w.~$/:-])(?:~|\$HOME|\$\{HOME\}|\.\.?)?\/[^\s`'"()<>,;:]+/g;
 const MAX_PATHS = 20;
 
@@ -79,6 +81,7 @@ function pathsIn(text, cwd) {
 // The session must sit in a personal repo (unknown means blocked); a path named in the
 // text is blocked only when it resolves to work, since new files and non-repo paths are normal.
 function workReason(cwd, text) {
+  if (fs.existsSync(WORK_MARKER)) return 'work machine';
   if (process.env.T_WORK !== undefined) return 'T_WORK set';
   if (!cwd) return 'no cwd';
   if (isWorkPath(cwd)) return 'session in work repo';
