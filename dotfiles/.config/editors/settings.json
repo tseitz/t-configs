@@ -302,4 +302,5 @@
   "[markdown]": {
     "editor.defaultFormatter": "DavidAnson.vscode-markdownlint",
   },
+  "vim.disableExtension": true,
 }
