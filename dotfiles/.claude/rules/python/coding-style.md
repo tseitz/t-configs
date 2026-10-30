@@ -10,7 +10,3 @@ paths:
 ## Formatting
 
 - **ruff** for formatting, import sorting and linting (`ruff format`, `ruff check`)
-
-## Reference
-
-See skills: `astral:ruff`, `astral:ty`, `astral:uv` for the modern Python toolchain.
