@@ -32,12 +32,13 @@
  * changes a key that is already there, so a different value stays a machine
  * decision.
  *
- * WHY A WORK OVERLAY
+ * WHY A ROLE OVERLAY
  * Work-only plugins and marketplaces live in settings.work.json, which applies
- * only on a machine carrying the dotfiles/.work-machine marker. Without reading
- * it here, every work plugin would look like drift on a work machine and every
- * one would look wanted on a personal machine. "The baseline" below therefore
- * means base, plus the work overlay when the marker is present.
+ * only on a machine carrying the dotfiles/.work-machine marker. Personal-only
+ * ones live in settings.personal.json, which applies only without it. Without
+ * reading them here, a role's plugins would look like drift on its own machine
+ * and wanted on the other one. "The baseline" below therefore means base, plus
+ * the overlay for this machine's role.
  *
  * WHY SKILL LINKS
  * Claude Code does not read ~/.agents/skills, so each skill there needs a link
@@ -112,17 +113,17 @@ function mergeDeep(base, overlay) {
 }
 
 /** The baseline this machine should match: settings.base.json, plus
- *  settings.work.json when the work marker is present. */
+ *  settings.work.json with the work marker, else settings.personal.json. */
 function readBaseline() {
   const claudeDir = repoClaudeDir();
   const base = readJson(path.join(claudeDir, "settings.base.json"));
   const marker = path.join(path.dirname(claudeDir), ".work-machine");
-  if (!fs.existsSync(marker)) return base;
+  const overlay = fs.existsSync(marker) ? "settings.work.json" : "settings.personal.json";
   try {
-    return mergeDeep(base, readJson(path.join(claudeDir, "settings.work.json")));
+    return mergeDeep(base, readJson(path.join(claudeDir, overlay)));
   } catch {
-    // A work machine with no work file is a half-finished setup, not a reason to
-    // report every base entry as drift. Fall back to the base alone.
+    // A missing overlay is a half-finished setup, not a reason to report every
+    // base entry as drift. Fall back to the base alone.
     return base;
   }
 }

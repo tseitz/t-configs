@@ -97,16 +97,24 @@ done
 WORK_MARKER="$DOTFILES_DIR/.work-machine"
 is_work_machine() { [ -f "$WORK_MARKER" ]; }
 
+# Role overlay: plugins and marketplaces for this machine's role only. Work gets
+# settings.work.json; personal gets settings.personal.json, which the work
+# machine ignores.
+role_overlay() {
+  if is_work_machine; then echo "$DOTFILES_DIR/.claude/settings.work.json"
+  else echo "$DOTFILES_DIR/.claude/settings.personal.json"; fi
+}
+
 if $WORK_FLAG && ! $CHECK_ONLY && ! $DRY_RUN && [ ! -f "$WORK_MARKER" ]; then
   echo "Work machine. Created by install.sh --work; delete this file to go back to personal." > "$WORK_MARKER"
 fi
 
-# The shared base, plus the work overlay on a work machine. Deep-merged so the
+# The shared base, plus the role overlay. Deep-merged so the
 # work file only has to carry the keys that differ (plugins, marketplaces) rather
 # than restating the whole baseline.
 merge_settings() {
   local files=("$DOTFILES_DIR/.claude/settings.base.json")
-  if is_work_machine; then files+=("$DOTFILES_DIR/.claude/settings.work.json"); fi
+  files+=("$(role_overlay)")
   python3 - "${files[@]}" <<'PY'
 import json, sys
 
@@ -131,14 +139,14 @@ PY
 }
 
 # The WANTED plugin list: every enabledPlugins key set to true, from the base plus
-# the work overlay. This replaced installed_plugins.json, which is gitignored and
+# the role overlay. This replaced installed_plugins.json, which is gitignored and
 # so was never present on the fresh clone it was supposed to bootstrap — step 9
 # read an absent file and silently installed nothing. settings.base.json is
 # tracked, so this list actually travels. A `false` entry is a recorded opinion
 # ("tried it, don't want it"), not an install target.
 wanted_plugins() {
   local files=("$DOTFILES_DIR/.claude/settings.base.json")
-  if is_work_machine; then files+=("$DOTFILES_DIR/.claude/settings.work.json"); fi
+  files+=("$(role_overlay)")
   python3 - "${files[@]}" <<'PY'
 import json, sys
 wanted = {}
@@ -669,11 +677,7 @@ step_symlinks() {
   else
     [ -L "$HOME/.claude/settings.json" ] && warn "Replacing settings.json symlink with a copy (symlinks break Claude Code atomic writes)" && rm "$HOME/.claude/settings.json"
     merge_settings > "$HOME/.claude/settings.json"
-    if is_work_machine; then
-      success "settings.json seeded from settings.base.json + settings.work.json (now machine-owned)"
-    else
-      success "settings.json seeded from settings.base.json (now machine-owned)"
-    fi
+    success "settings.json seeded from settings.base.json + $(basename "$(role_overlay)") (now machine-owned)"
   fi
   # CLAUDE.md IS symlinked (unlike settings.json). Claude Code edits it in place,
   # so a symlink is safe — and it means "update my global instructions" edits land
@@ -757,10 +761,10 @@ step_check_claude_plugins() {
   if is_work_machine; then
     info "Checking Claude plugins against the base + work overlay..."
   else
-    info "Checking Claude plugins against the base (personal machine)..."
+    info "Checking Claude plugins against the base + personal overlay..."
   fi
   local files=("$DOTFILES_DIR/.claude/settings.base.json")
-  if is_work_machine; then files+=("$DOTFILES_DIR/.claude/settings.work.json"); fi
+  files+=("$(role_overlay)")
   python3 - "$local_manifest" "${files[@]}" <<'PY'
 import json, sys
 
@@ -895,7 +899,7 @@ step_claude_plugins() {
   if is_work_machine; then
     info "Installing Claude plugins (base + work overlay)..."
   else
-    info "Installing Claude plugins (base only — pass --work for the work set)..."
+    info "Installing Claude plugins (base + personal overlay — pass --work for the work set)..."
   fi
   # A plugin from a marketplace this machine has not registered fails here rather
   # than mid-session. The loudest case is presentation-skills: it is a `directory`
@@ -960,7 +964,7 @@ if $CHECK_ONLY; then
   if is_work_machine; then
     info "Machine role: WORK (settings.work.json applies)"
   else
-    info "Machine role: personal — run ./install.sh --work to add the work plugin set"
+    info "Machine role: personal (settings.personal.json applies) — run ./install.sh --work for the work plugin set"
   fi
   echo ""
   step_symlinks

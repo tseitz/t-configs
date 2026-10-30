@@ -64,8 +64,10 @@ syncs before editing anything under `~/.claude/`:
     it always looks personal. The explicit marker exists to dodge that ordering trap.
   - Put something in the work file only if it is genuinely work-only. Widening it past
     plugins and marketplaces turns it into a second baseline that has to be kept in step.
+  - **Personal-only plugins go in `settings.personal.json`** — the mirror image: it applies
+    only on a machine *without* the marker. Same rule: plugins and marketplaces only.
 - **`enabledPlugins` in `settings.base.json` is the plugin wanted list.** `install.sh` step 9
-  installs every key set to `true` (plus the work overlay's keys on a work machine); `false`
+  installs every key set to `true` (plus the role overlay's keys: work or personal); `false`
   is a recorded "tried it, don't want it". `plugins/installed_plugins.json` is Claude Code's
   runtime state — gitignored, never seeded, never a wanted list. It held absolute install
   paths and git SHAs, so copying one machine's copy to another wrote paths that were true
