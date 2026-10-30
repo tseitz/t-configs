@@ -20,6 +20,7 @@
     "code-review@claude-plugins-official" : true,
     "explanatory-output-style@claude-plugins-official" : false,
     "github@claude-plugins-official" : true,
+    "last30days@last30days-skill" : true,
     "mattpocock-skills@mattpocock" : true,
     "playwright@claude-plugins-official" : true,
     "pr-review-toolkit@claude-plugins-official" : true,
@@ -36,6 +37,12 @@
     "CLAUDE_CODE_SCROLL_SPEED" : "5"
   },
   "extraKnownMarketplaces" : {
+    "last30days-skill" : {
+      "source" : {
+        "repo" : "mvanhorn\/last30days-skill",
+        "source" : "github"
+      }
+    },
     "mattpocock" : {
       "source" : {
         "repo" : "mattpocock\/skills",
