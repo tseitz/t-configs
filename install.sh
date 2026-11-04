@@ -747,7 +747,7 @@ step_check_packages() {
     success "Brewfile satisfied — nothing missing"
   else
     warn "Homebrew packages missing (install with: brew bundle --file=$brewfile):"
-    brew bundle check --file="$brewfile" --verbose 2>&1 | grep -v '^Homebrew bundle' || true
+    brew bundle check --file="$brewfile" --verbose 2>&1 | sed -n 's/^→ /  /p' | while IFS= read -r line; do warn "$line"; done
   fi
 }
 
