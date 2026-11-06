@@ -91,6 +91,9 @@ Each inline item carries its whole thread, which changes how you read it:
   in `thread` and is context for the reply, not feedback to action.
 - **`diff_hunk`** — the code GitHub anchored the thread to.
 
+Items with `type: review_summary` are a review's top-level body, not an inline thread. They
+can't be resolved, so check the PR conversation for a reply before treating one as open.
+
 Silently skip:
 
 - `resolved` threads — already handled

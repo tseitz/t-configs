@@ -102,7 +102,7 @@ def get_repo_info() -> tuple[str, str] | None:
 
 def get_pr_info(pr_number: int | None = None) -> dict[str, Any] | None:
     """Get PR info, optionally by number or for current branch."""
-    args = ["pr", "view", "--json", "number,url,headRefName,author,reviews,reviewDecision"]
+    args = ["pr", "view", "--json", "number,url,headRefName,author,reviewDecision"]
     if pr_number:
         args.insert(2, str(pr_number))
     return run_gh(args)
@@ -128,6 +128,16 @@ def get_review_comments(owner: str, repo: str, pr_number: int) -> list[dict[str,
     result = run_gh([
         "api",
         f"repos/{owner}/{repo}/pulls/{pr_number}/comments",
+        "--paginate",
+    ])
+    return result if isinstance(result, list) else []
+
+
+def get_reviews(owner: str, repo: str, pr_number: int) -> list[dict[str, Any]]:
+    """Get submitted reviews via REST, which (unlike `gh pr view`) carries html_url."""
+    result = run_gh([
+        "api",
+        f"repos/{owner}/{repo}/pulls/{pr_number}/reviews",
         "--paginate",
     ])
     return result if isinstance(result, list) else []
@@ -442,16 +452,23 @@ def main():
         "author_notes": [],   # PR author's own inline threads, no reviewer reply yet
     }
 
-    # Process reviews for overall status
-    reviews = pr_info.get("reviews", [])
-    for review in reviews:
+    # Any review state can carry feedback in its body, not just CHANGES_REQUESTED.
+    for review in get_reviews(owner, repo, pr_number):
+        author = (review.get("user") or {}).get("login", "")
+        body = review.get("body") or ""
+        if author == pr_author or len(body.strip()) < 3:
+            continue
+        item = extract_feedback_item(body, author, url=review.get("html_url"))
+        item["type"] = "review_summary"
+        item["review_state"] = review.get("state")
         if review.get("state") == "CHANGES_REQUESTED":
-            author = review.get("author", {}).get("login", "")
-            body = review.get("body", "")
-            if body and author != pr_author:
-                item = extract_feedback_item(body, author)
-                item["type"] = "changes_requested"
-                feedback["high"].append(item)
+            feedback["high"].append(item)
+        elif is_info_bot(author) and not is_review_bot(author):
+            feedback["bot"].append(item)
+        else:
+            if is_review_bot(author):
+                item["review_bot"] = True
+            feedback[categorize_comment(review, body)].append(item)
 
     # Get review threads (inline comments with resolution status)
     threads = get_review_threads(owner, repo, pr_number)
