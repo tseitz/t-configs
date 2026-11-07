@@ -52,12 +52,14 @@ if command -v omarchy &>/dev/null; then
   # more than the tidiness. Both run the full machine update, which includes the
   # mise step that `mup` runs on its own.
   alias omup="omarchy update"
-  alias brewup="omarchy update"
+  _brewup_pkgs="omarchy update"
 elif [[ -n "${IS_ARCH:-}" ]]; then
-  alias brewup="yay -Syu; claude upgrade;"
+  _brewup_pkgs="yay -Syu; claude upgrade"
 else
-  alias brewup="brew update; brew upgrade -y; brew cleanup; brew doctor; claude upgrade;"
+  _brewup_pkgs="brew update; brew upgrade -y; brew cleanup; brew doctor; claude upgrade"
 fi
+alias brewup="git -C ~/t-configs pull --ff-only; $_brewup_pkgs; ~/t-configs/install.sh --check"
+unset _brewup_pkgs
 alias codeconf="code $HOME/t-configs"
 alias claw="claude --dangerously-skip-permissions"
 
