@@ -39,13 +39,28 @@ function globToRegex(glob) {
   return new RegExp(`^${escaped}${optionalArgs ? '( .*)?' : ''}$`, 's');
 }
 
+const PREFIX = 'eval "$(direnv export bash 2>/dev/null)" && ';
+
+function hasEnvrc(dir) {
+  for (let d = path.resolve(dir); ; d = path.dirname(d)) {
+    if (fs.existsSync(path.join(d, '.envrc'))) return true;
+    if (path.dirname(d) === d) return false;
+  }
+}
+
+// Auto mode can't judge a rewritten command and bounces it back for a re-send, so rewrite
+// only where direnv has something to load, and never re-wrap the re-sent command.
 function main() {
   const input = JSON.parse(fs.readFileSync(0, 'utf8'));
   const command = input.tool_input.command;
   const projectDir = process.env.CLAUDE_PROJECT_DIR || input.cwd;
   const excluded = settingsFiles(projectDir).flatMap(readExclusions).map(globToRegex);
 
-  if (excluded.some((re) => re.test(command.trim()))) {
+  if (
+    command.startsWith(PREFIX) ||
+    !hasEnvrc(input.cwd) ||
+    excluded.some((re) => re.test(command.trim()))
+  ) {
     process.stdout.write('{}');
     return;
   }
@@ -55,7 +70,7 @@ function main() {
         hookEventName: 'PreToolUse',
         updatedInput: {
           ...input.tool_input,
-          command: `eval "$(direnv export bash 2>/dev/null)" && ${command}`,
+          command: `${PREFIX}${command}`,
         },
       },
     }),
