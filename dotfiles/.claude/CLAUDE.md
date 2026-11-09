@@ -49,8 +49,9 @@ slowed work and would recur; don't log one-off typos. Never put secrets in it.
   the `#`) → `job output get <job-uuid> --step-num N --condensed`. Two traps: the job *number* in
   a `gh pr checks` URL is rejected (UUIDs only), and `-B` prints `No runs found.` on a detached
   HEAD (review worktrees) — pass `-b <branch>` instead. Step numbers are like `109`, not `1..n`.
-- **Jira reads go through `acli` first** (`jira-with-acli` skill). The Atlassian MCP can hang
-  for many minutes with no response; use it only for what `acli` can't do.
+- **Jira goes through `acli` first.** The Atlassian MCP can hang for many minutes with no
+  response; use it only for what `acli` can't do. For project MF, the field rules, `acli` traps
+  and a helper for custom fields are in `~/Code/presentation/docs/reference/jira-ticket-workflow.md`.
 
 ## Clickable file references
 
