@@ -47,12 +47,19 @@ Examples of targeted requests:
 
 If **yes** → run the `/prp:stage-commit <description>` command to handle staging, then continue to Step 4.
 
-If **no** (e.g., "commit my changes", "commit everything", no description) → stage directly:
+If **no** (e.g., "commit my changes", "commit everything", no description) → stage the changed
+files by name:
 
 ```bash
-git add -A
+git status --porcelain --untracked-files=all
+git add -- <each path listed>
 git diff --cached --stat
 ```
+
+**Never `git add -A` or `git add .`.** A repo can set `status.showUntrackedFiles=no`, which hides
+untracked files, and a workspace root can hold other git clones; `-A` stages each clone as a
+gitlink without either showing in `git status`. Skip any listed path that is a directory ending
+in `/` — that is a nested repo — and tell the user you skipped it.
 
 If nothing staged, stop: "Nothing to commit."
 
