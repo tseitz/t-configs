@@ -51,6 +51,7 @@ const TIER_ARGS = {
 };
 const INSTALLED_PLUGINS = path.join(HOME, '.claude', 'plugins', 'installed_plugins.json');
 const REVIEW_PLUGIN = 'team-pr-review@presentation-skills';
+const KNOWN_MARKETPLACES = path.join(HOME, '.claude', 'plugins', 'known_marketplaces.json');
 // Runs once per new tab inside the run's shared Bash timeout (review-assigned-prs.md).
 const TRIAGE_TIMEOUT_MS = 25000;
 const TRIAGE_DIFF_CHARS = 150000;
@@ -367,18 +368,14 @@ function reviewTier({ files, lines }) {
   return { tier: 'standard', why };
 }
 
-function section(text, start, end, what) {
-  const from = text.indexOf(start);
-  const to = from < 0 ? -1 : text.indexOf(end, from + start.length);
-  if (to < 0) throw new Error(`review skill has no ${what} section`);
-  return text.slice(from, to).trim();
-}
-
-// Quoted from the skill at runtime so the triage and the review size by the same rules.
-function triageRules(skill) {
-  const sizing = section(skill, '**Size the review**', '\n## Step 4', 'sizing');
-  const step7 = section(skill, '\n## Step 7', '\nEach class ends', 'Step 7 class');
-  return `${sizing}\n\nStep 7 classes:\n\n${section(`${step7}\n\0`, '\n- **', '\0', 'Step 7 class')}`;
+// Read from the installed skill at runtime so the triage and the review size by the same rules.
+// Throws on an old plugin without the file; the caller falls back to diff-size tiering.
+function triageRules(skillDir) {
+  const rules = fs.existsSync(path.join(skillDir, 'references', 'sizing.md'))
+    ? fs.readFileSync(path.join(skillDir, 'references', 'sizing.md'), 'utf8').trim()
+    : '';
+  if (!rules) throw new Error('review skill has no sizing reference');
+  return rules;
 }
 
 function parseTriage(stdout) {
@@ -399,14 +396,18 @@ function parseTriage(stdout) {
   };
 }
 
-function reviewSkillPath() {
+// A directory marketplace is loaded from its folder, not the install cache, which goes stale.
+function reviewSkillDir() {
   const [entry] = JSON.parse(fs.readFileSync(INSTALLED_PLUGINS, 'utf8')).plugins[REVIEW_PLUGIN] || [];
   if (!entry) throw new Error(`${REVIEW_PLUGIN} is not installed`);
-  return path.join(entry.installPath, 'skills', 'team-pr-review', 'SKILL.md');
+  const [name, marketplace] = REVIEW_PLUGIN.split('@');
+  const source = JSON.parse(fs.readFileSync(KNOWN_MARKETPLACES, 'utf8'))[marketplace]?.source;
+  const root = source?.source === 'directory' ? path.join(source.path, 'plugins', name) : entry.installPath;
+  return path.join(root, 'skills', name);
 }
 
 function triageTier(s, body) {
-  const rules = triageRules(fs.readFileSync(reviewSkillPath(), 'utf8'));
+  const rules = triageRules(reviewSkillDir());
   // .gitattributes is PR-controlled: no external diff drivers or textconv.
   const diffArgs = ['-C', s.wt, 'diff', '--no-ext-diff', '--no-textconv', s.mergeBase, 'HEAD'];
   const stat = run('git', [...diffArgs, '--stat']);

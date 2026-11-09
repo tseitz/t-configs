@@ -156,21 +156,23 @@ test('triage output maps to a tier only when every field is valid', () => {
   ]) assert.throws(() => parseTriage(bad));
 });
 
-test('triage rules come from the skill, and missing markers fail rather than send no rules', () => {
+test('triage rules are the skill sizing reference, and a missing or empty one fails', () => {
   const { triageRules } = require('./review-prs');
-  const skill = [
-    '## Step 3', '**Size the review** from that list.', 'Heavy when…', '## Step 4 — Derive',
-    '## Step 7 — Sweep', 'intro', '**Heavy tier:** dispatch', '- **Access scope** — x', '- **Performance** — y', 'Each class ends somewhere.', '## Step 8',
-  ].join('\n');
-  const rules = triageRules(skill);
-  assert.match(rules, /Size the review[\s\S]*Heavy when/);
-  assert.match(rules, /Access scope[\s\S]*Performance/);
-  assert.doesNotMatch(rules, /Step 4|dispatch|Each class ends|Step 8/);
-
-  assert.throws(() => triageRules(skill.replace('**Size the review**', 'Size the review')), /sizing/);
-  assert.throws(() => triageRules(skill.replace('## Step 4', '## Step four')), /sizing/);
-  assert.throws(() => triageRules(skill.replace('Each class ends', 'Every class ends')), /Step 7/);
-  assert.throws(() => triageRules(skill.replace(/- \*\*/g, '* ')), /Step 7/);
+  const fs = require('node:fs');
+  const os = require('node:os');
+  const path = require('node:path');
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'review-prs-skill-'));
+  try {
+    assert.throws(() => triageRules(dir), /sizing reference/);
+    fs.mkdirSync(path.join(dir, 'references'));
+    const file = path.join(dir, 'references', 'sizing.md');
+    fs.writeFileSync(file, '  \n\n');
+    assert.throws(() => triageRules(dir), /sizing reference/);
+    fs.writeFileSync(file, '# Sizing\n\n## Tiers\nHeavy when…\n');
+    assert.strictEqual(triageRules(dir), '# Sizing\n\n## Tiers\nHeavy when…');
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
 });
 
 test('triage raises the size tier but only lowers a small diff', () => {
