@@ -370,6 +370,7 @@ function reviewTier({ files, lines }) {
 
 // Read from the installed skill at runtime so the triage and the review size by the same rules.
 // Throws on an old plugin without the file; the caller falls back to diff-size tiering.
+// TRIAGE_ARGS' tier enum and TIER_ARGS copy sizing.md's tiers by hand; a rename there lands in the same fallback.
 function triageRules(skillDir) {
   const rules = fs.existsSync(path.join(skillDir, 'references', 'sizing.md'))
     ? fs.readFileSync(path.join(skillDir, 'references', 'sizing.md'), 'utf8').trim()
