@@ -743,11 +743,12 @@ step_check_packages() {
   if [[ "$OSTYPE" == linux* ]] && [ -f "$REPO_DIR/Brewfile.wsl" ]; then brewfile="$REPO_DIR/Brewfile.wsl"; fi
   [ -f "$brewfile" ] || { warn "no Brewfile found"; return 0; }
   info "Checking $(basename "$brewfile")..."
-  if brew bundle check --file="$brewfile" >/dev/null 2>&1; then
+  # No auto-update: this runs in the background at session start and would lock out a concurrent brewup.
+  if HOMEBREW_NO_AUTO_UPDATE=1 brew bundle check --file="$brewfile" >/dev/null 2>&1; then
     success "Brewfile satisfied — nothing missing"
   else
     warn "Homebrew packages missing (install with: brew bundle --file=$brewfile):"
-    brew bundle check --file="$brewfile" --verbose 2>&1 | sed -n 's/^→ /  /p' | while IFS= read -r line; do warn "$line"; done
+    HOMEBREW_NO_AUTO_UPDATE=1 brew bundle check --file="$brewfile" --verbose 2>&1 | sed -n 's/^→ /  /p' | while IFS= read -r line; do warn "$line"; done
   fi
 }
 

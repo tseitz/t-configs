@@ -58,7 +58,8 @@ elif [[ -n "${IS_ARCH:-}" ]]; then
 else
   _brewup_pkgs="brew update; brew upgrade -y; brew cleanup; brew doctor; claude upgrade"
 fi
-alias brewup="git -C ~/t-configs pull --ff-only; $_brewup_pkgs; ~/t-configs/install.sh --check"
+# Writes the SessionStart hook's cache too, else it keeps reporting pre-upgrade drift for 15 min.
+alias brewup="git -C ~/t-configs pull --ff-only; $_brewup_pkgs; mkdir -p ~/.cache/t-configs; ~/t-configs/install.sh --check | tee ~/.cache/t-configs/install-check.log.tmp && mv ~/.cache/t-configs/install-check.log.tmp ~/.cache/t-configs/install-check.log"
 unset _brewup_pkgs
 alias codeconf="code $HOME/t-configs"
 alias claw="claude --dangerously-skip-permissions"
