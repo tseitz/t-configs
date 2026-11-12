@@ -21,8 +21,8 @@
  *               https://github.com/<owner>/<repo>/pull/<n> | <owner>/<repo>#<n> | <repo>#<n>
  *   --dry-run   print what would happen; change nothing
  *   --no-review start Claude idle instead of running team-pr-review
- *   --prune     first remove worktrees and tabs of closed or merged PRs;
- *               merged ones go even with local changes, closed ones are kept
+ *   --prune     first remove worktrees and tabs of closed or merged PRs,
+ *               local changes included
  *
  * Must run inside herdr, and outside the Claude Code sandbox (herdr socket,
  * ~/code/worktrees, gh keychain).
@@ -265,17 +265,6 @@ function registeredWorktrees(clone) {
 
 function isDirty(wt) {
   return run('git', ['-C', wt, 'status', '--porcelain']) !== '';
-}
-
-// `worktree remove` deletes gitignored files too, e.g. notes in .claude/plans/. Rebuildable dirs,
-// tool scratch space and untouched copies of the main clone's files (bootstrap's env copy) don't count.
-function ignoredWork(wt, clone) {
-  return run('git', ['-C', wt, 'ls-files', '--others', '--ignored', '--exclude-standard', '--directory'])
-    .split('\n')
-    .filter(Boolean)
-    .filter(f => !/(^|\/)(node_modules|\.bundle|vendor|tmp|log|coverage|dist|build|\.next|\.turbo)\/$/.test(f))
-    .filter(f => !/^(\.yarn|\.pnpm-store|\.husky\/_|\.claude\/\.cc-writes|vendor\/bundle)\//.test(f))
-    .filter(f => !sameAsClone(wt, clone, f));
 }
 
 function sameAsClone(wt, clone, file) {
@@ -937,21 +926,14 @@ function prune(ctx, dryRun) {
       try {
         const state = run('gh', ['pr', 'view', m[1], '--json', 'state', '--jq', '.state'], { cwd: wt });
         if (state === 'OPEN') continue;
-        const merged = state === 'MERGED';
         const clone = path.dirname(run('git', ['-C', wt, 'rev-parse', '--path-format=absolute', '--git-common-dir']));
-        const ignored = ignoredWork(wt, clone);
-        const hasLocal = isDirty(wt) || ignored.length > 0;
-        if (hasLocal && !merged) {
-          const extra = ignored.length ? ` (ignored: ${ignored.slice(0, 3).join(', ')})` : '';
-          results.push({ label, status: 'kept', why: `PR ${state.toLowerCase()} but worktree has local changes${extra}` });
-          continue;
-        }
+        const dirty = isDirty(wt);
         if (!dryRun) {
           const tabId = findTab(ctx, wt, label);
           if (tabId) run('herdr', ['tab', 'close', tabId]);
-          run('git', ['-C', clone, 'worktree', 'remove', ...(hasLocal ? ['--force'] : []), wt]);
+          run('git', ['-C', clone, 'worktree', 'remove', '--force', wt]);
         }
-        const discarded = hasLocal ? ', local changes discarded' : '';
+        const discarded = dirty ? ', local changes discarded' : '';
         results.push({ label, status: dryRun ? 'would prune' : 'pruned', why: `PR ${state.toLowerCase()}${discarded}` });
       } catch (err) {
         results.push({ label, status: 'failed', why: errorText(err) });
@@ -1049,5 +1031,5 @@ if (require.main === module) {
 }
 
 module.exports = {
-  npmLockProblems, pnpmLockProblems, parseYamlLock, offRegistrySpecs, changedFiles, matchesAny, within, reviewTier, floorTier, triageRules, parseTriage, TIER_ARGS, installGate, jiraKey, ignoredWork, reviewSettings, MISE_SENSITIVE, MISE_VERSION_FILE, CLAUDE_CONFIG, PM_CONFIG, NO_HOOKS,
+  npmLockProblems, pnpmLockProblems, parseYamlLock, offRegistrySpecs, changedFiles, matchesAny, within, reviewTier, floorTier, triageRules, parseTriage, TIER_ARGS, installGate, jiraKey, reviewSettings, MISE_SENSITIVE, MISE_VERSION_FILE, CLAUDE_CONFIG, PM_CONFIG, NO_HOOKS,
 };

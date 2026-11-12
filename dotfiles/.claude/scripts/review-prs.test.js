@@ -108,28 +108,6 @@ test('mise version files match at any depth, lookalikes do not', () => {
   for (const f of ['Gemfile.lock', 'x.ruby-version', 'docs/Gemfile.md', '.nvmrc']) assert.ok(!MISE_VERSION_FILE.test(f), f);
 });
 
-test('generated husky hooks are not local work, other ignored files are', () => {
-  const { ignoredWork } = require('./review-prs');
-  const fs = require('node:fs');
-  const os = require('node:os');
-  const path = require('node:path');
-  const { execFileSync } = require('node:child_process');
-  const wt = fs.mkdtempSync(path.join(os.tmpdir(), 'review-prs-'));
-  execFileSync('git', ['init', '-q', wt]);
-  const write = (file, body) => {
-    fs.mkdirSync(path.dirname(path.join(wt, file)), { recursive: true });
-    fs.writeFileSync(path.join(wt, file), body);
-  };
-  write('.gitignore', 'notes/\n');
-  write('.husky/pre-commit', 'x');
-  execFileSync('git', ['-C', wt, 'add', '.']);
-  write('.husky/_/.gitignore', '*');
-  write('.husky/_/pre-commit', 'x');
-  write('notes/plan.md', 'x');
-  assert.deepStrictEqual(ignoredWork(wt, path.join(wt, 'no-clone')), ['notes/']);
-  fs.rmSync(wt, { recursive: true, force: true });
-});
-
 test('triage output maps to a tier only when every field is valid', () => {
   const { parseTriage, TIER_ARGS } = require('./review-prs');
   const envelope = structured_output => JSON.stringify({ type: 'result', is_error: false, structured_output });
