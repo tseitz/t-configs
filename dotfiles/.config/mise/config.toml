@@ -2,6 +2,7 @@
 node = "latest"
 python = "3.12.13"
 "npm:netlify-cli" = { version = "27.14.2", trust_policy_excludes = ["@netlify/serverless-functions-api"] }
+"npm:svelte-language-server" = { version = "0.18.6", trust_policy_excludes = ["svelte@4.2.20"] }
 
 [settings]
 # Trust is bound to file content, and a git worktree no longer inherits its main
