@@ -22,6 +22,7 @@
     "github@claude-plugins-official" : true,
     "last30days@last30days-skill" : true,
     "mattpocock-skills@mattpocock" : true,
+    "modern-web-guidance@googlechrome" : true,
     "playwright@claude-plugins-official" : true,
     "pr-review-toolkit@claude-plugins-official" : true,
     "pyright-lsp@claude-plugins-official" : true,
@@ -37,6 +38,12 @@
     "CLAUDE_CODE_SCROLL_SPEED" : "5"
   },
   "extraKnownMarketplaces" : {
+    "googlechrome" : {
+      "source" : {
+        "repo" : "GoogleChrome\/modern-web-guidance",
+        "source" : "github"
+      }
+    },
     "last30days-skill" : {
       "source" : {
         "repo" : "mvanhorn\/last30days-skill",
