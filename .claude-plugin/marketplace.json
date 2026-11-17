@@ -1,0 +1,12 @@
+{
+  "name": "t-configs",
+  "owner": { "name": "tseitz" },
+  "description": "Personal Claude Code plugins from tseitz/t-configs",
+  "plugins": [
+    {
+      "name": "ts-lsp",
+      "source": "./claude-plugins/ts-lsp",
+      "description": "TypeScript LSP that matches each repo's own TypeScript: tsc --lsp on TS 7+, typescript-language-server below"
+    }
+  ]
+}

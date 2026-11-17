@@ -29,7 +29,8 @@
     "security-guidance@claude-plugins-official" : true,
     "sentry@claude-plugins-official" : true,
     "superpowers@claude-plugins-official" : false,
-    "typescript-lsp@claude-plugins-official" : true
+    "ts-lsp@t-configs" : true,
+    "typescript-lsp@claude-plugins-official" : false
   },
   "env" : {
     "CLAUDE_CODE_ATTRIBUTION_HEADER" : "0",
@@ -54,6 +55,13 @@
       "source" : {
         "repo" : "mattpocock\/skills",
         "source" : "github"
+      }
+    },
+    "t-configs" : {
+      "source" : {
+        "repo" : "tseitz\/t-configs",
+        "source" : "github",
+        "sparsePaths" : [".claude-plugin", "claude-plugins"]
       }
     }
   },

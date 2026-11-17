@@ -1,0 +1,27 @@
+{
+  "name": "ts-lsp",
+  "description": "TypeScript LSP that matches each repo's own TypeScript: tsc --lsp on TS 7+, typescript-language-server below",
+  "author": {
+    "name": "tseitz"
+  },
+  "lspServers": {
+    "typescript": {
+      "command": "${CLAUDE_PLUGIN_ROOT}/scripts/ts-lsp.sh",
+      "extensionToLanguage": {
+        ".ts": "typescript",
+        ".tsx": "typescriptreact",
+        ".js": "javascript",
+        ".jsx": "javascriptreact",
+        ".mts": "typescript",
+        ".cts": "typescript",
+        ".mjs": "javascript",
+        ".cjs": "javascript"
+      },
+      "initializationOptions": {
+        "tsserver": {
+          "fallbackPath": "ts-lsp-fallback-tsserver"
+        }
+      }
+    }
+  }
+}
