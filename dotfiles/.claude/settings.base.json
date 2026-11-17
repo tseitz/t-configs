@@ -135,15 +135,27 @@
           }
         ],
         "matcher" : "Bash"
-      },
+      }
+    ],
+    "CwdChanged" : [
       {
         "hooks" : [
           {
-            "command" : "~/.claude/scripts/hooks/direnv-wrap.js",
+            "command" : "~/.claude/scripts/hooks/direnv-env.js",
+            "type" : "command"
+          }
+        ]
+      }
+    ],
+    "FileChanged" : [
+      {
+        "hooks" : [
+          {
+            "command" : "~/.claude/scripts/hooks/direnv-env.js",
             "type" : "command"
           }
         ],
-        "matcher" : "Bash"
+        "matcher" : ".envrc"
       }
     ],
     "SessionEnd" : [
@@ -189,6 +201,14 @@
           {
             "command" : "node \"$HOME\/.claude\/scripts\/pin-test-browser.js\" --hook || true",
             "timeout" : 10,
+            "type" : "command"
+          }
+        ]
+      },
+      {
+        "hooks" : [
+          {
+            "command" : "~/.claude/scripts/hooks/direnv-env.js",
             "type" : "command"
           }
         ]
