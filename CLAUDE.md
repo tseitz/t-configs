@@ -39,8 +39,9 @@ syncs before editing anything under `~/.claude/`:
   hook (`scripts/settings-drift.js`) closes that gap: it warns when the base has **additive
   entries** this machine lacks — `permissions.{allow,ask,deny}` entries, `enabledPlugins`
   and `extraKnownMarketplaces` keys, and hook commands per event. Run
-  `./install.sh --sync-lists` to append them, or `./install.sh --check` to see the report on
-  demand.
+  `./install.sh --sync-lists` to append them (it also registers new marketplaces and installs
+  missing wanted plugins, via `scripts/sync-plugins.js`), or `./install.sh --check` to see the
+  report on demand.
   - Only additive entries are compared. Values (model, output style, a plugin toggled off)
     differ between machines on purpose, so diffing whole files is pure noise.
   - **The goal is that anything able to drift between machines gets a warning there.** The

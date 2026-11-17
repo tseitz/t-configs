@@ -461,4 +461,4 @@ function main() {
 
 if (require.main === module) main();
 
-module.exports = { findHookDrift, applyHookDrift };
+module.exports = { findHookDrift, applyHookDrift, readBaseline };

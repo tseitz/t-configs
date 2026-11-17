@@ -163,12 +163,17 @@ PY
 }
 
 # --sync-lists: append base entries this machine is missing from the additive
-# allow-lists in settings.json. Runs alone and exits — it must not drag the
-# whole installer along, and it is the only path allowed to edit a
-# machine-owned settings.json.
+# allow-lists in settings.json, then register their marketplaces and install
+# their plugins. Runs alone and exits — it must not drag the whole installer
+# along, and it is the only path allowed to edit a machine-owned settings.json.
 if ${SYNC_LISTS:-false}; then
-  node "$DOTFILES_DIR/.claude/scripts/settings-drift.js" --apply
-  exit $?
+  node "$DOTFILES_DIR/.claude/scripts/settings-drift.js" --apply || exit $?
+  if command -v claude &>/dev/null; then
+    node "$DOTFILES_DIR/.claude/scripts/sync-plugins.js"
+    exit $?
+  fi
+  echo "claude CLI not in PATH — marketplaces and plugins not synced" >&2
+  exit 1
 fi
 
 # --sync-settings: add base top-level keys this machine has no entry for. Same
@@ -902,18 +907,13 @@ step_claude_plugins() {
   else
     info "Installing Claude plugins (base + personal overlay — pass --work for the work set)..."
   fi
-  # A plugin from a marketplace this machine has not registered fails here rather
-  # than mid-session. The loudest case is presentation-skills: it is a `directory`
-  # source under ~/Code, so every plugin from it fails until that repo is cloned.
-  while IFS= read -r plugin; do
-    [ -n "$plugin" ] || continue
-    if claude plugin install "$plugin" &>/dev/null; then
-      success "Claude plugin installed: $plugin"
-    else
-      warn "Claude plugin already installed, or its marketplace is missing: $plugin"
-    fi
-  done <<< "$wanted"
-  success "Claude plugins processed"
+  # presentation-skills is a `directory` source under ~/Code: it and its plugins fail
+  # here until that repo is cloned.
+  if node "$DOTFILES_DIR/.claude/scripts/sync-plugins.js"; then
+    success "Claude marketplaces and plugins in sync"
+  else
+    warn "some Claude marketplaces or plugins failed — see [fail] lines above"
+  fi
   node "$DOTFILES_DIR/.claude/scripts/pin-test-browser.js" \
     || warn "could not pin browser MCP plugins to Chrome for Testing"
 }
