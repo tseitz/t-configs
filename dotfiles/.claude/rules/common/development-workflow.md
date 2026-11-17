@@ -275,8 +275,8 @@ second full copy of the source that file explorers list and that any linter run 
 explicit path walks.
 
 Then run `~/.claude/scripts/worktree-bootstrap.sh` from inside it. **Read that script's header
-first**: it carries why tracked-files-only breaks local config, and the polling flags an rspack
-dev server needs. Both of these override the skill's own directory-selection and `npm install`
+first**: it carries why tracked-files-only breaks local config, and what an rspack dev server's
+EMFILE really means. Both of these override the skill's own directory-selection and `npm install`
 steps.
 
 **Inside Herdr (`HERDR_ENV=1`), let it own the worktree** — its model is one worktree, one

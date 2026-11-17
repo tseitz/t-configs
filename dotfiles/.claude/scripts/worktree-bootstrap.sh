@@ -28,8 +28,8 @@
 #   Inside Herdr, `herdr worktree create --branch <name>` produces exactly that path
 #   and opens it as its own workspace.
 #
-# AFTER bootstrapping, to run an rspack dev server from the worktree, prefix it with
-# CHOKIDAR_USEPOLLING=true WATCHPACK_POLLING=true, or chokidar crashes with EMFILE.
+# A dev server hitting EMFILE/ENFILE means a big untracked tree under the repo (e.g. a stray
+# in-repo .pnpm-store) — delete it. Don't reach for CHOKIDAR/WATCHPACK polling: ~4-5 cores idle.
 #
 set -euo pipefail
 shopt -s nullglob
