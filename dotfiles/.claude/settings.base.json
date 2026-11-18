@@ -23,6 +23,7 @@
     "last30days@last30days-skill" : true,
     "mattpocock-skills@mattpocock" : true,
     "modern-web-guidance@googlechrome" : true,
+    "obsidian@obsidian-skills" : true,
     "playwright@claude-plugins-official" : true,
     "pr-review-toolkit@claude-plugins-official" : true,
     "pyright-lsp@claude-plugins-official" : true,
@@ -53,6 +54,12 @@
     "mattpocock" : {
       "source" : {
         "repo" : "mattpocock\/skills",
+        "source" : "github"
+      }
+    },
+    "obsidian-skills" : {
+      "source" : {
+        "repo" : "kepano\/obsidian-skills",
         "source" : "github"
       }
     },
