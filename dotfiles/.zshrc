@@ -132,8 +132,16 @@ command -v mise &>/dev/null && eval "$(mise activate zsh)"
 T_WORK_ROOT="$HOME/Code/presentation"
 t_work_context() {
   # T_WORK_FORCE is the escape hatch for a work clone outside the root.
-  if [[ -n "$T_WORK_FORCE" ]]; then export T_WORK=1; return; fi
-  if [[ "$PWD" == "$T_WORK_ROOT"* ]]; then export T_WORK=1; else unset T_WORK; fi
+  if [[ -n "$T_WORK_FORCE" || "$PWD" == "$T_WORK_ROOT"* ]]; then export T_WORK=1; else unset T_WORK; fi
+  # Claude Code: settings.json env beats these, so keep both keys out of it.
+  # Any value of NONESSENTIAL_TRAFFIC (even 0) disables traffic, and blocks Code Mode.
+  if [[ -n "$T_WORK" ]]; then
+    export CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC=1
+    unset CLAUDE_CODE_EXPERIMENTAL_CODE_MODE
+  else
+    unset CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC
+    export CLAUDE_CODE_EXPERIMENTAL_CODE_MODE=1
+  fi
 }
 autoload -Uz add-zsh-hook
 add-zsh-hook chpwd t_work_context
