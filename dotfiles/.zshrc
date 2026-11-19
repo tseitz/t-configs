@@ -135,7 +135,7 @@ t_work_context() {
   if [[ -n "$T_WORK_FORCE" || "$PWD" == "$T_WORK_ROOT"* ]]; then export T_WORK=1; else unset T_WORK; fi
   # Claude Code: settings.json env beats these, so keep both keys out of it.
   # Any value of NONESSENTIAL_TRAFFIC (even 0) disables traffic, and blocks Code Mode.
-  if [[ -n "$T_WORK" ]]; then
+  if [[ -n "$T_WORK" || -e "$dotfiles_path/.work-machine" ]]; then
     export CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC=1
     unset CLAUDE_CODE_EXPERIMENTAL_CODE_MODE
   else
