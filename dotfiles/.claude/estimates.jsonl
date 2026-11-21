@@ -13,3 +13,4 @@
 {"ev":"close","id":"2026-11-14-light-theme-redesign","actual":{"agent":32.5,"human":1.3,"session":33.9,"idle_dropped":0,"files":27},"ratio":0.28,"why_off":"overestimated","note":"token roles made recolor mostly mechanical","at":"2026-11-15T01:30:43.684Z"}
 {"ev":"drop","id":"2026-11-12-ocean-retheme","at":"2026-11-16T22:11:12.548Z"}
 {"ev":"open","id":"2026-11-20-solid-2-spike","start":"2026-11-21T01:34:09Z","session":"de0c1750-2305-4b7a-9cf5-a19a2b2e097f","slug":"frontend framework port spike","repo":"tegan-trades","type":"spike","tier":"FULL","files_est":16,"est":{"session_p50":60,"session_p90":120,"ship_p50":null,"ship_p90":null},"at":"2026-11-21T01:36:27.503Z"}
+{"ev":"close","id":"2026-11-20-solid-2-spike","actual":{"agent":153.6,"human":12.1,"session":165.8,"idle_dropped":0,"files":24},"ratio":2.76,"why_off":"scope-grew","note":"spike became full port; includes 2h prompt wait","at":"2026-11-21T12:48:02.389Z"}
